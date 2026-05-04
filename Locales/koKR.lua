@@ -196,10 +196,10 @@ L["Group.WeaponBuff"] = "무기 버프"
 -- ============================================================================
 L["Tooltip.MayShowExtraIcon"] = "추가 아이콘이 표시될 수 있음"
 L["Tooltip.MayShowExtraIcon.Desc"] =
-    "이 주문을 시전하기 전까지, 이 알림과 물/번개 보호막 알림이 동시에 표시될 수 있습니다. 대지의 보호막을 자신에게 걸려는 건지, 아니면 아군에게 걸고 자신은 물/번개 보호막을 걸려는 건지 구분할 수 없기 때문입니다."
+    "이 주문을 시전하기 전까진 이 알림과 물/번개 보호막 알림이 동시에 표시될 수 있습니다. 대지의 보호막을 자신에게 걸려는 건지 아군에게 걸고 자신은 물/번개 보호막을 걸려는 건지 구분이 불가능하기 때문입니다."
 L["Tooltip.InstanceEntryReminder"] = "인스턴스 입장 알림"
 L["Tooltip.InstanceEntryReminder.Desc"] =
-    "던전 입장 시 영혼샘을 깔라는 알림이 잠시 표시됩니다. 시전하거나 30초가 지나면 사라집니다."
+    "던전 입장 시 영혼의 샘을 깔라는 알림이 잠시 표시됩니다. 시전하거나 30초가 지나면 사라집니다."
 
 -- ============================================================================
 -- GLOW TYPE NAMES
@@ -259,13 +259,26 @@ L["Display.LoginSelfOnlyOutside"] =
 L["Tab.DisplayBehavior"] = "표시/동작"
 
 -- Sidebar groups
+L["Sidebar.General"] = "일반"
 L["Sidebar.Buffs"] = "버프"
+L["Sidebar.DisplayBehavior"] = "표시 및 동작"
 L["Sidebar.Profiles"] = "프로필"
 
 -- Page titles
+L["Page.General"] = "일반"
+L["Page.Defaults"] = "기본값"
+L["Page.Visibility"] = "표시 설정"
 L["Page.ChatRequests"] = "채팅 요청"
+L["Page.AnchorFrames"] = "앵커 프레임"
 L["Page.Profiles"] = "프로필"
+L["Page.AllBuffs"] = "모든 버프"
+L["Page.DetachedIcons"] = "분리된 아이콘"
 L["Page.Sounds"] = "효과음"
+L["Page.Sounds.Desc"] =
+    "추적된 버프가 없을 때 효과음을 재생합니다. 모든 버프 카테고리에 걸쳐 적용됩니다 - 버프당 1개씩 지정하세요"
+
+-- Per-category page section headers
+L["Section.Tracking"] = "추적 중"
 
 -- ============================================================================
 -- OPTIONS: SOUND ALERTS
@@ -284,8 +297,7 @@ L["Options.Sound.NoBuffs"] = "모든 버프에 효과음이 있습니다."
 -- OPTIONS: GLOBAL DEFAULTS
 -- ============================================================================
 L["Options.GlobalDefaults"] = "전체 기본값"
-L["Options.GlobalDefaults.Note"] =
-    "(사용자 지정 외형으로 덮어쓰지 않는 한 모든 카테고리에 적용됨)"
+L["Options.GlobalDefaults.Note"] = "(사용자 지정 외형으로 덮어쓰지 않는 한 모든 카테고리에 적용됨)"
 L["Options.Default"] = "기본값"
 L["Options.Font"] = "글꼴"
 L["Options.TextOutline"] = "외곽선 스타일"
@@ -294,7 +306,7 @@ L["Options.TextOutline.Outline"] = "외곽선"
 L["Options.TextOutline.Thick"] = "두꺼운 외곽선"
 L["Options.TextOutline.Monochrome"] = "모노크롬"
 L["Options.TextOutline.OutlineMono"] = "외곽선 + 모노크롬"
-L["Options.TextOutline.ThickMono"] = "두꺼운 + 모노크롬"
+L["Options.TextOutline.ThickMono"] = "두꺼움 + 모노크롬"
 
 -- ============================================================================
 -- OPTIONS: GLOW SETTINGS
@@ -340,8 +352,7 @@ L["Options.Glow.YOffset"] = "Y 조정"
 -- ============================================================================
 L["Options.HidePvPMatchStart"] = "PvP 경기 시작 시 숨기기"
 L["Options.HidePvPMatchStart.Title"] = "PvP 경기 시작 시 숨기기"
-L["Options.HidePvPMatchStart.Desc"] =
-    "PvP 경기가 시작되면 (준비 단계 종료 후) 이 카테고리를 숨깁니다."
+L["Options.HidePvPMatchStart.Desc"] = "PvP 경기가 시작되면 (준비 단계 종료 후) 이 카테고리를 숨깁니다."
 L["Options.ReadyCheckOnly"] = "전투 준비 시에만 표시"
 L["Options.ReadyCheckOnly.Desc"] = "전투 준비 후 15초 동안만 이 카테고리의 버프를 표시합니다."
 L["Options.Visibility"] = "표시 설정"
@@ -355,8 +366,7 @@ L["Options.Healthstone.AlwaysShow"] = "항상 표시"
 L["Options.Healthstone.Visibility"] = "생명석 표시"
 L["Options.Healthstone.Visibility.Desc"] =
     "생명석 알림이 표시되는 시점을 설정합니다.\n\n|cffffcc00전투 준비 시에만:|r 전투 준비(15초)때만 표시.\n|cffffcc00전투 준비 + 흑마법사는 항상 표시:|r 흑마법사는 항상 표시, 다른 직업은 전투 준비때만.\n|cffffcc00항상 표시:|r 설정에 맞는 콘텐츠에 있을 때 항상 표시."
-L["Options.Healthstone.WarlockAlwaysDesc"] =
-    "흑마법사는 항상 알림 표시, 다른 직업은 전투 준비때만"
+L["Options.Healthstone.WarlockAlwaysDesc"] = "흑마법사는 항상 알림 표시, 다른 직업은 전투 준비때만"
 L["Options.Healthstone.ReadyCheckDesc"] = "전투 준비 후 15초 동안 표시"
 L["Options.Healthstone.AlwaysDesc"] = "해당 콘텐츠 유형과 일치할 때 항상 표시"
 L["Options.Healthstone.LowStock"] = "부족 시 경고"
@@ -396,8 +406,7 @@ L["Options.FreeConsumables.Override.Desc"] =
 -- ============================================================================
 L["Options.Icons"] = "아이콘"
 L["Options.ShowText"] = "아이콘에 텍스트 표시"
-L["Options.ShowText.Desc"] =
-    "이 카테고리의 버프 아이콘에 버프 개수나 누락 텍스트 오버레이를 표시합니다."
+L["Options.ShowText.Desc"] = "이 카테고리의 버프 아이콘에 버프 개수나 누락 텍스트 오버레이를 표시합니다."
 L["Options.ShowMissingCountOnly"] = "누락 수량만 표시"
 L["Options.ShowMissingCountOnly.Desc"] =
     '전체 숫자(예: "19/20") 대신 누락된 버프 수(예: "1")만 표시합니다.'
@@ -413,11 +422,12 @@ L["Options.ClickToCast"] = "클릭으로 시전"
 L["Options.ClickToCast.DescFull"] =
     "버프 아이콘을 클릭해 해당 주문을 시전할 수 있습니다.(비전투 시에만) 내 캐릭터가 시전 가능한 주문에만 작동합니다."
 L["Options.HoverHighlight"] = "마우스오버 강조"
-L["Options.HoverHighlight.Desc"] =
-    "클릭 가능한 버프 아이콘에 마우스를 올리면 희미한 강조 효과가 표시됩니다."
+L["Options.HoverHighlight.Desc"] = "클릭 가능한 버프 아이콘에 마우스를 올리면 희미한 강조 효과가 표시됩니다."
 L["Options.RequestBuffInChat"] = "없는 버프를 채팅으로 요청"
 L["Options.RequestBuffInChat.Desc"] =
     "내 직업이 걸 수 없는 누락된 버프를 클릭하면 채팅으로 요청합니다. 채널(인스턴스/공격대/파티/일반)을 자동으로 감지합니다. 버프당 30초의 쿨타임이 있습니다."
+L["Options.ChatRequest.ResetAll"] = "모두 초기화"
+L["ChatRequests.PerBuffMessages"] = "버프별 메시지"
 -- Chat request messages (keyed by buff.key, sent as-is via SendChatMessage)
 -- EU/US translators: leave untranslated so chat messages stay in English.
 -- Asian translators: translate these so chat messages match your locale.
@@ -439,8 +449,7 @@ L["Options.PetSpecIcon.Title"] = "마우스를 올리면 소환수 특성 아이
 L["Options.PetSpecIcon.Desc"] =
     "마우스를 올리면 소환수 아이콘이 특성 능력(교활, 야성, 끈기)으로 바뀝니다."
 L["Options.ShowItemTooltips"] = "아이템 툴팁 표시"
-L["Options.ShowItemTooltips.Desc"] =
-    "소모품 아이콘에 마우스를 올리면 아이템 툴팁이 표시됩니다."
+L["Options.ShowItemTooltips.Desc"] = "소모품 아이콘에 마우스를 올리면 아이템 툴팁이 표시됩니다."
 L["Options.Behavior"] = "동작"
 L["Options.PetPassiveCombat"] = "전투 중에만 수동적 소환수 알림"
 L["Options.PetPassiveCombat.Desc"] =
@@ -479,8 +488,7 @@ L["Options.ItemDisplay"] = "아이템 표시"
 L["Options.ItemDisplay.IconOnly"] = "아이콘만 표시"
 L["Options.ItemDisplay.IconOnlyDesc"] = "수량이 가장 많은 아이템 표시"
 L["Options.ItemDisplay.SubIcons"] = "하위 아이콘"
-L["Options.ItemDisplay.SubIconsDesc"] =
-    "각 아이콘 아래에 클릭되는 다른 등급의 작은 아이템을 표시합니다"
+L["Options.ItemDisplay.SubIconsDesc"] = "각 아이콘 아래에 클릭되는 다른 등급의 작은 아이템을 표시합니다"
 L["Options.ItemDisplay.Expanded"] = "확장"
 L["Options.ItemDisplay.ExpandedDesc"] = "다른 등급 아이템 아이콘을 전체 크기로 확장합니다"
 L["Options.ItemDisplay.Mode"] = "소모품 아이템 표시"
@@ -556,8 +564,29 @@ L["Options.DelveFoodTimer.Desc"] =
 -- ============================================================================
 L["Options.Layout"] = "레이아웃"
 L["Options.SplitFrame"] = "개별 프레임으로 분리"
-L["Options.SplitFrame.Desc"] =
-    "이 카테고리의 버프를 독립적으로 이동 가능한 별도의 프레임에 표시합니다."
+L["Options.SplitFrame.Desc"] = "이 카테고리의 버프를 독립적으로 이동 가능한 별도의 프레임에 표시합니다."
+
+-- Display Order section (Defaults page) - drives the same priority field the
+-- old per-category slider wrote, but as a single ordered list across all
+-- non-split categories.
+L["Options.DisplayOrder"] = "표시 순서"
+L["Options.DisplayOrder.Note"] =
+    "조합된 프레임 내에서 카테고리들이 위에서 아래로 쌓이는 순서를 설정합니다. 분리한 카테고리는 별도의 프레임에 있으므로 여기엔 나오지 않습니다."
+L["Options.DisplayOrder.SplitGroup"] = "분리됨 (독립 프레임)"
+L["Options.DisplayOrder.SplitBadge"] = "분리됨"
+
+-- Detached Icons page (search-driven dual-list manager).
+L["DetachedIcons.PageNote"] =
+    "카테고리에서 버프 한개를 꺼내 자체 독립 프레임에 넣습니다. 분리된 아이콘은 자체 앵커를 유지하며 프레임 잠금 해제시 독립적으로 옮길 수 있습니다."
+L["DetachedIcons.Search"] = "검색:"
+L["DetachedIcons.Available"] = "사용 가능"
+L["DetachedIcons.CurrentlyDetachedCount"] = "분리됨 (%d)"
+L["DetachedIcons.NoneDetached"] = "분리된 아이콘이 없습니다. 아래에서 버프를 검색 후 분리를 클릭하세요."
+L["DetachedIcons.NoMatches"] = "검색 결과가 없습니다."
+L["DetachedIcons.Detach"] = "분리"
+L["DetachedIcons.Reattach"] = "다시 합침"
+L["DetachedIcons.ResetPos"] = "초기화"
+L["DetachedIcons.ReattachAll"] = "전부 다시 합침"
 
 -- ============================================================================
 -- OPTIONS: APPEARANCE
@@ -577,6 +606,9 @@ L["Options.ShowMinimapButton"] = "미니맵 버튼 표시"
 
 -- Hide when section
 L["Options.HideWhen"] = "숨김 조건:"
+L["Options.HideWhen.Alone"] = "1인"
+L["Options.HideWhen.Alone.Title"] = "혼자일 때 숨김"
+L["Options.HideWhen.Alone.Desc"] = "파티나 공격대 그룹에 없을 때 모든 버프 알림을 숨깁니다"
 L["Options.HideWhen.Resting"] = "휴식 중"
 L["Options.HideWhen.Resting.Title"] = "휴식 중 숨김"
 L["Options.HideWhen.Resting.Desc"] = "여관이나 대도시에 있을 때 버프 알림을 숨깁니다."
@@ -663,8 +695,7 @@ L["Dialog.DeleteCustomBuff"] = '사용자 지정 버프 "%s"|1을;를; 삭제할
 L["Dialog.ResetProfile"] =
     "활성 프로필을 기본값으로 초기화할까요?\n\n현재 프로필의 모든 사용자 지정\n설정이 삭제되고 UI가 재시작됩니다."
 L["Dialog.Reset"] = "초기화"
-L["Dialog.ReloadPrompt"] =
-    "설정을 성공적으로 가져왔습니다!\nUI를 재시작해서 변경 사항을 적용할까요?"
+L["Dialog.ReloadPrompt"] = "설정을 성공적으로 가져왔습니다!\nUI를 재시작해서 변경 사항을 적용할까요?"
 L["Dialog.Reload"] = "재시작"
 L["Dialog.NewProfilePrompt"] = "새 프로필의 이름을 입력하세요:"
 L["Dialog.Create"] = "생성"
@@ -675,8 +706,7 @@ L["Dialog.Close"] = "닫기"
 -- OPTIONS: TEST / LOCK
 -- ============================================================================
 L["Options.LockUnlock"] = "잠금 / 해제"
-L["Options.LockUnlock.Desc"] =
-    "잠금을 해제하면 버프 프레임 위치를 조정할 수 있는 앵커 핸들이 표시됩니다."
+L["Options.LockUnlock.Desc"] = "잠금을 해제하면 버프 프레임 위치를 조정할 수 있는 앵커 핸들이 표시됩니다."
 L["Options.TestAppearance"] = "아이콘 외형 테스트"
 L["Options.TestAppearance.Desc"] =
     "가짜 값으로 선택한 버프를 표시해서 외형을 미리 볼 수 있습니다."
@@ -690,6 +720,7 @@ L["Options.Unlock"] = "잠금 해제"
 -- OPTIONS: CUSTOM BUFF DIALOG
 -- ============================================================================
 L["CustomBuff.Edit"] = "사용자 지정 버프 편집"
+L["CustomBuff.EditShort"] = "편집"
 L["CustomBuff.Add"] = "사용자 지정 버프 추가"
 L["CustomBuff.AddButton"] = "+ 사용자 지정 버프 추가"
 L["CustomBuff.SpellIDs"] = "주문 ID:"
