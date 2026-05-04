@@ -19,41 +19,21 @@ jobs:
         run: sudo apt-get install -y subversion
 
       - name: Fetch latest libraries
-        run: |
-          # CurseForge SVN libs
-          svn export --force https://repos.curseforge.com/wow/libstub/trunk /tmp/LibStub
-          svn export --force https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0 /tmp/CallbackHandler-1.0
-          svn export --force https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0 /tmp/LibSharedMedia-3.0
-          svn export --force https://repos.curseforge.com/wow/ace3/trunk/AceDB-3.0 /tmp/AceDB-3.0
-          svn export --force https://repos.curseforge.com/wow/libdbicon-1-0/trunk/LibDBIcon-1.0 /tmp/LibDBIcon-1.0
-
-          # GitHub libs
-          git clone --depth 1 https://github.com/Stanzilla/LibCustomGlow.git /tmp/LibCustomGlow-1.0-repo
-          mkdir -p /tmp/LibCustomGlow-1.0
-          cp /tmp/LibCustomGlow-1.0-repo/LibCustomGlow-1.0.lua /tmp/LibCustomGlow-1.0/
-
-          git clone --depth 1 https://github.com/tekkub/libdatabroker-1-1.git /tmp/LibDataBroker-1.1-repo
-          mkdir -p /tmp/LibDataBroker-1.1
-          cp /tmp/LibDataBroker-1.1-repo/LibDataBroker-1.1.lua /tmp/LibDataBroker-1.1/
-
-          git clone --depth 1 https://github.com/Adirelle/LibDualSpec-1.0.git /tmp/LibDualSpec-1.0-repo
-          mkdir -p /tmp/LibDualSpec-1.0
-          # Strip @do-not-package@ blocks (test code not meant for distribution)
-          sed '/@do-not-package@/,/@end-do-not-package@/d' /tmp/LibDualSpec-1.0-repo/LibDualSpec-1.0.lua > /tmp/LibDualSpec-1.0/LibDualSpec-1.0.lua
-
-          git clone --depth 1 https://github.com/BigWigsMods/LibSpecialization.git /tmp/LibSpecialization-repo
-          mkdir -p /tmp/LibSpecialization
-          cp /tmp/LibSpecialization-repo/LibSpecialization/LibSpecialization.lua /tmp/LibSpecialization/
+        run: scripts/fetch-libs.sh
 
       - name: Check for updates
         id: diff
         run: |
           updated=""
 
-          # Compare only the .lua files we actually bundle
-          for lib in LibStub CallbackHandler-1.0 LibSharedMedia-3.0 LibCustomGlow-1.0 AceDB-3.0 LibDBIcon-1.0 LibDataBroker-1.1 LibDualSpec-1.0 LibSpecialization; do
+          # Iterate every vendored lib folder and compare each file against its upstream
+          # counterpart. Files we ship without an upstream copy (e.g. our hand-shipped
+          # LGPL text for LibSharedMedia-3.0) are skipped naturally.
+          for d in Libs/*/; do
+            lib=$(basename "$d")
             changed=false
-            for bundled in Libs/$lib/*.lua; do
+            for bundled in Libs/$lib/*; do
+              [ -f "$bundled" ] || continue
               fname=$(basename "$bundled")
               if [ -f "/tmp/$lib/$fname" ] && ! diff -q "$bundled" "/tmp/$lib/$fname" > /dev/null 2>&1; then
                 cp "/tmp/$lib/$fname" "$bundled"
@@ -69,6 +49,7 @@ jobs:
           echo "updated=$updated" >> "$GITHUB_OUTPUT"
 
       - name: Create PR if updates found
+        id: pr
         if: steps.diff.outputs.updated != ''
         uses: peter-evans/create-pull-request@v7
         with:
@@ -80,3 +61,41 @@ jobs:
             Please review the diff to make sure nothing breaking changed.
           branch: chore/update-libs
           delete-branch: true
+
+      - name: Notify Discord
+        if: always()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_LIBS_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          UPDATED: ${{ steps.diff.outputs.updated }}
+          PR_URL: ${{ steps.pr.outputs.pull-request-url }}
+          PR_OP: ${{ steps.pr.outputs.pull-request-operation }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "DISCORD_LIBS_WEBHOOK_URL secret not set; skipping notification"
+            exit 0
+          fi
+
+          case "$JOB_STATUS" in
+            failure)
+              content="check-libs failed: $RUN_URL"
+              ;;
+            cancelled)
+              content="check-libs cancelled: $RUN_URL"
+              ;;
+            success)
+              if [ -n "$UPDATED" ]; then
+                content="check-libs: lib-update PR ${PR_OP:-opened} for ${UPDATED} -> ${PR_URL}"
+              else
+                content="check-libs: ran clean, no lib updates this week"
+              fi
+              ;;
+            *)
+              content="check-libs finished with status '$JOB_STATUS': $RUN_URL"
+              ;;
+          esac
+
+          curl -sS -H "Content-Type: application/json" \
+            -d "$(jq -nc --arg c "$content" '{content: $c}')" \
+            "$WEBHOOK"
