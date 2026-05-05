@@ -251,7 +251,7 @@ L["Display.DismissConsumablesChat"] = "소모품 알림이 다음 로딩 화면�
 L["Display.LoginFirstInstall"] =
     "설치해 주셔서 감사합니다! |cFFFFD100/br unlock|r을 입력하여 버프 표시를 이동하거나, |cFFFFD100/br|r 옵션 패널 하단의 버튼을 사용하세요."
 L["Display.LoginSelfOnlyOutside"] =
-    "새로운 기본값: 야외에서는 내 스스로 거는 버프만 추적합니다. 변경하려면 설정 탭에서 |cFFFFD100던전/공격대 외에선 내것만 추적|r 옵션을 설정하세요."
+    "새로운 기본값: 야외에서는 내 스스로 거는 버프만 추적합니다. 변경하려면 설정 탭에서 |cFFFFD100던전/공격대 밖에선 내것만 추적|r 옵션을 설정하세요."
 
 -- ============================================================================
 -- OPTIONS: NAVIGATION LABELS
@@ -278,7 +278,7 @@ L["Page.Sounds.Desc"] =
     "추적된 버프가 없을 때 효과음을 재생합니다. 모든 버프 카테고리에 걸쳐 적용됩니다 - 버프당 1개씩 지정하세요"
 
 -- Per-category page section headers
-L["Section.Tracking"] = "추적 중"
+L["Section.Tracking"] = "추적"
 
 -- ============================================================================
 -- OPTIONS: SOUND ALERTS
@@ -490,7 +490,7 @@ L["Options.ItemDisplay.IconOnlyDesc"] = "수량이 가장 많은 아이템 표�
 L["Options.ItemDisplay.SubIcons"] = "하위 아이콘"
 L["Options.ItemDisplay.SubIconsDesc"] = "각 아이콘 아래에 클릭되는 다른 등급의 작은 아이템을 표시합니다"
 L["Options.ItemDisplay.Expanded"] = "확장"
-L["Options.ItemDisplay.ExpandedDesc"] = "다른 등급 아이템 아이콘을 전체 크기로 확장합니다"
+L["Options.ItemDisplay.ExpandedDesc"] = "다른 등급 아이템 아이콘을 원래 크기로 확장합니다"
 L["Options.ItemDisplay.Mode"] = "소모품 아이템 표시"
 L["Options.ItemDisplay.Mode.Desc"] =
     "복수의 등급이 있는 소모품 아이템(예: 다양한 영약 등급)의 표시 방식을 설정합니다."
@@ -579,7 +579,7 @@ L["Options.DisplayOrder.SplitBadge"] = "분리됨"
 L["DetachedIcons.PageNote"] =
     "카테고리에서 버프 한개를 꺼내 자체 독립 프레임에 넣습니다. 분리된 아이콘은 자체 앵커를 유지하며 프레임 잠금 해제시 독립적으로 옮길 수 있습니다."
 L["DetachedIcons.Search"] = "검색:"
-L["DetachedIcons.Available"] = "사용 가능"
+L["DetachedIcons.Available"] = "분리 가능"
 L["DetachedIcons.CurrentlyDetachedCount"] = "분리됨 (%d)"
 L["DetachedIcons.NoneDetached"] = "분리된 아이콘이 없습니다. 아래에서 버프를 검색 후 분리를 클릭하세요."
 L["DetachedIcons.NoMatches"] = "검색 결과가 없습니다."
@@ -613,7 +613,7 @@ L["Options.HideWhen.Resting"] = "휴식 중"
 L["Options.HideWhen.Resting.Title"] = "휴식 중 숨김"
 L["Options.HideWhen.Resting.Desc"] = "여관이나 대도시에 있을 때 버프 알림을 숨깁니다."
 L["Options.HideWhen.Combat"] = "전투 중"
-L["Options.HideWhen.Expiring"] = "전투 중에 만료 임박 버프만"
+L["Options.HideWhen.Expiring"] = "전투 중에는 만료 임박 버프만"
 L["Options.HideWhen.Expiring.Title"] = "전투 중 만료 임박 버프 숨기기"
 L["Options.HideWhen.Expiring.Desc"] =
     "전투 중에는 곧 만료될 버프를 숨기고 완전히 사라진 버프만 표시합니다."
@@ -655,7 +655,7 @@ L["Options.BuffTracking.Smart.Desc"] =
 L["Options.BuffTracking.Mode"] = "버프 추적 모드"
 L["Options.BuffTracking.Mode.Desc"] =
     "표시할 공격대 및 특수 버프를 설정하고 그룹 전체 또는 자신만 추적할지 설정합니다."
-L["Options.BuffTracking.SelfOnlyOutsideInstances"] = "던전/공격대 외에선 내것만 추적"
+L["Options.BuffTracking.SelfOnlyOutsideInstances"] = "던전/공격대 밖에선 내것만 추적"
 L["Options.BuffTracking.SelfOnlyOutsideInstances.Desc"] =
     "활성화하면 야외에서는 나에게 걸린 내 직업 버프만 추적합니다. 선택한 추적 모드는 던전, 공격대, 시나리오, PvP 내에서 계속 사용됩니다."
 
