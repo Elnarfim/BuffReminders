@@ -588,6 +588,29 @@ L["DetachedIcons.Reattach"] = "다시 합침"
 L["DetachedIcons.ResetPos"] = "초기화"
 L["DetachedIcons.ReattachAll"] = "전부 다시 합침"
 
+-- Display Order section (Defaults page) - drives the same priority field the
+-- old per-category slider wrote, but as a single ordered list across all
+-- non-split categories.
+L["Options.DisplayOrder"] = "표시 순서"
+L["Options.DisplayOrder.Note"] =
+    "조합된 프레임 내에서 카테고리들이 위에서 아래로 쌓이는 순서를 설정합니다. 분리한 카테고리는 별도의 프레임에 있으므로 여기엔 나오지 않습니다."
+L["Options.DisplayOrder.SplitGroup"] = "분리됨 (독립 프레임)"
+L["Options.DisplayOrder.SplitBadge"] = "분리됨"
+
+-- Detached Icons page (search-driven dual-list manager).
+L["DetachedIcons.PageNote"] =
+    "카테고리에서 버프 한개를 꺼내 자체 독립 프레임에 넣습니다. 분리된 아이콘은 자체 앵커를 유지하며 프레임 잠금 해제시 독립적으로 옮길 수 있습니다."
+L["DetachedIcons.Search"] = "검색:"
+L["DetachedIcons.Available"] = "분리 가능"
+L["DetachedIcons.CurrentlyDetachedCount"] = "분리됨 (%d)"
+L["DetachedIcons.NoneDetached"] =
+    "분리된 아이콘이 없습니다. 아래에서 버프를 검색 후 분리를 클릭하세요."
+L["DetachedIcons.NoMatches"] = "검색 결과가 없습니다."
+L["DetachedIcons.Detach"] = "분리"
+L["DetachedIcons.Reattach"] = "다시 합침"
+L["DetachedIcons.ResetPos"] = "초기화"
+L["DetachedIcons.ReattachAll"] = "전부 다시 합침"
+
 -- ============================================================================
 -- OPTIONS: APPEARANCE
 -- ============================================================================
