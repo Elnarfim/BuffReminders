@@ -53,8 +53,8 @@ jobs:
         if: steps.diff.outputs.updated != ''
         uses: peter-evans/create-pull-request@v7
         with:
-          commit-message: "chore: update embedded libs (${{ steps.diff.outputs.updated }})"
-          title: "chore: update embedded libs (${{ steps.diff.outputs.updated }})"
+          commit-message: "chore(libs): 📦 update embedded libs (${{ steps.diff.outputs.updated }})"
+          title: "chore(libs): 📦 update embedded libs (${{ steps.diff.outputs.updated }})"
           body: |
             Automated weekly check found updates for: **${{ steps.diff.outputs.updated }}**
 

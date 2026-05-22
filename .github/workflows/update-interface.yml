@@ -23,6 +23,6 @@ jobs:
         with:
           branch: automation/wow-interface
           delete-branch: true
-          commit-message: "chore: 🔧 update WoW TOC interface versions"
-          title: "chore: 🔧 update WoW TOC interface versions"
+          commit-message: "chore(toc): 🔧 update WoW TOC interface versions"
+          title: "chore(toc): 🔧 update WoW TOC interface versions"
           body: ${{ steps.toc.outputs.pr-body }}
