@@ -50,6 +50,7 @@ L["Overlay.NoES"] = "대보\n없음"
 L["Overlay.NoSource"] = "원천\n없음"
 L["Overlay.NoScales"] = "비늘\n없음"
 L["Overlay.NoLink"] = "공생\n없음"
+L["Overlay.NoWeyrnstone"] = "웨이른\n없음"
 L["Overlay.NoTimeless"] = "무궁\n없음"
 L["Overlay.NoAttune"] = "조율\n없음"
 L["Overlay.NoFamiliar"] = "전령\n없음"
@@ -138,6 +139,7 @@ L["Buff.EarthShield"] = "대지의 보호막"
 L["Buff.SourceOfMagic"] = "마법의 원천"
 L["Buff.SymbioticRelationship"] = "공생관계"
 L["Buff.Timelessness"] = "무궁"
+L["Buff.Weyrnstone"] = "웨이른석"
 -- Self
 L["Buff.ArcaneFamiliar"] = "비전 전령"
 L["Buff.Attunement"] = "조율"
@@ -200,6 +202,7 @@ L["Tooltip.MayShowExtraIcon.Desc"] =
 L["Tooltip.InstanceEntryReminder"] = "인스턴스 입장 알림"
 L["Tooltip.InstanceEntryReminder.Desc"] =
     "던전 입장 시 영혼의 샘을 깔라는 알림이 잠시 표시됩니다. 시전하거나 30초가 지나면 사라집니다."
+L["BuffTooltip.ProvidedBy"] = "%s|1이;가; 걸어줌"
 
 -- ============================================================================
 -- GLOW TYPE NAMES
@@ -241,6 +244,8 @@ L["Display.FramesLocked"] = "프레임 위치를 고정했습니다."
 L["Display.FramesUnlocked"] = "프레임의 고정이 해제됐습니다."
 L["Display.MinimapHidden"] = "미니맵 아이콘이 숨겨졌습니다."
 L["Display.MinimapShown"] = "미니맵 아이콘이 표시됩니다."
+L["Display.DebugEnabled"] = "디버그 모드가 활성화됐습니다. |cFFFFD100/br debug|r를 다시 실행하면 꺼집니다."
+L["Display.DebugDisabled"] = "디버그 모드가 비활성화됐습니다."
 L["Display.Description"] = "누락된 버프를 한꺼번에 확인하세요."
 L["Display.OpenOptions"] = "옵션 열기"
 L["Display.SlashCommands"] = "슬래시 명령어: /br, /br lock, /br unlock, /br test, /br minimap"
@@ -414,6 +419,25 @@ L["Options.ShowBuffReminderText"] = '"버프!" 알림 텍스트 표시'
 L["Options.Size"] = "크기"
 
 -- ============================================================================
+-- OPTIONS: TEXT POSITIONS
+-- ============================================================================
+L["Options.TextPositions"] = "텍스트"
+L["Options.TextPositions.Zone"] = "위치"
+L["Options.TextPositions.OffsetX.Short"] = "X"
+L["Options.TextPositions.OffsetY.Short"] = "Y"
+L["Options.TextPositions.StackCount"] = "중첩 수"
+L["Options.TextPositions.StatLabel"] = "능력치 라벨"
+L["Options.TextPositions.Badge"] = "표시 (든 / 덧)"
+L["Options.TextPositions.Vertical.Above"] = "위쪽"
+L["Options.TextPositions.Vertical.InsideTop"] = "상단"
+L["Options.TextPositions.Vertical.InsideMiddle"] = "중앙"
+L["Options.TextPositions.Vertical.InsideBottom"] = "하단"
+L["Options.TextPositions.Vertical.Below"] = "아래쪽"
+L["Options.TextPositions.Align.Left"] = "왼쪽"
+L["Options.TextPositions.Align.Center"] = "중앙"
+L["Options.TextPositions.Align.Right"] = "오른쪽"
+
+-- ============================================================================
 -- OPTIONS: CLICK TO CAST
 -- ============================================================================
 L["Options.ClickToCast"] = "클릭으로 시전"
@@ -424,6 +448,9 @@ L["Options.HoverHighlight.Desc"] = "클릭 가능한 버프 아이콘에 마우�
 L["Options.RequestBuffInChat"] = "없는 버프를 채팅으로 요청"
 L["Options.RequestBuffInChat.Desc"] =
     "내 직업이 걸 수 없는 누락된 버프를 클릭하면 채팅으로 요청합니다. 채널(인스턴스/공격대/파티/일반)을 자동으로 감지합니다. 버프당 30초의 쿨타임이 있습니다."
+L["Options.ChatRequest.FixAttempt"] = "|cffffd200시험용|r 전송이 안된 채팅 요청 복구 시도"
+L["Options.ChatRequest.FixAttempt.Desc"] =
+    "채팅 요청이 전송되지 않았을 때만 사용하세요. 의도치 않은 클릭 도배를 방지하기 위한 5초 클릭 쿨타임도 함께 비활성화됩니다."
 L["Options.ChatRequest.ResetAll"] = "모두 초기화"
 L["ChatRequests.PerBuffMessages"] = "버프별 메시지"
 -- Chat request messages (keyed by buff.key, sent as-is via SendChatMessage)
@@ -448,6 +475,9 @@ L["Options.PetSpecIcon.Desc"] =
     "마우스를 올리면 소환수 아이콘이 특성 능력(교활, 야성, 끈기)으로 바뀝니다."
 L["Options.ShowItemTooltips"] = "아이템 툴팁 표시"
 L["Options.ShowItemTooltips.Desc"] = "소모품 아이콘에 마우스를 올리면 아이템 툴팁이 표시됩니다."
+L["Options.ShowBuffTooltips"] = "버프 툴팁 표시"
+L["Options.ShowBuffTooltips.Desc"] =
+    "공격대 또는 특수 버프 아이콘에 마우스 커서를 올리면 주문 툴팁과 걸어준 직업이 표시됩니다."
 L["Options.Behavior"] = "동작"
 L["Options.PetPassiveCombat"] = "전투 중에만 수동적 소환수 알림"
 L["Options.PetPassiveCombat.Desc"] =
@@ -562,7 +592,8 @@ L["Options.DelveFoodTimer.Desc"] =
 -- ============================================================================
 L["Options.Layout"] = "레이아웃"
 L["Options.SplitFrame"] = "개별 프레임으로 분리"
-L["Options.SplitFrame.Desc"] = "이 카테고리의 버프를 독립적으로 이동 가능한 별도의 프레임에 표시합니다."
+L["Options.SplitFrame.Desc"] =
+    "이 카테고리의 버프를 독립적으로 이동 가능한 별도의 프레임에 표시합니다."
 
 -- Display Order section (Defaults page) - drives the same priority field the
 -- old per-category slider wrote, but as a single ordered list across all
@@ -580,29 +611,6 @@ L["DetachedIcons.Search"] = "검색:"
 L["DetachedIcons.Available"] = "분리 가능"
 L["DetachedIcons.CurrentlyDetachedCount"] = "분리됨 (%d)"
 L["DetachedIcons.NoneDetached"] = "분리된 아이콘이 없습니다. 아래에서 버프를 검색 후 분리를 클릭하세요."
-L["DetachedIcons.NoMatches"] = "검색 결과가 없습니다."
-L["DetachedIcons.Detach"] = "분리"
-L["DetachedIcons.Reattach"] = "다시 합침"
-L["DetachedIcons.ResetPos"] = "초기화"
-L["DetachedIcons.ReattachAll"] = "전부 다시 합침"
-
--- Display Order section (Defaults page) - drives the same priority field the
--- old per-category slider wrote, but as a single ordered list across all
--- non-split categories.
-L["Options.DisplayOrder"] = "표시 순서"
-L["Options.DisplayOrder.Note"] =
-    "조합된 프레임 내에서 카테고리들이 위에서 아래로 쌓이는 순서를 설정합니다. 분리한 카테고리는 별도의 프레임에 있으므로 여기엔 나오지 않습니다."
-L["Options.DisplayOrder.SplitGroup"] = "분리됨 (독립 프레임)"
-L["Options.DisplayOrder.SplitBadge"] = "분리됨"
-
--- Detached Icons page (search-driven dual-list manager).
-L["DetachedIcons.PageNote"] =
-    "카테고리에서 버프 한개를 꺼내 자체 독립 프레임에 넣습니다. 분리된 아이콘은 자체 앵커를 유지하며 프레임 잠금 해제시 독립적으로 옮길 수 있습니다."
-L["DetachedIcons.Search"] = "검색:"
-L["DetachedIcons.Available"] = "분리 가능"
-L["DetachedIcons.CurrentlyDetachedCount"] = "분리됨 (%d)"
-L["DetachedIcons.NoneDetached"] =
-    "분리된 아이콘이 없습니다. 아래에서 버프를 검색 후 분리를 클릭하세요."
 L["DetachedIcons.NoMatches"] = "검색 결과가 없습니다."
 L["DetachedIcons.Detach"] = "분리"
 L["DetachedIcons.Reattach"] = "다시 합침"
@@ -638,8 +646,8 @@ L["Options.HideWhen.Expiring"] = "전투 중에는 만료 임박 버프만"
 L["Options.HideWhen.Expiring.Title"] = "전투 중 만료 임박 버프 숨기기"
 L["Options.HideWhen.Expiring.Desc"] =
     "전투 중에는 곧 만료될 버프를 숨기고 완전히 사라진 버프만 표시합니다."
-L["Options.HideWhen.Vehicle"] = "차량 탑승 중"
-L["Options.HideWhen.Vehicle.Title"] = "차량 탑승 중에 숨기기"
+L["Options.HideWhen.Vehicle"] = "차량 이용 중"
+L["Options.HideWhen.Vehicle.Title"] = "차량 이용 중에 숨기기"
 L["Options.HideWhen.Vehicle.Desc"] =
     "퀘스트 차량을 이용 중일 때 모든 버프 알림을 숨깁니다. 비활성화 시에도 공격대 및 특수 버프는 표시됩니다."
 L["Options.HideWhen.Mounted"] = "탈것 탔을 때"
@@ -876,6 +884,7 @@ L["Appearance.Text"] = "텍스트"
 -- Slider tooltip
 L["Component.AdjustValue"] = "값 조정"
 L["Component.AdjustValue.Desc"] = "클릭해서 입력하거나 마우스 휠을 사용하세요."
+L["Component.AdjustValue.ClickHint"] = "숫자를 클릭하면 직접 값을 입력할 수 있습니다."
 
 -- Direction labels
 L["Direction.Left"] = "왼쪽"
