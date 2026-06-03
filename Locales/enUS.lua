@@ -424,7 +424,8 @@ english["Options.FreeConsumables.Override.Desc"] =
 -- ============================================================================
 english["Options.Icons"] = "Icons"
 english["Options.ShowText"] = "Show text on icons"
-english["Options.ShowText.Desc"] = "Display count or missing text overlays on buff icons for this category"
+english["Options.ShowText.Desc"] =
+    "Display count and missing-buff text overlays on buff icons for this category. The expiring countdown timer always stays visible"
 english["Options.ShowMissingCountOnly"] = "Show missing count only"
 english["Options.ShowMissingCountOnly.Desc"] =
     'Show only the number of missing buffs (e.g., "1") instead of the full count (e.g., "19/20")'

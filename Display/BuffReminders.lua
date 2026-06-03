@@ -868,6 +868,15 @@ local function ShouldShowText(category)
     return not cs or cs.showText ~= false
 end
 
+---The count fontstring multiplexes three kinds of text: missing-buff labels ("NO X"),
+---group counts ("17/20"), and live countdowns. Countdowns are duration context that
+---always render; only labels and counts are governed by the per-category showText toggle.
+---@param entry BuffStateEntry
+---@return boolean
+local function IsCountdownText(entry)
+    return entry.isEating or entry.displayType == "expiring"
+end
+
 ---Calculate font size from explicit textSize
 ---@param scale? number
 ---@param textSize number
@@ -2539,8 +2548,9 @@ local function RenderVisibleEntry(frame, entry)
         end
     end
 
-    -- Per-category text visibility (uses buff's actual category, not effective/main)
-    if not ShouldShowText(frame.buffCategory) then
+    -- Per-category text visibility (uses buff's actual category, not effective/main).
+    -- Countdowns always stay (see IsCountdownText); labels and counts respect the toggle.
+    if not ShouldShowText(frame.buffCategory) and not IsCountdownText(entry) then
         frame.count:Hide()
         frame.stackCount:Hide()
         ClearConsumableOverlays(frame)
