@@ -151,6 +151,23 @@ local function ImportSettings(prefixedStr)
         BR.profile[k] = DeepCopy(v)
     end
 
+    -- Back-compat: pre-v44 export strings carry the legacy boolean tracking
+    -- overrides instead of the per-context mode enums. Migrations don't re-run on
+    -- import, so map them here (mirrors migration [44]) and clear the stale keys.
+    local p = BR.profile
+    if p.outsideInstancesMode == nil and p.selfOnlyOutsideInstances ~= nil then
+        p.outsideInstancesMode = p.selfOnlyOutsideInstances ~= false and "self_only" or "default"
+    end
+    if p.combatMode == nil and p.hideOthersInCombat ~= nil then
+        p.combatMode = p.hideOthersInCombat and "my_buffs" or "default"
+    end
+    if p.levelingMode == nil and p.myBuffsOnlyWhileLeveling ~= nil then
+        p.levelingMode = p.myBuffsOnlyWhileLeveling ~= false and "my_buffs" or "default"
+    end
+    p.selfOnlyOutsideInstances = nil
+    p.hideOthersInCombat = nil
+    p.myBuffsOnlyWhileLeveling = nil
+
     -- Ensure defaults sub-table exists and has the metatable (DeepCopy produces
     -- a plain table, and old export strings may not include a defaults key at all).
     if not BR.profile.defaults then

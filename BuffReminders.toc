@@ -52,6 +52,7 @@ Data\Beneficiaries.lua
 Data\AuraWhitelist.lua
 Data\ConsumableItems.lua
 Data\Pets.lua
+Core\ChatRequest.lua
 Core\ConsumableMemory.lua
 Core\State.lua
 UI\Components.lua

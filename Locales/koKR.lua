@@ -285,8 +285,6 @@ L["Page.Sounds.Desc"] =
 -- Per-category page section headers
 L["Section.Tracking"] = "추적"
 L["Section.TrackingOverrides"] = "추적 무시"
-L["Section.TrackingOverrides.Desc"] =
-    "설정한 환경 하에선 자동으로 추적 모드의 범위를 좁혀서 위에 선택한 사항들을 무시합니다."
 
 -- ============================================================================
 -- OPTIONS: SOUND ALERTS
@@ -687,12 +685,6 @@ L["Options.BuffTracking.Smart.Desc"] =
 L["Options.BuffTracking.Mode"] = "버프 추적 모드"
 L["Options.BuffTracking.Mode.Desc"] =
     "표시할 공격대 및 특수 버프를 설정하고 그룹 전체 또는 자신만 추적할지 설정합니다."
-L["Options.BuffTracking.SelfOnlyOutsideInstances"] = "던전/공격대 밖에선 내것만 추적"
-L["Options.BuffTracking.SelfOnlyOutsideInstances.Desc"] =
-    "활성화하면 야외에서는 나에게 걸린 내 직업 버프만 추적합니다. 선택한 추적 모드는 던전, 공격대, 시나리오, PvP 내에서 계속 사용됩니다."
-L["Options.BuffTracking.HideOthersInCombat"] = '전투 중에 "내 버프만, 모든 사람에게" 옵션 사용'
-L["Options.BuffTracking.HideOthersInCombat.Desc"] =
-    "전투 중에는 '내 버프만, 모든 사람에게' 모드를 사용합니다. 다른 직업이 거는 버프의 리마인더(예: 드루이드가 아닌 캐릭터에게 걸린 야생의 징표)는 비전투시에는 표시가 되서 걸어달라고 요청할 수 있으나 전투가 시작하면 사라집니다. '모든 버프, 모든 사람에게' 또는 '스마트' 추적 모드를 사용해야 합니다."
 
 -- ============================================================================
 -- OPTIONS: PROFILES TAB
