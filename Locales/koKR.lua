@@ -122,7 +122,7 @@ L["Badge.Fleeting"] = "덧"
 -- ============================================================================
 -- Raid
 L["Buff.ArcaneIntellect"] = "신비한 지능"
-L["Buff.BattleShout"] = "전투의 함성"
+L["Buff.BattleShout"] = "전투의 외침"
 L["Buff.BlessingOfTheBronze"] = "청동용군단의 축복"
 L["Buff.MarkOfTheWild"] = "야생의 징표"
 L["Buff.PowerWordFortitude"] = "신의 권능: 인내"
@@ -285,6 +285,8 @@ L["Page.Sounds.Desc"] =
 -- Per-category page section headers
 L["Section.Tracking"] = "추적"
 L["Section.TrackingOverrides"] = "추적 무시"
+L["Section.TrackingOverrides.Desc"] =
+    "지정된 상황일 때 추적 모드의 범위를 좁힙니다. 위의 모드를 사용하려면 상황 설정을 기본값으로 두세요. 여러가지 상황(렙업 중 전투중 같은)을 한번에 적용할 경우 가장 제한이 심한 사항이 우선합니다."
 
 -- ============================================================================
 -- OPTIONS: SOUND ALERTS
@@ -412,7 +414,8 @@ L["Options.FreeConsumables.Override.Desc"] =
 -- ============================================================================
 L["Options.Icons"] = "아이콘"
 L["Options.ShowText"] = "아이콘에 텍스트 표시"
-L["Options.ShowText.Desc"] = "이 카테고리의 버프 아이콘에 버프 개수나 누락 텍스트 오버레이를 표시합니다."
+L["Options.ShowText.Desc"] =
+    "이 카테고리의 버프 아이콘에 버프 개수나 누락 텍스트 오버레이를 표시합니다."
 L["Options.ShowMissingCountOnly"] = "누락 수량만 표시"
 L["Options.ShowMissingCountOnly.Desc"] =
     '전체 숫자(예: "19/20") 대신 누락된 버프 수(예: "1")만 표시합니다.'
@@ -466,6 +469,7 @@ L["ChatRequest.skyfury"] = "하늘의 격노 버프 주세요"
 L["ChatRequest.atrophicNumbingPoison"] = "위축/마취 독 발라주세요"
 L["ChatRequest.devotionAura"] = "헌신의 오라 켜주세요"
 L["ChatRequest.soulstone"] = "영혼석 걸어주세요"
+L["ChatRequest.healthstone"] = "생명석 주세요"
 
 -- ============================================================================
 -- OPTIONS: PET
@@ -593,8 +597,7 @@ L["Options.DelveFoodTimer.Desc"] =
 -- ============================================================================
 L["Options.Layout"] = "레이아웃"
 L["Options.SplitFrame"] = "개별 프레임으로 분리"
-L["Options.SplitFrame.Desc"] =
-    "이 카테고리의 버프를 독립적으로 이동 가능한 별도의 프레임에 표시합니다."
+L["Options.SplitFrame.Desc"] = "이 카테고리의 버프를 독립적으로 이동 가능한 별도의 프레임에 표시합니다."
 
 -- Display Order section (Defaults page) - drives the same priority field the
 -- old per-category slider wrote, but as a single ordered list across all
@@ -685,6 +688,16 @@ L["Options.BuffTracking.Smart.Desc"] =
 L["Options.BuffTracking.Mode"] = "버프 추적 모드"
 L["Options.BuffTracking.Mode.Desc"] =
     "표시할 공격대 및 특수 버프를 설정하고 그룹 전체 또는 자신만 추적할지 설정합니다."
+L["Options.BuffTracking.Override.Default"] = "기본값 (위의 모드 사용)"
+L["Options.BuffTracking.Override.OutsideInstances"] = "던전 및 공격대 아님"
+L["Options.BuffTracking.Override.OutsideInstances.Desc"] =
+    "필드에서 사용하는 추적 모드입니다. 위에서 선택한 모드는 던전, 공격대, 시나리오, PvP에서 여전히 사용됩니다."
+L["Options.BuffTracking.Override.Combat"] = "전투 중"
+L["Options.BuffTracking.Override.Combat.Desc"] =
+    "전투 중에 사용하는 추적 모드입니다. 예를 들면 '내 버프만'으로 범위를 좁히면 전투 중이 아닐땐 다른 직업의 버프 리마인더가 표시되지만 전투가 시작되면 사라집니다."
+L["Options.BuffTracking.Override.Leveling"] = "레벨링"
+L["Options.BuffTracking.Override.Leveling.Desc"] =
+    "만렙이 아닐 때 사용하는 추적 모드입니다. 만렙이 되면 위에 선택한 모드가 사용됩니다."
 
 -- ============================================================================
 -- OPTIONS: PROFILES TAB
