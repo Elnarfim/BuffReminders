@@ -200,9 +200,17 @@ local function BuildTrackingOverridesSection(content, layout)
     LayoutSectionHeader(layout, content, L["Section.TrackingOverrides"])
     LayoutSectionNote(layout, content, L["Section.TrackingOverrides.Desc"])
 
+    -- Shared label column so all three override dropdowns line up vertically.
+    local overrideLW = Components.MeasureSharedLabelWidth({
+        L["Options.BuffTracking.Override.OutsideInstances"],
+        L["Options.BuffTracking.Override.Combat"],
+        L["Options.BuffTracking.Override.Leveling"],
+    })
+
     local function OverrideDropdown(cfg)
         local holder = Components.Dropdown(content, {
             label = cfg.label,
+            labelWidth = overrideLW,
             width = 220,
             options = OverrideOptions(),
             tooltip = cfg.tooltip,

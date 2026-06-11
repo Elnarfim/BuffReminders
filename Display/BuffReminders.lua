@@ -4906,17 +4906,21 @@ eventFrame:SetScript("OnEvent", function(_, event, arg1, arg2, arg3)
             -- per-context mode enums (value = a tracking mode, or "default" for no
             -- override). Map each old boolean to the mode it used to force so every
             -- user keeps their current effective behavior, then clear the old keys.
-            -- nil (pre-dates the key) falls back to the historical default: outside
-            -- instances and leveling defaulted ON (self_only / my_buffs), combat OFF.
+            -- Guard on the OLD key's presence, not the new one: the new root keys
+            -- live in the AceDB profile defaults, so copyDefaults has already
+            -- rawset them before migrations run (`db.outsideInstancesMode == nil`
+            -- is never true here). A missing old key means the user kept its
+            -- historical default (which AceDB stripped on logout), so we leave the
+            -- eagerly-copied new default in place - it matches the old behavior.
             [44] = function()
-                if db.outsideInstancesMode == nil then
-                    db.outsideInstancesMode = (db.selfOnlyOutsideInstances ~= false) and "self_only" or "default"
+                if db.selfOnlyOutsideInstances ~= nil then
+                    db.outsideInstancesMode = db.selfOnlyOutsideInstances and "self_only" or "default"
                 end
-                if db.combatMode == nil then
+                if db.hideOthersInCombat ~= nil then
                     db.combatMode = db.hideOthersInCombat and "my_buffs" or "default"
                 end
-                if db.levelingMode == nil then
-                    db.levelingMode = (db.myBuffsOnlyWhileLeveling ~= false) and "my_buffs" or "default"
+                if db.myBuffsOnlyWhileLeveling ~= nil then
+                    db.levelingMode = db.myBuffsOnlyWhileLeveling and "my_buffs" or "default"
                 end
                 db.selfOnlyOutsideInstances = nil
                 db.hideOthersInCombat = nil

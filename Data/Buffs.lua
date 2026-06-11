@@ -58,6 +58,7 @@ BR.DK_RUNEFORGES = DK_RUNEFORGES
 ---@field class ClassName
 ---@field levelRequired? number
 ---@field playersOnly? boolean Exclude NPCs from the count (e.g. buffs NPCs provide themselves)
+---@field chatRequestable? boolean Offer "request this buff in chat" on click for players who can't provide it
 
 ---@class PresenceBuff
 ---@field spellID SpellID
@@ -77,6 +78,7 @@ BR.DK_RUNEFORGES = DK_RUNEFORGES
 ---@field glowDetectable? boolean Use action bar glow as fallback detection when aura API is restricted
 ---@field groupOnly? boolean Only show when in a group (hide when solo)
 ---@field suppressedByEntry? string Hide when this entry key is already visible (e.g., self buff covers it)
+---@field chatRequestable? boolean Offer "request this buff in chat" on click for players who can't provide it
 
 ---@class TargetedBuff
 ---@field spellID SpellID
@@ -142,6 +144,7 @@ BR.DK_RUNEFORGES = DK_RUNEFORGES
 ---@field permanentRuneItemIDs? number[] Item IDs that, if in bags, make this a free consumable (bypass content gates)
 ---@field showOnInstanceEntry? boolean Only show briefly when entering an instance
 ---@field disabledInCompetitivePvP? boolean Unusable in arenas and rated BGs
+---@field chatRequestable? boolean Offer "request this buff in chat" on click for players who can't provide it (e.g. non-warlock requesting a Healthstone)
 
 ---@class BuffGroup
 ---@field displayName string
