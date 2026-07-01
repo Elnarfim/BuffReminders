@@ -2,6 +2,7 @@
 
 [![](https://shields.io/badge/github-gray?logo=github&style=for-the-badge&logoColor=white)](https://github.com/zerbiniandrea/BuffReminders)
 [![](https://shields.io/badge/discord-5865F2?logo=discord&style=for-the-badge&logoColor=white)](https://discord.gg/qezQ2hXJJ7)
+[![](https://shields.io/badge/ko--fi-FF5E5B?logo=ko-fi&style=for-the-badge&logoColor=white)](https://ko-fi.com/zerbyy)
 
 Track missing buffs at a glance
 
@@ -31,3 +32,5 @@ Choose which buffs you want to track and how you want them to look.
 ## Support
 
 Got a bug to report, a feature idea, or just want to see what's coming next? Join the [Discord](https://discord.gg/qezQ2hXJJ7)!
+
+If BuffReminders makes your raids a little smoother, consider [supporting development on Ko-fi](https://ko-fi.com/zerbyy) ❤️

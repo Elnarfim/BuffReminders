@@ -16,7 +16,7 @@ LOCALES_DIR="$ROOT/Locales"
 
 # --- Collect keys -----------------------------------------------------------
 # Direct literal usage: L["Foo.Bar"]
-direct_used=$(grep -rhoP 'L\["[^"]+"\]' "$ROOT" --include='*.lua' --exclude-dir=Locales --exclude-dir=Libs --exclude-dir=ignored | sed 's/L\["\(.*\)"\]/\1/' | sort -u)
+direct_used=$(grep -rhoP 'L\["[^"]+"\]' "$ROOT" --include='*.lua' --exclude-dir=Locales --exclude-dir=Libs --exclude-dir=.ignored | sed 's/L\["\(.*\)"\]/\1/' | sort -u)
 
 # Indirect usage via convention-named role keys that are later passed to L[].
 # Source patterns like `labelKey = "Options.HideWhen.Alone"` paired with
@@ -25,11 +25,11 @@ direct_used=$(grep -rhoP 'L\["[^"]+"\]' "$ROOT" --include='*.lua' --exclude-dir=
 # Only treat dotted strings as full keys. Non-dotted role-key values (e.g.
 # `labelKey = "Duration"` in a Glow row) are suffixes used with the
 # concat-prefix machinery below, not standalone keys.
-indirect_used=$(grep -rhoP '(labelKey|titleKey|noteKey|tooltipTitle|tooltipDesc)\s*=\s*"[^"]+"' "$ROOT" --include='*.lua' --exclude-dir=Locales --exclude-dir=Libs --exclude-dir=ignored | sed -E 's/^[^=]+=\s*"//' | sed 's/"$//' | grep '\.' | sort -u)
+indirect_used=$(grep -rhoP '(labelKey|titleKey|noteKey|tooltipTitle|tooltipDesc)\s*=\s*"[^"]+"' "$ROOT" --include='*.lua' --exclude-dir=Locales --exclude-dir=Libs --exclude-dir=.ignored | sed -E 's/^[^=]+=\s*"//' | sed 's/"$//' | grep '\.' | sort -u)
 
 # Concatenation prefixes: L["Options.Glow." .. spec.labelKey]. Treat any
 # defined key starting with such a prefix as used.
-concat_prefixes=$(grep -rhoP 'L\["[^"]+"\s*\.\.' "$ROOT" --include='*.lua' --exclude-dir=Locales --exclude-dir=Libs --exclude-dir=ignored | sed -E 's/^L\["//' | sed -E 's/"[[:space:]]*\.\..*$//' | sort -u)
+concat_prefixes=$(grep -rhoP 'L\["[^"]+"\s*\.\.' "$ROOT" --include='*.lua' --exclude-dir=Locales --exclude-dir=Libs --exclude-dir=.ignored | sed -E 's/^L\["//' | sed -E 's/"[[:space:]]*\.\..*$//' | sort -u)
 
 defined=$(grep -oP 'english\["[^"]+"\]' "$LOCALES_DIR/enUS.lua" | sed 's/english\["\(.*\)"\]/\1/' | sort -u)
 enUS_count=$(echo "$defined" | wc -l)

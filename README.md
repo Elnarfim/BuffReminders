@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/zerbiniandrea/BuffReminders"><img src="https://shields.io/badge/github-gray?logo=github&style=for-the-badge&logoColor=white" /></a>
   <a href="https://discord.gg/qezQ2hXJJ7"><img src="https://shields.io/badge/discord-5865F2?logo=discord&style=for-the-badge&logoColor=white" /></a>
+  <a href="https://ko-fi.com/zerbyy"><img src="https://shields.io/badge/ko--fi-FF5E5B?logo=ko-fi&style=for-the-badge&logoColor=white" /></a>
 </p>
 <p align="center">Track missing buffs at a glance</p>
 <p align="center">From the author of <a href="https://wago.io/iWkZ4Eq-i">Raid Buffs Tracker</a>, one of the most popular raid buffs tracking WeakAuras.</p>
@@ -41,3 +42,5 @@ Choose which buffs you want to track and how you want them to look.
 ## Support
 
 Got a bug to report, a feature idea, or just want to see what's coming next? Join the [Discord](https://discord.gg/qezQ2hXJJ7)!
+
+If BuffReminders makes your raids a little smoother, consider [supporting development on Ko-fi](https://ko-fi.com/zerbyy) ❤️

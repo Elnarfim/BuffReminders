@@ -1,6 +1,6 @@
 ignore:
   - images
-  - ignored
+  - .ignored
   - .github
   - .gitignore
   - .claude

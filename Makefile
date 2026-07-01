@@ -11,12 +11,12 @@ lint:
 ascii-clean:
 	@find . -type f \( -name '*.lua' -o -name '*.md' -o -name '*.sh' \) \
 		-not -path './Libs/*' \
-		-not -path './ignored/*' \
+		-not -path './.ignored/*' \
 		-not -path './Locales/*' \
 		-exec sed -i 's/—/-/g; s/…/.../g; s/→/->/g' {} +
 
 format:
-	stylua --glob '!ignored/**' --glob '*.lua' .
+	stylua --glob '!.ignored/**' --glob '*.lua' .
 
 typecheck:
 	lua-language-server --check . --checklevel=Warning
@@ -25,4 +25,4 @@ i18n:
 	@scripts/check-locales.sh $(ARGS)
 
 check: typecheck lint
-	stylua --check --glob '!ignored/**' --glob '*.lua' .
+	stylua --check --glob '!.ignored/**' --glob '*.lua' .

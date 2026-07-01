@@ -7,6 +7,6 @@
 	},
 	"workspace": {
 		"checkThirdParty": false,
-		"ignoreDir": ["Libs", "ignored"]
+		"ignoreDir": ["Libs", ".ignored"]
 	}
 }
