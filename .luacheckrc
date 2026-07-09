@@ -138,6 +138,7 @@ read_globals = {
     "GameTooltip_Hide",
     "HideUIPanel",
     "Minimap",
+    "PlayerSpellsFrame",
     "PlayerSpellsUtil",
     "RegisterStateDriver",
     "STANDARD_TEXT_FONT",

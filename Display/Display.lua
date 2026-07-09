@@ -400,7 +400,6 @@ local SOULWELL_SPELL_IDS = { [29893] = true, [6201] = true } -- Create Soulwell,
 local DECOR_DUEL_DIFFICULTY_ID = 253
 local ClearInstanceEntryState -- forward declaration
 local ClearDelveEntryState -- forward declaration
-local HideDismissFrames -- forward declaration
 local testMode = false
 local eventFrame -- forward declaration; created later in file, referenced by StartUpdates
 
@@ -1103,6 +1102,29 @@ local function ShowBuffSpellTooltip(frame, anchor)
 end
 BR.Display.ShowBuffSpellTooltip = ShowBuffSpellTooltip
 
+-- Apply mouse interactivity to a buff icon frame. Icons are always click-through
+-- (dragging is handled by anchor handles; click-to-cast/chat-requests live on the
+-- secure overlays that float above the icon). Raid/presence frames get hover
+-- events ONLY when the buff tooltip is opted in - otherwise they stay fully
+-- click-through so the world beneath (camera drag, unit clicks) is reachable.
+-- Re-called from UpdateVisuals so toggling showBuffTooltips takes effect live.
+local function ApplyBuffFrameMouse(frame, category)
+    if (category == "raid" or category == "presence") and BR.profile.defaults.showBuffTooltips == true then
+        frame:SetMouseClickEnabled(false)
+        frame:SetMouseMotionEnabled(true)
+        frame:SetScript("OnEnter", function(self)
+            ShowBuffSpellTooltip(self)
+        end)
+        frame:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+    else
+        frame:SetScript("OnEnter", nil)
+        frame:SetScript("OnLeave", nil)
+        frame:EnableMouse(false)
+    end
+end
+
 -- Create icon frame for a buff
 local function CreateBuffFrame(buff, category)
     local parent
@@ -1203,24 +1225,7 @@ local function CreateBuffFrame(buff, category)
         frame.subLabel:Hide()
     end
 
-    -- Always click-through (dragging is handled by anchor handles). For raid
-    -- and presence frames we still want hover events so the buff tooltip can
-    -- pop on mouseover when the user opts in - clicks remain disabled so the
-    -- mover/anchor flow stays intact. Other categories already have their own
-    -- hover paths (consumable item tooltip + targeted last-target tooltip
-    -- live on the click overlay, which sits above the icon when active).
-    if category == "raid" or category == "presence" then
-        frame:SetMouseClickEnabled(false)
-        frame:SetMouseMotionEnabled(true)
-        frame:SetScript("OnEnter", function(self)
-            ShowBuffSpellTooltip(self)
-        end)
-        frame:SetScript("OnLeave", function()
-            GameTooltip:Hide()
-        end)
-    else
-        frame:EnableMouse(false)
-    end
+    ApplyBuffFrameMouse(frame, category)
 
     frame:Hide()
     return frame
@@ -1814,8 +1819,6 @@ local function HideAllDisplayFrames()
     end
     -- Hide secure click overlays and action buttons (sub-icons)
     BR.SecureButtons.HideAllSecureFrames()
-    -- Hide dismiss button
-    HideDismissFrames()
 end
 
 -- Update the fallback display (shows tracked buffs via action bar glow during PvP/Arena)
@@ -2518,83 +2521,16 @@ end
 -- end
 
 -- ============================================================================
--- CONSUMABLE DISMISS BUTTON
+-- CONSUMABLE SNOOZE
 -- ============================================================================
 
-local GameTooltip = GameTooltip
-local dismissButton -- small X badge overlaid on the last consumable icon
-local reusableDismissFrameList = {} -- reused each cycle to avoid allocation in split mode
-
-local function GetOrCreateDismissButton()
-    if dismissButton then
-        return dismissButton
-    end
-    local btn = CreateFrame("Button", "BuffReminders_DismissConsumables", UIParent)
-    btn:SetSize(16, 16)
-    btn:EnableMouse(true)
-    btn:RegisterForClicks("LeftButtonUp")
-
-    local bg = btn:CreateTexture(nil, "BACKGROUND")
-    bg:SetPoint("TOPLEFT", 3, -3)
-    bg:SetPoint("BOTTOMRIGHT", -3, 3)
-    bg:SetColorTexture(0, 0, 0, 0.6)
-
-    local icon = btn:CreateTexture(nil, "OVERLAY")
-    icon:SetAllPoints()
-    icon:SetTexture([[Interface\RAIDFRAME\ReadyCheck-NotReady]])
-    icon:SetAlpha(0.8)
-
-    btn:SetScript("OnClick", function()
-        BR.BuffState.SetConsumablesDismissed(true)
-        UpdateDisplay()
-        print("|cff00ccffBuffReminders:|r " .. L["Display.DismissConsumablesChat"])
-    end)
-    btn:SetScript("OnEnter", function(self)
-        icon:SetAlpha(1)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:AddLine(L["Display.DismissConsumables"], 0.8, 0.8, 0.8)
-        GameTooltip:Show()
-    end)
-    btn:SetScript("OnLeave", function()
-        icon:SetAlpha(0.8)
-        GameTooltip:Hide()
-    end)
-    btn:SetFrameStrata("MEDIUM")
-    btn:Hide()
-    dismissButton = btn
-    return btn
-end
-
---- Show the dismiss badge on the top-right corner of the last consumable frame.
-local function PositionDismissButton(frameList)
-    -- Find the last consumable frame in the list
-    local lastConsumableFrame = nil
-    for i = #frameList, 1, -1 do
-        local f = frameList[i]
-        if f.buffCategory == "consumable" then
-            lastConsumableFrame = f
-            break
-        end
-    end
-    if not lastConsumableFrame then
-        return
-    end
-
-    local btn = GetOrCreateDismissButton()
-    local iconSize = lastConsumableFrame:GetHeight()
-    local btnSize = max(floor(iconSize * 0.3), 12)
-    btn:SetSize(btnSize, btnSize)
-    btn:SetParent(lastConsumableFrame)
-    btn:SetFrameLevel(lastConsumableFrame:GetFrameLevel() + 10)
-    btn:ClearAllPoints()
-    btn:SetPoint("TOPRIGHT", lastConsumableFrame, "TOPRIGHT", 3, 3)
-    btn:Show()
-end
-
-HideDismissFrames = function()
-    if dismissButton then
-        dismissButton:Hide()
-    end
+--- Snooze every consumable reminder until the next loading screen. Driven by the /br snooze
+--- command and by right-clicking a consumable icon when consumable click-to-cast is enabled
+--- (see Display/SecureButtons.lua, which neutralises the right button's item-use).
+function BR.SnoozeConsumables()
+    BR.BuffState.SetConsumablesDismissed(true)
+    UpdateDisplay()
+    print("|cff00ccffBuffReminders:|r " .. L["Display.DismissConsumablesChat"])
 end
 
 -- Play per-buff sound alert when an icon first appears.
@@ -2818,38 +2754,11 @@ UpdateDisplay = function(refreshMode)
     end
     suppressSound = false
 
-    -- Consumable dismiss button: show X badge on last visible consumable icon
-    local consumableEntries = not testMode and visibleByCategory["consumable"]
-    local hasConsumableFrames = consumableEntries and #consumableEntries > 0
-    local consumableSplit = IsCategorySplit("consumable")
-
     -- Position main container
     PositionMainContainer(reusableMainBuffs)
 
     -- Handle split category frames with no visible buffs
     PositionSplitCategories(visibleByCategory)
-
-    -- Show dismiss badge on the last visible consumable icon
-    if hasConsumableFrames then
-        local frameList
-        if consumableSplit then
-            wipe(reusableDismissFrameList)
-            for _, entry in ipairs(consumableEntries) do
-                local f = buffFrames[entry.key]
-                if f and f:IsShown() then
-                    reusableDismissFrameList[#reusableDismissFrameList + 1] = f
-                end
-            end
-            frameList = reusableDismissFrameList
-        else
-            frameList = reusableMainBuffs
-        end
-        PositionDismissButton(frameList)
-    else
-        if dismissButton then
-            dismissButton:Hide()
-        end
-    end
 
     if not anyVisible then
         HideAllDisplayFrames()
@@ -3392,6 +3301,10 @@ local function UpdateVisuals()
         end
         UpdateIconStyling(frame, catSettings)
 
+        -- Re-apply mouse state so toggling Show Buff Tooltips (raid/presence)
+        -- switches between hover-enabled and fully click-through without /reload.
+        ApplyBuffFrameMouse(frame, frame.buffCategory)
+
         -- Per-category text visibility
         if not ShouldShowText(frame.buffCategory) then
             frame.count:Hide()
@@ -3587,12 +3500,103 @@ BR.Masque = {
 }
 
 -- Slash command handler
+-- Temporary diagnostic for the DK "Wrong Rune" false-positive reports. Dumps every
+-- value that feeds the dkRuneMH / dkRuneOH checks so a user can paste it into an
+-- issue. Intentionally not localized (throwaway developer command).
+local function PrintRuneDebug()
+    local PREFIX = "|cff00ccffBuffReminders rune debug:|r "
+    local function line(...)
+        print(PREFIX .. table.concat({ ... }, " "))
+    end
+
+    local _, class = UnitClass("player")
+    line("class =", tostring(class))
+
+    local specId = BR.StateHelpers.GetPlayerSpecId()
+    local specName
+    if specId then
+        specName = select(2, GetSpecializationInfoByID(specId))
+    end
+    line("specId =", tostring(specId), "(" .. tostring(specName) .. ")")
+
+    local hasOH = BR.BuffState.HasOffHandWeapon()
+    line("HasOffHandWeapon =", tostring(hasOH), "| HasShield =", tostring(BR.BuffState.HasShield()))
+    line("IsRestricted =", tostring(BR.BuffState.IsRestricted()), "(checks are suppressed when true)")
+
+    -- Refresh so the permanent-enchant accessors reflect the current item links.
+    BR.BuffState.Refresh("full")
+
+    -- Enchant name lookup by enchantID from the runeforge table.
+    local runeByEnchant = {}
+    for _, rune in ipairs(BR.DK_RUNEFORGES) do
+        runeByEnchant[rune.enchantID] = BR.GetSpellName(rune.spellID) or rune.key
+    end
+    local function enchantLabel(id)
+        if not id then
+            return "none"
+        end
+        return tostring(id) .. " (" .. (runeByEnchant[id] or "UNKNOWN - not in DK_RUNEFORGES") .. ")"
+    end
+
+    -- Raw item links + the value the addon actually parses/uses. Escape the pipe
+    -- codes (| -> ||) so the link prints as copyable literal text instead of
+    -- rendering as a clickable [Item Name] (which would drop the enchant payload
+    -- when the user pastes the output to us).
+    local function escapeLink(link)
+        if not link then
+            return "nil"
+        end
+        return (link:gsub("|", "||"))
+    end
+    local mhLink = GetInventoryItemLink("player", 16)
+    local ohLink = GetInventoryItemLink("player", 17)
+    line("MH link =", escapeLink(mhLink))
+    line("OH link =", escapeLink(ohLink))
+    line("MH permanent enchant =", enchantLabel(BR.BuffState.GetPermanentWeaponEnchantID(16)))
+    line("OH permanent enchant =", enchantLabel(BR.BuffState.GetPermanentWeaponEnchantID(17)))
+
+    -- Temporary weapon enchants (oils/imbues) for completeness - not used by rune check.
+    local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
+    line("temp enchant MH =", tostring(hasMain), tostring(mainID), "| OH =", tostring(hasOff), tostring(offID))
+
+    -- Configured preference buckets for this spec.
+    local prefs = BR.profile.dkRunePreferences
+    local specPrefs = prefs and specId and prefs[specId]
+    local function dumpBucket(name, bucket)
+        if not bucket or not next(bucket) then
+            line("prefs." .. name, "= (empty)")
+            return
+        end
+        local parts = {}
+        for id in pairs(bucket) do
+            parts[#parts + 1] = enchantLabel(id)
+        end
+        line("prefs." .. name, "=", table.concat(parts, ", "))
+    end
+    if not specPrefs then
+        line("dkRunePreferences[specId] = nil (nothing configured for this spec)")
+    else
+        dumpBucket("mainhand (2H)", specPrefs.mainhand)
+        dumpBucket("dw_mainhand", specPrefs.dw_mainhand)
+        dumpBucket("dw_offhand", specPrefs.dw_offhand)
+    end
+
+    -- Which bucket the MH check resolves to, and the verdict each check would return.
+    line("MH check uses bucket:", hasOH and "dw_mainhand" or "mainhand (2H)")
+    local mhEntry = BR.BuffState.entries and BR.BuffState.entries.dkRuneMH
+    local ohEntry = BR.BuffState.entries and BR.BuffState.entries.dkRuneOH
+    line("dkRuneMH visible =", tostring(mhEntry and mhEntry.visible))
+    line("dkRuneOH visible =", tostring(ohEntry and ohEntry.visible))
+end
+
 local function SlashHandler(msg)
     local cmd = msg:match("^(%S*)") or ""
     cmd = cmd:lower()
 
     if cmd == "test" then
         ToggleTestMode()
+    elseif cmd == "snooze" then
+        BR.SnoozeConsumables()
     elseif cmd == "lock" then
         BR.profile.locked = true
         BR.Movers.HideAll()
@@ -3622,6 +3626,8 @@ local function SlashHandler(msg)
         else
             print("|cff00ccffBuffReminders:|r " .. L["Display.DebugDisabled"])
         end
+    elseif cmd == "runedebug" then
+        PrintRuneDebug()
     else
         BR.Options.Toggle()
     end

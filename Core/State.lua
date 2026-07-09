@@ -953,16 +953,19 @@ end
 -- Loadout rule "scope" -> the content type its content must equal. Gear/talents
 -- lock once a key or match starts, so scope is just the content bucket (no
 -- per-difficulty granularity). "dungeon" covers every dungeon difficulty incl.
--- Mythic+; arena/battleground both live under "pvp" and split on instance type.
+-- Mythic+; arena/battleground both live under "pvp" and split on instance type;
+-- "delve" lives under "scenario" and splits on difficulty key.
 local LOADOUT_SCOPE_CONTENT = {
+    openWorld = "openWorld",
     raid = "raid",
     dungeon = "dungeon",
+    delve = "scenario",
     arena = "pvp",
     battleground = "pvp",
 }
 
 ---Check if a loadout rule should be visible for the current content. Rules store a
----player-facing `scope` (raid / dungeon / arena / battleground) plus an optional
+---player-facing `scope` (openWorld / dungeon / delve / raid / arena / battleground) plus an optional
 ---instance allow-list and a `readyCheckOnly` gate. Scope captures intent directly,
 ---so there is no deny-list to infer.
 ---@param rule LoadoutRule
@@ -988,12 +991,17 @@ local function IsLoadoutRuleVisibleForContent(rule)
             return false
         end
         -- Arena and battleground share the "pvp" content type; split on diff key.
+        -- Delves share the "scenario" content type with Torghast etc.; split too.
         if scope == "arena" then
             if GetCurrentDifficultyKey() ~= "arena" then
                 return false
             end
         elseif scope == "battleground" then
             if GetCurrentDifficultyKey() ~= "bg" then
+                return false
+            end
+        elseif scope == "delve" then
+            if GetCurrentDifficultyKey() ~= "delves" then
                 return false
             end
         end
@@ -2630,7 +2638,16 @@ local function ResolveOffHandType()
     end
     local offhandItemID = GetInventoryItemID("player", 17) -- INVSLOT_OFFHAND
     if not offhandItemID then
-        cachedOffHandType = "none"
+        -- Only trust an empty off-hand if inventory data is actually loaded. Right
+        -- after a loading screen / equipment swap, slot 17 can transiently read nil
+        -- for a real dual-wielder; caching "none" then would poison the rest of the
+        -- session (dual-wielder read as two-handed -> wrong rune bucket). The main
+        -- hand is always equipped, so a readable MH means inventory is loaded and a
+        -- nil off-hand is genuinely empty. If MH is also nil, leave the cache unset
+        -- so the next refresh retries (mirrors the itemClassID branch below).
+        if GetInventoryItemID("player", 16) then -- INVSLOT_MAINHAND
+            cachedOffHandType = "none"
+        end
         return
     end
     local _, _, _, _, _, itemClassID, itemSubClassID = GetItemInfoInstant(offhandItemID)
