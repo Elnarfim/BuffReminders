@@ -48,13 +48,24 @@ end
 
 local FEL_DOMINATION_ID = 333889
 
+-- Fel Domination macros memoized per pet spell: the names never change once the
+-- client resolves them, and this runs on every display cycle for warlocks.
+-- Unresolved names (early login) are not cached so the next cycle retries.
+local felDomMacroCache = {}
+
 local function GetFelDomPetMacro(petSpellID)
+    local cached = felDomMacroCache[petSpellID]
+    if cached then
+        return cached
+    end
     local felDomName = C_Spell.GetSpellName(FEL_DOMINATION_ID)
     local spellName = BR.GetSpellName(petSpellID)
     if not felDomName or not spellName then
         return nil
     end
-    return "/cast " .. felDomName .. "\n/cast " .. spellName
+    local macro = "/cast " .. felDomName .. "\n/cast " .. spellName
+    felDomMacroCache[petSpellID] = macro
+    return macro
 end
 
 -- Pre-filter a buff's spell by talent/spec requirements, then find a castable spell ID.
@@ -147,7 +158,8 @@ local lastTargetTooltip
 ---@param anchor table Frame to anchor to
 ---@param name string Character name
 ---@param class? string English class token
-local function ShowLastTargetTooltip(anchor, name, class)
+---@param hint? string Gray auxiliary text appended after the name (e.g. "(not in group)")
+local function ShowLastTargetTooltip(anchor, name, class, hint)
     if not lastTargetTooltip then
         local fontPath = BR.Display.GetFontPath()
         local outlineFlag = BR.Display.GetOutline()
@@ -174,7 +186,8 @@ local function ShowLastTargetTooltip(anchor, name, class)
             r, g, b = c.r, c.g, c.b
         end
     end
-    tip.name:SetText(name)
+    -- Color escapes in the hint override SetTextColor for just that portion
+    tip.name:SetText(hint and (name .. " |cff888888" .. hint .. "|r") or name)
     tip.name:SetTextColor(r, g, b)
     -- Size to fit text
     local textWidth = tip.name:GetStringWidth()
@@ -210,12 +223,78 @@ local function SetRightClickSnooze(button, on)
     button:SetAttribute("type2", on == true and "" or nil)
 end
 
+-- Dirty-gated secure attribute writers. UpdateActionButtons re-wires every frame
+-- in a category on every display cycle, but the resolved action rarely changes -
+-- these writers remember what was last applied (kind + identifying values) and
+-- skip the SetAttribute calls when re-applying the same action. Any kind switch
+-- rewrites in full. PreClick's dynamic click-macro rebuild is unaffected: it
+-- writes macrotext directly at click time and is keyed off _br_clickMacroFn,
+-- not these trackers.
+
+---Apply macro-type attributes only when (kind, macrotext) changed.
+---@param overlay table SecureActionButton overlay
+---@param kind string Tracker tag distinguishing the macro source
+---@param macrotext string
+local function ApplyMacroAction(overlay, kind, macrotext)
+    if overlay._br_attr_kind == kind and overlay._br_attr_value == macrotext then
+        return
+    end
+    overlay._br_attr_kind = kind
+    overlay._br_attr_value = macrotext
+    overlay:SetAttribute("type", "macro")
+    overlay:SetAttribute("macrotext", macrotext)
+end
+
+---Apply spell-type attributes only when the spell (or unit) changed.
+---@param overlay table SecureActionButton overlay
+---@param spellID number|string
+---@param unit string? Cast target unit (nil = default targeting). Only the raid
+---generic path passes "player"; other paths pass nil.
+local function ApplySpellAction(overlay, spellID, unit)
+    if overlay._br_attr_kind == "spell" and overlay._br_attr_value == spellID and overlay._br_attr_unit == unit then
+        return
+    end
+    overlay._br_attr_kind = "spell"
+    overlay._br_attr_value = spellID
+    overlay._br_attr_unit = unit
+    overlay:SetAttribute("type", "spell")
+    overlay:SetAttribute("spell", spellID)
+    -- Always write unit (nil clears): a stale "player" left over from a previous
+    -- state would silently retarget type="spell" casts onto the player.
+    overlay:SetAttribute("unit", unit)
+end
+
+-- Frames that own any secure child (click overlay, action buttons, or an extra
+-- frame with a click overlay). SyncSecureButtons and the hide-all paths iterate
+-- this set instead of every buff frame - most frames never get a secure child.
+-- Weak keys are only a backstop: a frame with an overlay is pinned by the
+-- overlay's script closures (the overlay itself is UIParent-parented and
+-- permanent), so removal paths call UnregisterSecureHost explicitly. In-combat
+-- custom-buff deletions deliberately stay registered so the next sync can hide
+-- their orphaned overlay once out of combat.
+local secureHostFrames = setmetatable({}, { __mode = "k" })
+
+---Register the buff frame that hosts a secure child (extra frames register
+---their main frame, which is what SyncSecureButtons iterates).
+---@param frame table The frame a secure child was created for
+local function RegisterSecureHost(frame)
+    secureHostFrames[frame.isExtraFrame and frame.mainFrame or frame] = true
+end
+
+---Drop a destroyed frame from the secure-host set (see the note above on why
+---weak keys alone never release it).
+---@param frame table
+local function UnregisterSecureHost(frame)
+    secureHostFrames[frame] = nil
+end
+
 -- Create a SecureActionButton overlay for click-to-cast on a buff frame.
 -- Parented to UIParent with NO anchors to the buff frame hierarchy, avoiding any
 -- layout dependency that would make the frame hierarchy protected/secure.
 -- Position is synced manually by SyncSecureButtons() after each layout pass.
 ---@param frame table The parent buff frame
 local function CreateClickOverlay(frame)
+    RegisterSecureHost(frame)
     local overlay = CreateFrame("Button", nil, UIParent, "SecureActionButtonTemplate")
     overlay:RegisterForClicks("AnyDown", "AnyUp")
     overlay:EnableMouse(false)
@@ -317,9 +396,25 @@ local function CreateClickOverlay(frame)
             if frame.buffDef.class and frame.buffDef.class ~= playerClass then
                 return
             end
-            local name, class = BR.StateHelpers.GetLastTarget(frame.buffDef.key)
+            local name, class = BR.TargetMemory.Get(frame.buffDef.key)
+            -- A user-pinned target overrides the automatic memory (class color
+            -- is only known when the pin matches the remembered player). If the
+            -- pinned player isn't in the group, say so - the click macro will be
+            -- a no-op and the tooltip should explain why.
+            local hint
+            local pinned = frame.buffDef.pinnedTarget and frame.buffDef.pinnedTarget()
+            if pinned then
+                if pinned ~= name then
+                    class = nil
+                end
+                name = pinned
+                local ok, inGroup = pcall(UnitExists, pinned)
+                if not (ok and inGroup) then
+                    hint = L["Tooltip.PinNotInGroup"]
+                end
+            end
             if name then
-                ShowLastTargetTooltip(overlay, name, class)
+                ShowLastTargetTooltip(overlay, name, class, hint)
             end
             return
         end
@@ -674,6 +769,7 @@ local function UpdateConsumableButtons(frame, actionItems, clickable, startIndex
 
     if not frame.actionButtons then
         frame.actionButtons = {}
+        RegisterSecureHost(frame)
     end
 
     local btnIndex = 0
@@ -736,7 +832,7 @@ local function HideSecureFramesForCatKey(catKey)
     if InCombatLockdown() then
         return
     end
-    for _, frame in pairs(BR.Display.frames) do
+    for frame in pairs(secureHostFrames) do
         -- Match by effective category OR by individual buff key (for detached icons)
         local effectiveCat = GetEffectiveCategory(frame)
         if effectiveCat == catKey or frame.key == catKey then
@@ -776,7 +872,7 @@ local function HideAllSecureFrames()
     if InCombatLockdown() then
         return
     end
-    for _, frame in pairs(BR.Display.frames) do
+    for frame in pairs(secureHostFrames) do
         if frame.clickOverlay then
             frame.clickOverlay:EnableMouse(false)
             frame.clickOverlay:Hide()
@@ -816,7 +912,7 @@ local function SyncSecureButtons()
     end
     local fontPath = BR.Display.GetFontPath()
     local outlineFlag = BR.Display.GetOutline()
-    for _, frame in pairs(BR.Display.frames) do
+    for frame in pairs(secureHostFrames) do
         -- Sync click overlay
         local overlay = frame.clickOverlay
         if overlay then
@@ -1092,9 +1188,19 @@ local function SetupChatRequestOverlay(frame, showHighlight)
     overlay._br_clickMacroSpellID = nil
     overlay.itemID = nil
     overlay._br_chatRequestKey = frame.key
-    overlay._br_chatRequestMsg = ChatRequest.ResolveMessage(frame.key, frame.displayName)
-    overlay:SetAttribute("type", "macro")
-    overlay:SetAttribute("macrotext", ChatRequest.GetPrefix() .. overlay._br_chatRequestMsg)
+    local msg = ChatRequest.ResolveMessage(frame.key, frame.displayName)
+    local prefix = ChatRequest.GetPrefix()
+    -- Skip the attribute writes (and the macrotext concat) when nothing changed.
+    -- RefreshChatRequestMacros keeps these trackers current when it rewrites the
+    -- macrotext on roster/profile changes.
+    if overlay._br_attr_kind ~= "chat" or overlay._br_chatRequestMsg ~= msg or overlay._br_attr_prefix ~= prefix then
+        overlay._br_attr_kind = "chat"
+        overlay._br_attr_value = nil
+        overlay._br_attr_prefix = prefix
+        overlay:SetAttribute("type", "macro")
+        overlay:SetAttribute("macrotext", prefix .. msg)
+    end
+    overlay._br_chatRequestMsg = msg
     overlay:EnableMouse(true)
     if overlay.highlight then
         overlay.highlight:SetShown(showHighlight)
@@ -1138,11 +1244,9 @@ local function SetPetSpellAttributes(overlay, spellID, db)
         and IsPlayerSpell(FEL_DOMINATION_ID)
         and GetFelDomPetMacro(spellID)
     if felMacro then
-        overlay:SetAttribute("type", "macro")
-        overlay:SetAttribute("macrotext", felMacro)
+        ApplyMacroAction(overlay, "petmacro", felMacro)
     else
-        overlay:SetAttribute("type", "spell")
-        overlay:SetAttribute("spell", spellID)
+        ApplySpellAction(overlay, spellID)
     end
 end
 
@@ -1152,6 +1256,13 @@ end
 ---@param weaponSlot number? 16 or 17, or nil for non-weapon consumables
 local function SetItemAttributes(overlay, itemID, weaponSlot)
     overlay.itemID = itemID
+    -- Skip the attribute writes when the same item/slot is being re-applied
+    if overlay._br_attr_kind == "item" and overlay._br_attr_value == itemID and overlay._br_attr_slot == weaponSlot then
+        return
+    end
+    overlay._br_attr_kind = "item"
+    overlay._br_attr_value = itemID
+    overlay._br_attr_slot = weaponSlot
     if weaponSlot then
         overlay:SetAttribute("type", "macro")
         overlay:SetAttribute("macrotext", "/use item:" .. itemID .. "\n/use " .. weaponSlot)
@@ -1299,12 +1410,19 @@ local function UpdateActionButtons(category)
         return
     end
 
+    -- Per-category bucket: skip the whole pass (including the sync scheduling)
+    -- when the category has no frames at all (e.g. no custom buffs defined).
+    local frames = BR.Display.framesByCategory and BR.Display.framesByCategory[category]
+    if not frames or not next(frames) then
+        return
+    end
+
     local db = BR.profile
     local cs = db.categorySettings and db.categorySettings[category]
     local enabled = cs and cs.clickable == true
     local showHighlight = enabled and (cs.clickableHighlight ~= false)
 
-    for _, frame in pairs(BR.Display.frames) do
+    for _, frame in pairs(frames) do
         if frame.buffCategory == category then
             -- Custom buffs define click actions per-buff; treat as enabled when an action is set
             local frameEnabled = enabled
@@ -1345,8 +1463,14 @@ local function UpdateActionButtons(category)
                         overlay._br_clickMacroFn = def.clickMacro
                         overlay._br_clickMacroSpellID = castableID
                         ClearChatRequestState(overlay)
-                        overlay:SetAttribute("type", "macro")
-                        overlay:SetAttribute("macrotext", def.clickMacro(castableID))
+                        -- Skip regenerating the macro when fn+spell are unchanged;
+                        -- PreClick rebuilds the macrotext at click time anyway.
+                        if overlay._br_attr_kind ~= "clickmacro" or overlay._br_attr_value ~= castableID then
+                            overlay._br_attr_kind = "clickmacro"
+                            overlay._br_attr_value = castableID
+                            overlay:SetAttribute("type", "macro")
+                            overlay:SetAttribute("macrotext", def.clickMacro(castableID))
+                        end
                         SetRightClickSnooze(overlay, true)
                         overlay:EnableMouse(true)
                         if overlay.highlight then
@@ -1363,8 +1487,7 @@ local function UpdateActionButtons(category)
                         overlay._br_clickMacroFn = nil
                         overlay._br_clickMacroSpellID = nil
                         ClearChatRequestState(overlay)
-                        overlay:SetAttribute("type", "spell")
-                        overlay:SetAttribute("spell", def.castSpellID)
+                        ApplySpellAction(overlay, def.castSpellID)
                         SetRightClickSnooze(overlay, true)
                         overlay:EnableMouse(true)
                         if overlay.highlight then
@@ -1401,8 +1524,7 @@ local function UpdateActionButtons(category)
                     overlay._br_clickMacroFn = nil
                     overlay._br_clickMacroSpellID = nil
                     ClearChatRequestState(overlay)
-                    overlay:SetAttribute("type", "macro")
-                    overlay:SetAttribute("macrotext", "/petassist")
+                    ApplyMacroAction(overlay, "petassist", "/petassist")
                     overlay:EnableMouse(true)
                     if overlay.highlight then
                         overlay.highlight:SetShown(frameHighlight)
@@ -1435,11 +1557,23 @@ local function UpdateActionButtons(category)
                         overlay._br_clickMacroSpellID = nil
                         ClearChatRequestState(overlay)
                         if customActionType == "macro" then
-                            overlay:SetAttribute("type", "macro")
-                            overlay:SetAttribute("macrotext", customActionValue:gsub("\\n", "\n"))
+                            -- Guard on the raw macro text so the gsub only runs on change
+                            if
+                                overlay._br_attr_kind ~= "custommacro"
+                                or overlay._br_attr_value ~= customActionValue
+                            then
+                                overlay._br_attr_kind = "custommacro"
+                                overlay._br_attr_value = customActionValue
+                                overlay:SetAttribute("type", "macro")
+                                overlay:SetAttribute("macrotext", (customActionValue:gsub("\\n", "\n")))
+                            end
                         elseif customActionType == "item" then
-                            overlay:SetAttribute("type", "item")
-                            overlay:SetAttribute("item", "item:" .. customActionValue)
+                            if overlay._br_attr_kind ~= "customitem" or overlay._br_attr_value ~= customActionValue then
+                                overlay._br_attr_kind = "customitem"
+                                overlay._br_attr_value = customActionValue
+                                overlay:SetAttribute("type", "item")
+                                overlay:SetAttribute("item", "item:" .. customActionValue)
+                            end
                             overlay.itemID = customActionValue
                         end
                         overlay:EnableMouse(true)
@@ -1457,8 +1591,14 @@ local function UpdateActionButtons(category)
                         if frame.buffDef and frame.buffDef.clickMacro then
                             overlay._br_clickMacroFn = frame.buffDef.clickMacro
                             overlay._br_clickMacroSpellID = castableID
-                            overlay:SetAttribute("type", "macro")
-                            overlay:SetAttribute("macrotext", frame.buffDef.clickMacro(castableID))
+                            -- Skip regenerating the macro when the spell is unchanged;
+                            -- PreClick rebuilds the macrotext at click time anyway.
+                            if overlay._br_attr_kind ~= "clickmacro" or overlay._br_attr_value ~= castableID then
+                                overlay._br_attr_kind = "clickmacro"
+                                overlay._br_attr_value = castableID
+                                overlay:SetAttribute("type", "macro")
+                                overlay:SetAttribute("macrotext", frame.buffDef.clickMacro(castableID))
+                            end
                         elseif frame._br_pet_spell then
                             overlay._br_clickMacroFn = nil
                             overlay._br_clickMacroSpellID = nil
@@ -1466,9 +1606,7 @@ local function UpdateActionButtons(category)
                         else
                             overlay._br_clickMacroFn = nil
                             overlay._br_clickMacroSpellID = nil
-                            overlay:SetAttribute("type", "spell")
-                            overlay:SetAttribute("spell", castableID)
-                            overlay:SetAttribute("unit", category == "raid" and "player" or nil)
+                            ApplySpellAction(overlay, castableID, category == "raid" and "player" or nil)
                         end
                         overlay:EnableMouse(true)
                         if overlay.highlight then
@@ -1506,13 +1644,13 @@ end
 -- of rebuilding inside PreClick, which was subject to secure-dispatcher
 -- hardware-event timing.
 local function RefreshChatRequestMacros()
-    -- Frames may not exist yet if a roster event fires before the first
-    -- PLAYER_ENTERING_WORLD initializes them.
-    if InCombatLockdown() or not BR.Display or not BR.Display.frames then
+    -- Before the first PLAYER_ENTERING_WORLD initializes frames, the host set
+    -- is simply empty and the loop no-ops.
+    if InCombatLockdown() then
         return
     end
     local prefix = ChatRequest.GetPrefix()
-    for _, frame in pairs(BR.Display.frames) do
+    for frame in pairs(secureHostFrames) do
         local overlay = frame.clickOverlay
         if overlay and overlay._br_chatRequestKey then
             -- Re-resolve message from the current profile (profile switch may
@@ -1521,6 +1659,7 @@ local function RefreshChatRequestMacros()
             local msg = ChatRequest.ResolveMessage(frame.key, frame.displayName)
             overlay._br_chatRequestMsg = msg
             if msg then
+                overlay._br_attr_prefix = prefix
                 overlay:SetAttribute("macrotext", prefix .. msg)
             end
         end
@@ -1535,16 +1674,17 @@ local function RefreshOverlaySpells()
         return
     end
 
+    -- Frames may not exist yet if an event fires before the first
+    -- PLAYER_ENTERING_WORLD initializes them.
+    local framesByCategory = BR.Display.framesByCategory
+    if not framesByCategory then
+        return
+    end
     local db = BR.profile
-    local seen = {}
-    for _, frame in pairs(BR.Display.frames) do
-        local cat = frame.buffCategory
-        if cat and not seen[cat] then
-            seen[cat] = true
-            local cs = db.categorySettings and db.categorySettings[cat]
-            if (cs and cs.clickable == true) or cat == "custom" then
-                UpdateActionButtons(cat)
-            end
+    for cat in pairs(framesByCategory) do
+        local cs = db.categorySettings and db.categorySettings[cat]
+        if (cs and cs.clickable == true) or cat == "custom" then
+            UpdateActionButtons(cat)
         end
     end
 end
@@ -1552,6 +1692,7 @@ end
 -- Export module
 BR.SecureButtons = {
     UpdateActionButtons = UpdateActionButtons,
+    UnregisterSecureHost = UnregisterSecureHost,
     RefreshOverlaySpells = RefreshOverlaySpells,
     RefreshChatRequestMacros = RefreshChatRequestMacros,
     GetConsumableActionItems = GetConsumableActionItems,

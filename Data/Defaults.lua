@@ -95,6 +95,7 @@ BR.defaults = {
         healthstoneLowStock = false,
         soulstoneVisibility = "readyCheck",
         soulstoneHideCooldown = false,
+        -- soulstonePinnedTarget: deliberately absent - nil means "no pin" (set via BuffPanel drawer)
         consumableDisplayMode = "sub_icons",
         consumableTextScale = 25,
         hideConsumableLabels = false,
@@ -164,6 +165,15 @@ BR.defaults = {
             hideInPvPMatch = true,
         },
         self = {
+            openWorld = true,
+            dungeon = true,
+            scenario = true,
+            raid = true,
+            housing = false,
+            pvp = true,
+            hideInPvPMatch = true,
+        },
+        utility = {
             openWorld = true,
             dungeon = true,
             scenario = true,
@@ -275,6 +285,14 @@ BR.defaults = {
             clickableHighlight = true,
             subIconSide = "BOTTOM",
             priority = 6,
+        },
+        utility = {
+            position = { point = "CENTER", x = 0, y = -60 },
+            useCustomAppearance = false,
+            split = false,
+            clickable = true,
+            clickableHighlight = true,
+            priority = 9,
         },
         custom = {
             position = { point = "CENTER", x = 0, y = 20 },

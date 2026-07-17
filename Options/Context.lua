@@ -684,6 +684,7 @@ local function GetCategoryLabels()
         self = L["Category.SelfBuffs"],
         pet = L["Category.PetReminders"],
         consumable = L["Category.Consumables"],
+        utility = L["Category.UtilityReminders"],
         custom = L["Category.CustomBuffs"],
         loadout = L["Category.LoadoutReminders"],
     }

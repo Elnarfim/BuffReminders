@@ -72,6 +72,11 @@ local RIGHT_SECTIONS = {
         titleKey = "Category.PetReminders",
         noteKey = "Category.PetNote",
     },
+    {
+        category = "utility",
+        titleKey = "Category.UtilityReminders",
+        noteKey = "Category.UtilityNote",
+    },
 }
 
 local function CreateSectionWithNote(parent, x, y, headerText, noteText)

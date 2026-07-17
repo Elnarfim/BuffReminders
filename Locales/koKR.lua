@@ -51,7 +51,8 @@ L["Loadout.Content"] = "콘텐트"
 L["Loadout.Requirement"] = "필요 조건"
 L["Loadout.EquipmentSet"] = "장비 구성"
 L["Loadout.TalentSpell"] = "특성 주문 ID"
-L["Loadout.NoSets"] = "장비 구성이 없습니다. 캐릭터 정보 (장비 관리) 창에서 먼저 하나를 만드세요."
+L["Loadout.NoSets"] =
+    "장비 구성이 없습니다. 캐릭터 정보 (장비 관리) 창에서 먼저 하나를 만드세요."
 L["Loadout.NoSetSelected"] = "먼저 장비 구성을 선택하세요."
 L["Loadout.NoLoadouts"] = "이 전문화에는 저장된 특성 구성이 없습니다."
 L["Loadout.NoLoadoutSelected"] = "먼저 특성 구성을 선택하세요."
@@ -286,7 +287,8 @@ L["Display.FramesLocked"] = "프레임 위치를 고정했습니다."
 L["Display.FramesUnlocked"] = "프레임의 고정이 해제됐습니다."
 L["Display.MinimapHidden"] = "미니맵 아이콘이 숨겨졌습니다."
 L["Display.MinimapShown"] = "미니맵 아이콘이 표시됩니다."
-L["Display.DebugEnabled"] = "디버그 모드가 활성화됐습니다. |cFFFFD100/br debug|r를 다시 실행하면 꺼집니다."
+L["Display.DebugEnabled"] =
+    "디버그 모드가 활성화됐습니다. |cFFFFD100/br debug|r를 다시 실행하면 꺼집니다."
 L["Display.DebugDisabled"] = "디버그 모드가 비활성화됐습니다."
 L["Display.Description"] = "누락된 버프를 한꺼번에 확인하세요."
 L["Display.OpenOptions"] = "옵션 열기"
@@ -326,7 +328,8 @@ L["Section.Tracking"] = "추적"
 L["Section.TrackingOverrides"] = "추적 무시"
 L["Section.TrackingOverrides.Desc"] =
     "지정된 상황일 때 추적 모드의 범위를 좁힙니다. 위의 모드를 사용하려면 상황 설정을 기본값으로 두세요. 여러가지 상황(렙업 중 전투중 같은)을 한번에 적용할 경우 가장 제한이 심한 사항이 우선합니다."
-L["DisabledReason.PvPDisabled"] = "이 카테고리는 PvP에서 완전히 숨겨집니다. (표시 설정 페이지 참고)"
+L["DisabledReason.PvPDisabled"] =
+    "이 카테고리는 PvP에서 완전히 숨겨집니다. (표시 설정 페이지 참고)"
 
 -- ============================================================================
 -- OPTIONS: SOUND ALERTS
@@ -341,7 +344,8 @@ L["Options.Preview"] = "미리보기"
 -- OPTIONS: GLOBAL DEFAULTS
 -- ============================================================================
 L["Options.GlobalDefaults"] = "전체 기본값"
-L["Options.GlobalDefaults.Note"] = "(사용자 지정 외형으로 덮어쓰지 않는 한 모든 카테고리에 적용됨)"
+L["Options.GlobalDefaults.Note"] =
+    "(사용자 지정 외형으로 덮어쓰지 않는 한 모든 카테고리에 적용됨)"
 L["Options.Default"] = "기본값"
 L["Options.Font"] = "글꼴"
 L["Options.TextOutline"] = "외곽선"
@@ -402,7 +406,8 @@ L["Options.Glow.YOffset"] = "Y 조정"
 -- ============================================================================
 L["Options.HidePvPMatchStart"] = "PvP 경기 시작 시 숨기기"
 L["Options.HidePvPMatchStart.Title"] = "PvP 경기 시작 시 숨기기"
-L["Options.HidePvPMatchStart.Desc"] = "PvP 경기가 시작되면 (준비 단계 종료 후) 이 카테고리를 숨깁니다."
+L["Options.HidePvPMatchStart.Desc"] =
+    "PvP 경기가 시작되면 (준비 단계 종료 후) 이 카테고리를 숨깁니다."
 L["Options.ReadyCheckOnly"] = "전투 준비 시에만 표시"
 L["Options.ReadyCheckOnly.Desc"] = "전투 준비 후 15초 동안만 이 카테고리의 버프를 표시합니다."
 L["Options.Visibility"] = "표시 설정"
@@ -474,7 +479,8 @@ L["Options.ClickToCast.DescFull"] =
 L["Options.ClickToCast.SnoozeNote"] =
     "소모품에 우클릭을 하면 다음 로딩 스크린 전까지 리마인더가 일시적으로 해제됩니다. (|cFFFFD100/br snooze|r로도 작동)"
 L["Options.HoverHighlight"] = "마우스오버 강조"
-L["Options.HoverHighlight.Desc"] = "클릭 가능한 버프 아이콘에 마우스를 올리면 희미한 강조 효과가 표시됩니다."
+L["Options.HoverHighlight.Desc"] =
+    "클릭 가능한 버프 아이콘에 마우스를 올리면 희미한 강조 효과가 표시됩니다."
 L["Options.RequestBuffInChat"] = "없는 버프를 채팅으로 요청"
 L["Options.RequestBuffInChat.Desc"] =
     "내 직업이 걸 수 없는 누락된 버프를 클릭하면 채팅으로 요청합니다. 채널(인스턴스/공격대/파티/일반)을 자동으로 감지합니다. 버프당 30초의 쿨타임이 있습니다."
@@ -506,7 +512,8 @@ L["Options.PetSpecIcon.Title"] = "마우스를 올리면 소환수 특성 아이
 L["Options.PetSpecIcon.Desc"] =
     "마우스를 올리면 소환수 아이콘이 특성 능력(교활, 야성, 끈기)으로 바뀝니다."
 L["Options.ShowItemTooltips"] = "아이템 툴팁 표시"
-L["Options.ShowItemTooltips.Desc"] = "소모품 아이콘에 마우스를 올리면 아이템 툴팁이 표시됩니다."
+L["Options.ShowItemTooltips.Desc"] =
+    "소모품 아이콘에 마우스를 올리면 아이템 툴팁이 표시됩니다."
 L["Options.ShowBuffTooltips"] = "버프 툴팁 표시"
 L["Options.ShowBuffTooltips.Desc"] =
     "공격대 또는 특수 버프 아이콘에 마우스 커서를 올리면 주문 툴팁과 걸어준 직업이 표시됩니다."
@@ -548,7 +555,8 @@ L["Options.ItemDisplay"] = "아이템 표시"
 L["Options.ItemDisplay.IconOnly"] = "아이콘만 표시"
 L["Options.ItemDisplay.IconOnlyDesc"] = "수량이 가장 많은 아이템 표시"
 L["Options.ItemDisplay.SubIcons"] = "하위 아이콘"
-L["Options.ItemDisplay.SubIconsDesc"] = "각 아이콘 아래에 클릭되는 다른 등급의 작은 아이템을 표시합니다"
+L["Options.ItemDisplay.SubIconsDesc"] =
+    "각 아이콘 아래에 클릭되는 다른 등급의 작은 아이템을 표시합니다"
 L["Options.ItemDisplay.Expanded"] = "확장"
 L["Options.ItemDisplay.ExpandedDesc"] = "다른 등급 아이템 아이콘을 원래 크기로 확장합니다"
 L["Options.ItemDisplay.Mode"] = "소모품 아이템 표시"
@@ -611,13 +619,15 @@ L["Options.DelveFoodTimer.Desc"] =
 -- ============================================================================
 L["Options.Layout"] = "레이아웃"
 L["Options.SplitFrame"] = "개별 프레임으로 분리"
-L["Options.SplitFrame.Desc"] = "이 카테고리의 버프를 독립적으로 이동 가능한 별도의 프레임에 표시합니다."
+L["Options.SplitFrame.Desc"] =
+    "이 카테고리의 버프를 독립적으로 이동 가능한 별도의 프레임에 표시합니다."
 
 -- Display Order section (Defaults page) - drives the same priority field the
 -- old per-category slider wrote, but as a single ordered list across all
 -- non-split categories.
 L["Options.DisplayOrder"] = "쌓이는 순서"
-L["Options.DisplayOrder.Moved"] = "표시 순서 설정을 찾고 있나요? 레이아웃 페이지로 옮겨졌습니다."
+L["Options.DisplayOrder.Moved"] =
+    "표시 순서 설정을 찾고 있나요? 레이아웃 페이지로 옮겨졌습니다."
 
 -- Layout page
 L["Layout.PositionFrames"] = "프레임 위치"
@@ -686,8 +696,10 @@ L["BuffPanel.Detached.Desc"] =
 L["BuffPanel.CasterAlways"] = "흑마법사일땐 항상 표시"
 L["BuffPanel.CasterAlways.Desc"] =
     "흑마법사(제공자)는 항상 리마인더를 볼 수 있으며, 다른 사람은 전투 준비 검사때만 볼 수 있습니다."
-L["DisabledReason.NotDetached"] = "이 버프는 분리되지 않았습니다 - 카테고리 프레임 안에 있습니다."
-L["DisabledReason.CasterAlways"] = '전투 준비 검사 모드에서만 적용됩니다. 먼저 "표시"를 전투 준비 검사로 전환하세요.'
+L["DisabledReason.NotDetached"] =
+    "이 버프는 분리되지 않았습니다 - 카테고리 프레임 안에 있습니다."
+L["DisabledReason.CasterAlways"] =
+    '전투 준비 검사 모드에서만 적용됩니다. 먼저 "표시"를 전투 준비 검사로 전환하세요.'
 L["Options.DisplayOrder.Note"] =
     "조합된 프레임 내에서 카테고리들이 위에서 아래로 쌓이는 순서를 설정합니다. 분리한 카테고리는 별도의 프레임에 있으므로 여기엔 나오지 않습니다."
 
@@ -815,7 +827,8 @@ L["Dialog.DeleteLoadout"] = '구성 알림 "%s"|1을;를; 삭제할까요?'
 L["Dialog.ResetProfile"] =
     "활성 프로필을 기본값으로 초기화할까요?\n\n현재 프로필의 모든 사용자 지정\n설정이 삭제되고 UI가 재시작됩니다."
 L["Dialog.Reset"] = "초기화"
-L["Dialog.ReloadPrompt"] = "설정을 성공적으로 가져왔습니다!\nUI를 재시작해서 변경 사항을 적용할까요?"
+L["Dialog.ReloadPrompt"] =
+    "설정을 성공적으로 가져왔습니다!\nUI를 재시작해서 변경 사항을 적용할까요?"
 L["Dialog.Reload"] = "재시작"
 L["Dialog.NewProfilePrompt"] = "새 프로필의 이름을 입력하세요:"
 L["Dialog.Create"] = "생성"
@@ -827,7 +840,8 @@ L["Dialog.Close"] = "닫기"
 -- OPTIONS: TEST / LOCK
 -- ============================================================================
 L["Options.LockUnlock"] = "잠금 / 해제"
-L["Options.LockUnlock.Desc"] = "잠금을 해제하면 버프 프레임 위치를 조정할 수 있는 앵커 핸들이 표시됩니다."
+L["Options.LockUnlock.Desc"] =
+    "잠금을 해제하면 버프 프레임 위치를 조정할 수 있는 앵커 핸들이 표시됩니다."
 L["Options.TestAppearance"] = "아이콘 외형 테스트"
 L["Options.TestAppearance.Desc"] =
     "가짜 값으로 선택한 버프를 표시해서 외형을 미리 볼 수 있습니다."
@@ -940,7 +954,8 @@ L["Options.JoinDiscord.Desc"] = "피드백, 기능 요청, 버그 신고를 하�
 -- ============================================================================
 L["Options.SupportKofi"] = "Ko-fi에서 후원하기"
 L["Options.SupportKofi.Title"] = "링크를 클릭"
-L["Options.SupportKofi.Desc"] = "BuffReminders를 잘 쓰고 계시나요?\nKo-fi에서 개발 작업을 후원해 주세요!"
+L["Options.SupportKofi.Desc"] =
+    "BuffReminders를 잘 쓰고 계시나요?\nKo-fi에서 개발 작업을 후원해 주세요!"
 
 -- ============================================================================
 -- OPTIONS: CUSTOM ANCHOR FRAMES
@@ -1006,7 +1021,8 @@ L["DisabledReason.LevelingOverride"] =
 L["DisabledReason.ExpiringInCombat"] =
     '"전투 중" 숨김이 활성화되있어서 전투 중에는 이미 모든 것이 숨겨집니다.'
 L["DisabledReason.HealthstoneThreshold"] = '먼저 "수량 부족 시 경고"를 활성화하세요.'
-L["DisabledReason.UseDefaultThreshold"] = '카테고리별로 값을 설정하려면 "기본 기준값 사용"을 체크 해제하세요.'
+L["DisabledReason.UseDefaultThreshold"] =
+    '카테고리별로 값을 설정하려면 "기본 기준값 사용"을 체크 해제하세요.'
 
 -- Direction labels
 L["Direction.Left"] = "왼쪽"

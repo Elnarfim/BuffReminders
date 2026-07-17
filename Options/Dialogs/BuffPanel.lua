@@ -265,9 +265,15 @@ local SPECIAL_SECTIONS = {
     },
 
     soulstone = {
-        caption = ToggleCaption(function()
-            return BR.Config.Get("defaults.soulstoneHideCooldown")
-        end, "BuffRow.Caption.SoulstoneHidden", "BuffRow.Caption.SoulstoneShown"),
+        caption = function()
+            local pinned = BR.Config.Get("defaults.soulstonePinnedTarget")
+            if pinned and pinned ~= "" then
+                return format(L["BuffRow.Caption.SoulstonePinned"], pinned), false
+            end
+            return BR.Config.Get("defaults.soulstoneHideCooldown") and L["BuffRow.Caption.SoulstoneHidden"]
+                or L["BuffRow.Caption.SoulstoneShown"],
+                false
+        end,
         build = function(layout)
             AddSpecialCheckbox(layout, {
                 label = L["Options.Soulstone.HideCooldown"],
@@ -282,6 +288,23 @@ local SPECIAL_SECTIONS = {
                     BR.Config.Set("defaults.soulstoneHideCooldown", checked)
                 end,
             })
+            local pinHolder = Components.TextInput(body, {
+                label = L["Options.Soulstone.PinnedTarget"],
+                width = 120,
+                get = function()
+                    return BR.Config.Get("defaults.soulstonePinnedTarget") or ""
+                end,
+                onChange = function(text)
+                    -- Strip macro-structural characters: the name is spliced into
+                    -- macrotext and must never break out of the [@...] conditional
+                    text = strtrim(((text or ""):gsub("[%[%]\r\n]", "")))
+                    BR.Config.Set("defaults.soulstonePinnedTarget", text ~= "" and text or nil)
+                    Components.RefreshAll()
+                end,
+            })
+            pinHolder.editBox:SetMaxLetters(48)
+            tinsert(bodyHolders, pinHolder)
+            layout:Add(pinHolder, nil, COMPONENT_GAP)
         end,
     },
 
