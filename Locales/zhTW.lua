@@ -103,6 +103,7 @@ L["Overlay.NoAttune"] = "沒有\n同調"
 L["Overlay.NoFamiliar"] = "沒有\n魔寵"
 L["Overlay.DropWell"] = "置放\n靈魂井"
 L["Overlay.DropTable"] = "置放\n餐桌"
+L["Overlay.Repair"] = "修理\n裝備"
 L["Overlay.NoGrim"] = "沒有\n魔典"
 L["Overlay.BurningRush"] = "燃燒狂奔"
 L["Overlay.NoRite"] = "沒有\n儀式"
@@ -163,8 +164,8 @@ L["Label.LowPrimary"] = "低主屬"
 L["Label.LowSecondary"] = "低次屬"
 L["Label.RevivePet"] = "復活寵物"
 L["Label.Felguard"] = "惡魔守衛"
-L["Badge.Hearty"] = "H"
-L["Badge.Fleeting"] = "F"
+L["Badge.Hearty"] = "澎"
+L["Badge.Fleeting"] = "普"
 
 -- ============================================================================
 -- BUFF NAMES (used in Options panel checkboxes and sound notification list)
@@ -194,6 +195,7 @@ L["Buff.ArcaneFamiliar"] = "秘法魔寵"
 L["Buff.Attunement"] = "黑曜同調"
 L["Buff.CreateSoulwell"] = "製造靈魂之井"
 L["Buff.RefreshmentTable"] = "餐點桌"
+L["Buff.RepairGear"] = "修理裝備"
 L["Buff.DruidForm"] = "德魯伊形態"
 L["Buff.GrimoireOfSacrifice"] = "犧牲魔典"
 L["Buff.BurningRush"] = "燃燒狂奔"
@@ -253,6 +255,8 @@ L["Tooltip.MayShowExtraIcon.Desc"] =
 L["Tooltip.InstanceEntryReminder"] = "副本進本提示"
 L["Tooltip.InstanceEntryReminder.Desc"] =
     "進入地下城時會短暫顯示放置靈魂井的提示。施放法術或30秒後將消失。"
+L["Tooltip.Repair"] = "修理提醒"
+L["Tooltip.Repair.Desc"] = "當裝備的物品耐久度低於閾值時顯示。拜訪一個商店來修理。"
 L["BuffTooltip.ProvidedBy"] = "由 %s 提供"
 
 -- ============================================================================
@@ -426,6 +430,12 @@ L["Options.Healthstone.Threshold"] = "當有時警告"
 L["Options.Healthstone.Threshold.Desc"] =
     "當治療石等於或低於此數量時顯示不足警告。\n\n|cffffcc001:|r 僅在剛好有1個時警告。\n|cffffcc002:|r 有1個或2個時警告。"
 
+L["Options.Repair.Threshold"] = "低於多少警告"
+L["Options.Repair.Threshold.Desc"] = "當裝備的物品耐久度低於多少百分比時顯示修理提醒。"
+L["Options.RepairHideInCombat"] = "戰鬥中隱藏"
+L["Options.RepairHideInCombat.Desc"] =
+    "在戰鬥中時隱藏修理提醒。你無法在戰鬥中拜訪商店來修理，所以它只能在非戰鬥狀態下進行。"
+
 -- ============================================================================
 -- OPTIONS: SOULSTONE
 -- ============================================================================
@@ -550,6 +560,11 @@ L["Options.PetLabels.SizePct"] = "尺寸占比 %"
 L["Options.ConsumableTextScale"] = "文字縮放"
 L["Options.ConsumableTextScale.Title"] = "消耗品文字大小"
 L["Options.ConsumableTextScale.Desc"] = "物品數量和品質標簽相對於圖示大小的字體縮放比例。"
+L["Options.ConsumableBadgeOnSubIcons"] = "在子圖示上顯示品質標記"
+L["Options.ConsumableBadgeOnSubIcons.Title"] = "品質標記在子圖示上"
+L["Options.ConsumableBadgeOnSubIcons.Desc"] =
+    '在每個子圖示顯示食物品質字母 (例如 "澎"為澎湃，"普"為普通的)，而非只在主圖示。'
+L["Options.ConsumableBadgeOnSubIcons.Disabled"] = "只適用於子圖示顯示模式。"
 L["Options.HideConsumableLabels"] = "隱藏屬性標籤"
 L["Options.HideConsumableLabels.Title"] = "隱藏消耗品屬性標籤"
 L["Options.HideConsumableLabels.Desc"] =

@@ -15,6 +15,9 @@
 
 ---@class Button: Frame
 
+---@class EditBox: Frame
+---@field SetFont fun(self: EditBox, font: string, size: number, flags?: string)
+
 ---@class Texture
 ---@field SetAllPoints fun(self: Texture, target?: any)
 ---@field SetTexCoord fun(self: Texture, left: number, right: number, top: number, bottom: number)
@@ -36,7 +39,7 @@
 
 ---@class AnimationGroup
 
----@alias TooltipText {title: string, desc?: string}
+---@alias TooltipText {title: string, desc?: string, atlas?: string}
 ---@alias SpellID number|number[]
 ---@alias ClassName "WARRIOR"|"PALADIN"|"HUNTER"|"ROGUE"|"PRIEST"|"DEATHKNIGHT"|"SHAMAN"|"MAGE"|"WARLOCK"|"MONK"|"DRUID"|"DEMONHUNTER"|"EVOKER"
 ---@alias RoleType "TANK"|"HEALER"|"DAMAGER"

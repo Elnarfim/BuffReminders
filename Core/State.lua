@@ -238,6 +238,13 @@ local cachedOffHandType = nil -- nil = not yet checked, "weapon" | "shield" | "n
 ---@type table<number, boolean>
 local cachedItemOwnership = {}
 
+-- Lowest equipped-item durability ratio (0-1). The 18-slot scan is a read-only
+-- lookup whose answer only changes on durability / equipment events, so it's
+-- memoized and reused on the fallback ticker instead of re-scanned every refresh.
+-- Invalidated on UPDATE_INVENTORY_DURABILITY, PLAYER_EQUIPMENT_CHANGED.
+---@type number|nil
+local cachedLowestDurability = nil
+
 -- Loadout state cache: rule.key -> { satisfied, icon }. The detection calls
 -- (IsSatisfied / GetRuleIcon) are read-only WoW lookups whose answers only change
 -- on spec / talent / equipment / equipment-set events, so they're cached here and
@@ -924,12 +931,39 @@ local function GetBuffSettingKey(buff)
     return buff.groupId or buff.key
 end
 
----Check if a buff is enabled (defaults to true if not explicitly set to false)
----@param key string
+-- Ship defaults for opt-in buffs. Built lazily from the buff definitions'
+-- `defaultEnabled = false` field, keyed by setting key (groupId or key). A buff
+-- absent here ships enabled. Resolving the default at read time (rather than
+-- seeding `false` into every profile) keeps the buff def the single source of
+-- truth and covers profiles created after install, which never run migrations.
+---@type table<string, boolean>|nil
+local defaultEnabledByKey = nil
+local function GetDefaultEnabledLookup()
+    local lookup = defaultEnabledByKey
+    if not lookup then
+        lookup = {}
+        for _, category in pairs(BUFF_TABLES) do
+            for _, buff in ipairs(category) do
+                if buff.defaultEnabled == false then
+                    lookup[buff.groupId or buff.key] = false
+                end
+            end
+        end
+        defaultEnabledByKey = lookup
+    end
+    return lookup
+end
+
+---Check if a buff is enabled. An explicit user choice wins; otherwise the buff's
+---declared ship default applies (enabled unless the def sets defaultEnabled=false).
+---@param key string setting key (groupId or individual key)
 ---@return boolean
 local function IsBuffEnabled(key)
-    local db = BR.profile
-    return db.enabledBuffs[key] ~= false
+    local stored = BR.profile.enabledBuffs[key]
+    if stored ~= nil then
+        return stored
+    end
+    return GetDefaultEnabledLookup()[key] ~= false
 end
 
 ---Get the current content type based on instance/zone (cached)
@@ -2221,12 +2255,14 @@ function BuffState.Refresh(refreshMode)
     if not groupOnly then
         local utilityVisible = IsCategoryVisibleForContent("utility")
         local _, utilityMissGlow = GetCategoryGlowSettings("utility")
+        local repairHiddenInCombat = inCombat and db.defaults and db.defaults.repairHideInCombat ~= false
         for i, buff in ipairs(UtilityBuffs) do
             local entry = GetOrCreateEntry(buff.key, "utility", i)
             local settingKey = buff.groupId or buff.key
             local entryOk = not buff.showOnInstanceEntry or inInstanceEntry
             if
                 entryOk
+                and not (repairHiddenInCombat and buff.key == "repairGear")
                 and utilityVisible
                 and (not buff.class or buff.class == playerClass)
                 and IsBuffEnabled(settingKey)
@@ -3020,6 +3056,32 @@ end
 function BuffState.InvalidateItemCache()
     cachedItemOwnership = {}
     cachedItemCounts = {}
+end
+
+---Lowest equipped-item durability ratio (0-1; 1 when nothing is damaged), cached.
+---Slots without durability (neck/rings/trinkets/shirt/tabard) return nil and are skipped.
+---@return number
+function BuffState.GetLowestDurability()
+    if cachedLowestDurability ~= nil then
+        return cachedLowestDurability
+    end
+    local lowest = 1
+    for slot = 1, 18 do
+        local cur, max = GetInventoryItemDurability(slot)
+        if cur and max and max > 0 then
+            local pct = cur / max
+            if pct < lowest then
+                lowest = pct
+            end
+        end
+    end
+    cachedLowestDurability = lowest
+    return lowest
+end
+
+---Invalidate the durability cache (call on UPDATE_INVENTORY_DURABILITY, PLAYER_EQUIPMENT_CHANGED)
+function BuffState.InvalidateDurabilityCache()
+    cachedLowestDurability = nil
 end
 
 ---Invalidate loadout state cache (call on PLAYER_SPECIALIZATION_CHANGED,

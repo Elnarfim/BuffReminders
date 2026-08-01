@@ -96,6 +96,7 @@ BR.DK_RUNEFORGES = DK_RUNEFORGES
 ---@field icons? IconSpec See "Icon fields" comment at end of self[]
 ---@field requireSpecId? number
 ---@field infoTooltip? TooltipText
+---@field defaultEnabled? boolean Ships disabled when false (opt-in); enabled otherwise. Resolved at read time by IsBuffEnabled.
 ---@field clickMacro? fun(spellID: number?): string
 ---@field casterBuffId? number Check this buff on the caster instead of scanning group
 ---@field glowDetectable? boolean Use action bar glow as fallback detection when aura API is restricted
@@ -107,6 +108,7 @@ BR.DK_RUNEFORGES = DK_RUNEFORGES
 ---@field class? ClassName
 ---@field overlayText string
 ---@field groupId? string
+---@field defaultEnabled? boolean Ships disabled when false (opt-in); enabled otherwise. Resolved at read time by IsBuffEnabled.
 ---@field enchantID? number
 ---@field requiresBuffWithEnchant? boolean -- When true, require both enchant AND buff to be present (for Paladin Rites)
 ---@field castSpellID? number           -- Spell ID used for click-to-cast when different from spellID
@@ -732,6 +734,7 @@ BR.BUFF_TABLES = {
         {
             spellID = 111400,
             key = "burningRush",
+            defaultEnabled = false, -- opt-in: ships disabled
             name = L["Buff.BurningRush"],
             class = "WARLOCK",
             overlayText = L["Overlay.BurningRush"],
@@ -743,6 +746,7 @@ BR.BUFF_TABLES = {
         -- aura queries are restricted.
         {
             key = "druidWrongForm",
+            defaultEnabled = false, -- opt-in: ships disabled
             name = L["Buff.DruidForm"],
             class = "DRUID",
             overlayText = L["Overlay.WrongForm"],
@@ -1059,6 +1063,7 @@ BR.BUFF_TABLES = {
         -- clickMacro dispatches the spec-correct cast at click time.
         {
             key = "warriorWrongStance",
+            defaultEnabled = false, -- opt-in: ships disabled
             name = L["Buff.WarriorStance"],
             class = "WARRIOR",
             overlayText = L["Overlay.WrongStance"],
@@ -1278,19 +1283,36 @@ BR.BUFF_TABLES = {
         },
         -- Mage food (healers only): remind to grab conjured food when a mage is in
         -- the group and you're inside an instance without any in your bags. Click
-        -- asks the mage in chat (healers can't conjure their own).
+        -- asks the mage in chat (healers can't conjure their own). Its own per-buff
+        -- ready-check gate (readyCheckOnly, on by default; the drawer's Show toggle
+        -- switches it to Always) - so it opts out of the shared consumable category
+        -- ready-check filter (ignoresReadyCheckFilter) to keep that toggle the sole
+        -- control. `mageFoodContent` narrows it to dungeons or raids only.
         {
             itemID = { 113509 }, -- Conjured Mana Bun
             key = "mageFood",
+            defaultEnabled = false, -- opt-in: ships disabled
+            addedIn = "6.3.0",
             name = L["Buff.MageFood"],
             casterClass = "MAGE",
             overlayText = L["Overlay.NoMageFood"],
             icons = { spells = { 190336 } }, -- Conjure Refreshment icon (the bun)
+            infoTooltip = {
+                title = L["Tooltip.MageFood"],
+                desc = L["Tooltip.MageFood.Desc"],
+            },
             chatRequestable = true,
-            ignoresReadyCheckFilter = true, -- persistent instance reminder, not ready-check gated
+            readyCheckOnly = true,
+            ignoresReadyCheckFilter = true,
             visibilityCondition = function()
                 local ct = BR.StateHelpers.GetCurrentContentType()
                 if ct == "openWorld" or ct == "housing" then
+                    return false
+                end
+                local filter = BR.Config.Get("defaults.mageFoodContent", "all")
+                if filter == "dungeon" and ct ~= "dungeon" then
+                    return false
+                elseif filter == "raid" and ct ~= "raid" then
                     return false
                 end
                 return BR.BuffState.GetPlayerRole() == "HEALER"
@@ -1357,6 +1379,7 @@ BR.BUFF_TABLES = {
             infoTooltip = {
                 title = L["Tooltip.InstanceEntryReminder"],
                 desc = L["Tooltip.InstanceEntryReminder.Desc"],
+                atlas = "auctionhouse-icon-clock", -- clock reads "timed reminder", not the generic "!" info icon
             },
             customCheck = function(isRestricted)
                 -- Cooldown API returns tainted values during combat/encounters/M+
@@ -1377,6 +1400,7 @@ BR.BUFF_TABLES = {
             spellID = 190336, -- Conjure Refreshment (used for icon resolution)
             castSpellID = 190336, -- Click-to-cast: smart-drops the refreshment table
             key = "refreshmentTable",
+            addedIn = "6.3.0",
             name = L["Buff.RefreshmentTable"],
             class = "MAGE",
             overlayText = L["Overlay.DropTable"],
@@ -1384,6 +1408,7 @@ BR.BUFF_TABLES = {
             infoTooltip = {
                 title = L["Tooltip.InstanceEntryReminder"],
                 desc = L["Tooltip.InstanceEntryReminder.Desc"],
+                atlas = "auctionhouse-icon-clock", -- clock reads "timed reminder", not the generic "!" info icon
             },
             customCheck = function(isRestricted)
                 -- Cooldown API returns tainted values during combat/encounters/M+
@@ -1403,6 +1428,21 @@ BR.BUFF_TABLES = {
                     return not info or info.duration == 0
                 end)
                 return not ok or result
+            end,
+        },
+        -- Repair reminder: shows when any equipped item drops below the configured
+        -- durability threshold. Durability is not a tainted read, so no restricted
+        -- gate; the 18-slot scan is memoized in State.lua (cachedLowestDurability).
+        {
+            key = "repairGear",
+            defaultEnabled = false, -- opt-in: ships disabled
+            addedIn = "6.3.0",
+            name = L["Buff.RepairGear"],
+            icons = { textures = { 1405803 } },
+            overlayText = L["Overlay.Repair"],
+            noClickToCast = true, -- nothing to cast; the action is visiting a merchant
+            customCheck = function()
+                return BR.BuffState.GetLowestDurability() < (BR.Config.Get("defaults.repairThreshold", 20) / 100)
             end,
         },
     },
