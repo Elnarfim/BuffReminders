@@ -189,6 +189,25 @@ BR.Secret = {
     AuraByInstanceID = AuraByInstanceID,
 }
 
+---The frame a stored anchor name points at, or nil when it cannot hold an anchor.
+---A forbidden frame raises on every method call, so anchoring to one would throw
+---on every login - and the name in the database can be anything the user typed.
+---@param name string? Global frame name
+---@return table? frame
+function BR.ResolveAnchorFrame(name)
+    if not name or name == "" then
+        return nil
+    end
+    local frame = _G[name]
+    if type(frame) ~= "table" or frame.GetCenter == nil then
+        return nil
+    end
+    if frame.IsForbidden ~= nil and Plain(frame:IsForbidden()) ~= false then
+        return nil
+    end
+    return frame
+end
+
 -- ============================================================================
 -- CALLBACK REGISTRY (Event System)
 -- ============================================================================
@@ -205,6 +224,8 @@ CallbackRegistry:GenerateCallbackEvents({
     "FramesReparent", -- Fired when frames need reparenting (split category change)
     "VisibilityRefresh", -- Fired when visibility toggles change (hide-when, show-only-in-group)
     "BuffStateChanged", -- Fired when buff state entries are recomputed
+    "ExternalsRefresh", -- Fired when the externals display needs reconfiguring
+    "CustomAnchorsChanged", -- Fired when the user's anchor-target list gains or loses a name
 })
 BR.CallbackRegistry = CallbackRegistry
 
@@ -450,6 +471,10 @@ local DynamicRoots = {
     readyCheckOnlyOverrides = "DisplayRefresh",
     detachedIcons = "FramesReparent",
     loadoutReminders = "DisplayRefresh",
+    -- One event for the whole subtree: AuraButton styling is creation-window-only,
+    -- so every externals change (appearance or entry set) takes the same
+    -- reconfigure-or-defer path anyway. No point in finer-grained refresh types.
+    externals = "ExternalsRefresh",
 }
 
 ---Check if a config path is valid
@@ -1008,4 +1033,23 @@ function BR.CreateBuffIcon(parent, size, textureID)
         icon:SetTexture(textureID)
     end
     return icon
+end
+
+---Aspect-ratio-aware texcoord insets: when width ~= height, crop the longer
+---texture axis more so the icon shows a centered slice instead of stretching.
+---@param inset number Base symmetric inset (edge crop + zoom)
+---@param width number
+---@param height number
+---@return number xInset
+---@return number yInset
+function BR.GetAspectCropInsets(inset, width, height)
+    local aspectRatio = width / height
+    if aspectRatio > 1 then
+        -- Wider than tall: crop top/bottom more
+        return inset, inset + (1 - 1 / aspectRatio) * (0.5 - inset)
+    elseif aspectRatio < 1 then
+        -- Taller than wide: crop left/right more
+        return inset + (1 - aspectRatio) * (0.5 - inset), inset
+    end
+    return inset, inset
 end

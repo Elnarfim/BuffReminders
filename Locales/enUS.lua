@@ -87,6 +87,9 @@ english["Loadout.Scope.Battleground"] = "Battleground"
 english["Loadout.SpecClass"] = "%s %s"
 english["Loadout.Require.Gear"] = "Equipment set"
 english["Loadout.Require.Talent"] = "Talent"
+-- Requirement dropdown only. The check asks whether the player knows the spell,
+-- so it also covers granted passives. "Talent" above stays short for the rule list.
+english["Loadout.Require.TalentOption"] = "Talent or known spell"
 english["Loadout.Require.Loadout"] = "Talent loadout"
 -- On-icon "what's wrong" tags (newline wraps them to two lines on the icon)
 english["Loadout.Tag.Gear"] = "WRONG\nGEAR"
@@ -114,6 +117,7 @@ english["Overlay.NoFamiliar"] = "NO\nFAMILIAR"
 english["Overlay.DropWell"] = "DROP\nWELL"
 english["Overlay.DropTable"] = "DROP\nTABLE"
 english["Overlay.Repair"] = "REPAIR\nGEAR"
+english["Overlay.RepairLabel"] = "REPAIR"
 english["Overlay.NoGrim"] = "NO\nGRIM"
 english["Overlay.BurningRush"] = "RUSH"
 english["Overlay.NoRite"] = "NO\nRITE"
@@ -329,10 +333,34 @@ english["Tab.DisplayBehavior"] = "Display/Behavior"
 
 -- Sidebar groups
 english["Sidebar.AddonSettings"] = "Addon Settings"
-english["Sidebar.BuffsReminders"] = "Buffs & Reminders"
+english["Sidebar.Buffs"] = "Buffs"
 english["Sidebar.Appearance"] = "Appearance"
 english["Sidebar.Display"] = "Display"
 english["Sidebar.Alerts"] = "Alerts"
+-- Externals (present-based display)
+english["Externals.Title"] = "External Buffs"
+english["Externals.PageNote"] =
+    "The game marks these buffs secret and draws the icons itself, so the addon never sees their data. That is why they stay visible in combat - and why only buffs on you can be shown, with nothing to customize beyond size and spacing."
+english["Externals.Enable"] = "Enable external buffs"
+english["Externals.EnableTooltip"] = "Show a row of icons for the buffs selected below while they are active on you."
+english["Externals.DisabledReason"] = "Enable external buffs first."
+english["Externals.EnableElsewhere"] = "Enable external buffs on the Buffs > External Buffs page first."
+english["Externals.Defensives"] = "External Defensives"
+english["Externals.GroupBuffs"] = "Group Buffs"
+english["Externals.Movement"] = "Movement"
+english["Externals.Aggro"] = "Threat Redirects"
+english["Externals.Augmentation"] = "Augmentation"
+-- Groups Bloodlust/Heroism/Time Warp/Fury of the Aspects/Primal Rage/Ancient Hysteria
+english["Externals.Bloodlust"] = "Bloodlust"
+-- Groups the three barriers Mass Barrier casts on allies (Ice/Blazing/Prismatic)
+english["Externals.MassBarrier"] = "Mass Barrier"
+-- Groups Blessing of Summer/Autumn/Winter/Spring
+english["Externals.BlessingOfSeasons"] = "Blessing of the Seasons"
+english["Externals.DurationSize"] = "Countdown size"
+english["Externals.Appearance"] = "Appearance"
+english["Externals.AppearanceNote"] =
+    "While these buffs are secret the game forbids restyling their icons, so changes made in combat apply as soon as you leave it. Unlock the frames to drag the row."
+english["Externals.MasqueNote"] = "Masque cannot skin these icons: their size reads back as a secret value."
 
 -- Page titles
 english["Page.General"] = "General"
@@ -342,7 +370,8 @@ english["Page.ChatRequests"] = "Chat Requests"
 english["Page.Layout"] = "Layout"
 english["Page.Categories"] = "Categories"
 english["Page.Profiles"] = "Profiles"
-english["Page.AllBuffs"] = "All Buffs"
+english["Page.Reminders"] = "Reminders"
+english["Page.CustomAnchors"] = "Custom Anchors"
 
 -- Per-category page section headers
 english["Section.Tracking"] = "Tracking"
@@ -366,6 +395,9 @@ english["Options.Preview"] = "Preview"
 english["Options.GlobalDefaults"] = "Global Defaults"
 english["Options.GlobalDefaults.Note"] = "(All categories inherit these unless overridden with a custom appearance)"
 english["Options.Default"] = "Default"
+english["Options.Text"] = "Text"
+english["Options.Text.Note"] =
+    "(Size and color can be overridden per category; font, outline and position always apply everywhere)"
 english["Options.Font"] = "Font"
 english["Options.TextOutline"] = "Outline"
 english["Options.TextOutline.None"] = "None"
@@ -484,6 +516,9 @@ english["Options.TextPositions"] = "Text"
 english["Options.TextPositions.Zone"] = "Position"
 english["Options.TextPositions.OffsetX.Short"] = "X"
 english["Options.TextPositions.OffsetY.Short"] = "Y"
+english["Options.TextPositions.MainText"] = "Main text"
+english["Options.TextPositions.MainText.Note"] =
+    "Position of the big text on the icon - group counts like 17/20, countdowns, and labels like NO FLASK."
 english["Options.TextPositions.StackCount"] = "Stack count"
 english["Options.TextPositions.StatLabel"] = "Stat label"
 english["Options.TextPositions.Badge"] = "Badge (H / F)"
@@ -650,30 +685,16 @@ english["Options.Layout"] = "Layout"
 english["Options.SplitFrame"] = "Split into separate frame"
 english["Options.SplitFrame.Desc"] = "Display this category's buffs in a separate, independently movable frame"
 
--- Display Order section (Defaults page) - drives the same priority field the
--- old per-category slider wrote, but as a single ordered list across all
--- non-split categories.
+-- Stacking Order section (Layout page): one ordered list across all non-split
+-- categories, driving each category's priority field.
 english["Options.DisplayOrder"] = "Stacking Order"
-english["Options.DisplayOrder.Moved"] = "Looking for Display Order? It moved to the Layout page."
 
 -- Layout page
-english["Layout.PositionFrames"] = "Position Frames"
-english["Layout.PositionFrames.Note"] =
-    "Unlock to get drag handles in-game. Click a handle to type exact coordinates; drag to reposition. Anchored frames keep their anchor while dragging."
-english["Layout.SplitFrames"] = "Split Frames"
-english["Layout.SplitFrames.Note"] =
-    "Categories split into their own independently positioned frame. Split a category from the Layout section of its page."
-english["Layout.NoSplitFrames"] = "No categories are split into their own frame."
 english["Layout.DetachedIcons"] = "Detached Icons"
 english["Layout.NoDetached"] =
-    'No detached icons. Detach a buff from its settings panel on the All Buffs page ("Own frame").'
-english["Layout.AnchorTargets"] = "Anchor Targets"
-english["Layout.AnchorFrame.Desc"] = "Attach this frame to another frame instead of a fixed screen position."
-english["Layout.AnchorPoint.Desc"] = "Which corner or edge of the anchor frame to attach to."
+    'No detached icons. Detach a buff from its settings panel on the Reminders page ("Own frame").'
 english["Layout.FrameNotFound"] =
     "This frame doesn't currently exist in-game.\nIt will appear in anchor dropdowns once its addon creates it."
-english["DisabledReason.AnchorPoint"] =
-    "Pick an anchor frame first - anchor points only apply when anchored to a frame."
 
 -- Buff panel (uniform per-buff settings dialog)
 english["BuffPanel.SettingsLink"] = "Settings"
@@ -754,6 +775,8 @@ english["Options.Override.Appearance.Desc"] =
     "Override the global appearance defaults for this category.\nWhile off, the controls below show the inherited values from the Defaults page."
 english["Options.Override.Glow.Desc"] =
     "Override the global glow settings for this category.\nWhile off, the controls below show the inherited values from the Defaults page."
+english["Options.Override.Externals.Desc"] =
+    "Override the global appearance defaults for these icons.\nWhile off, the size, zoom, border and spacing controls show the inherited values from the Defaults page. Countdown size and direction are always separate."
 english["Options.Customize"] = "Customize"
 english["Options.ResetPosition"] = "Reset Position"
 english["Options.MasqueNote"] = "Zoom and Border settings are managed by Masque"
@@ -997,6 +1020,8 @@ english["Options.SupportKofi.Desc"] = "Enjoying BuffReminders?\nConsider support
 -- ============================================================================
 english["Options.CustomAnchorFrames.Desc"] =
     "Add global frame names to the anchor dropdown (e.g. MyAddon_PlayerFrame). \nFrames that don't exist in-game are silently skipped."
+english["Options.CustomAnchorFrames.PickNote"] =
+    "Every frame you pick with the Pick button lands here, so it stays one click away."
 english["Options.Add"] = "Add"
 english["Options.New"] = "New"
 english["Options.ResetToDefaults"] = "Reset to Defaults"
@@ -1018,6 +1043,28 @@ english["Content.ClickToFilter"] = "Click to filter by %s difficulty"
 -- Mover labels
 english["Mover.AnchorGrowth"] = "Anchor · Growth %s"
 english["Mover.AnchorGrowthFrame"] = "Anchor · Growth %s · > %s"
+-- Anchor dropdown: "%s %s" takes the owner (Blizzard, Cell, ...) and the role.
+-- "%s (%s)" takes the role and the frame's own name, for a discovered unit frame.
+english["Mover.AnchorFrameEntry"] = "%s %s"
+english["Mover.UnitFrameEntry"] = "%s (%s)"
+english["Mover.Role.Player"] = "Player Frame"
+english["Mover.Role.Target"] = "Target Frame"
+english["Mover.Role.Focus"] = "Focus Frame"
+english["Mover.Role.Pet"] = "Pet Frame"
+english["Mover.Role.Party"] = "Party Frames"
+english["Mover.Role.Raid"] = "Raid Frames"
+english["Mover.Role.Boss"] = "Boss Frame"
+english["Mover.Frame.Minimap"] = "Minimap"
+english["Mover.Frame.ObjectiveTracker"] = "Objective Tracker"
+english["Mover.PickFrame"] = "Pick"
+english["Mover.PickHint"] = "Point at a frame and click it. Right click or press Escape to cancel."
+english["Mover.PickNone"] = "No frame under the cursor"
+english["Mover.Frame.EssentialCooldowns"] = "Essential Cooldowns"
+english["Mover.Frame.UtilityCooldowns"] = "Utility Cooldowns"
+english["Mover.Frame.TrackedBuffIcons"] = "Tracked Buff Icons"
+english["Mover.Frame.TrackedBuffBars"] = "Tracked Buff Bars"
+english["Mover.AnchorHidden"] = "(hidden)"
+english["Mover.AnchorNotFound"] = "(not found)"
 
 -- Pet labels
 english["Pet.SpiritBeast"] = "Spirit Beast"
@@ -1029,7 +1076,7 @@ english["Appearance.Zoom"] = "Zoom"
 english["Appearance.Border"] = "Border"
 english["Appearance.Spacing"] = "Spacing"
 english["Appearance.Alpha"] = "Alpha"
-english["Appearance.Text"] = "Text"
+english["Appearance.Text"] = "Text size"
 
 -- Slider tooltip
 english["Component.AdjustValue"] = "Adjust value"

@@ -57,6 +57,31 @@ BR.defaults = {
         hide = true,
     },
 
+    -- Externals: a present-based display, the inverse of the reminder pipeline.
+    -- Rendered by Blizzard via an AuraContainer, so it works for auras the addon is
+    -- not allowed to read (docs/SecretValues.md #3.9). Purely additive schema -
+    -- DeepCopyDefault seeds it, so no migration is needed.
+    externals = {
+        enabled = false,
+        -- false = the appearance keys below inherit from the global `defaults`
+        -- table (resolved by BR.GetExternalSetting) and their stored values stay
+        -- dormant. Countdown size and direction have no `defaults` counterpart,
+        -- so they always come from this table.
+        useCustomAppearance = false,
+        -- anchorFrame/anchorPoint stay nil until the mover popup sets them, and nil
+        -- means screen placement - the same contract the categories use.
+        position = { point = "CENTER", x = 0, y = -180 },
+        iconSize = 40,
+        -- iconWidth: nil = same as iconSize (square). Set explicitly for non-square icons.
+        iconZoom = 0,
+        borderSize = 2,
+        iconAlpha = 1,
+        spacing = 4, -- absolute px (Blizzard's elementSpacing), not an iconSize multiplier
+        durationSize = 16, -- countdown text, centered on the icon
+        growDirection = "RIGHT", -- "LEFT" or "RIGHT"; the flow layout has no centered growth
+        entries = {}, -- [Data/Externals.lua key] = true
+    },
+
     -- Global defaults (inherited by categories unless overridden)
     ---@type DefaultSettings
     defaults = {

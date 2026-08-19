@@ -233,8 +233,7 @@ local LCG_FRAME_KEYS = {
 -- resolved (frame shown but not yet anchored by PositionMainContainer), LCG would
 -- size all glow textures to 0×0. We stash the requested args on the host and let
 -- WoW's OnSizeChanged event fire the dispatch the moment the layout pass settles -
--- without waiting on the addon's throttled UpdateDisplay tick. Mirrors the
--- WeakAuras Glow sub-region pattern (UpdateSize -> SetVisible(true)).
+-- without waiting on the addon's throttled UpdateDisplay tick.
 local function FlushPending(host)
     if host:GetWidth() < 1 or host:GetHeight() < 1 then
         return

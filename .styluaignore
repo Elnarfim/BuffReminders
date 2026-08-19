@@ -1,2 +1,6 @@
 Libs/
 .ignored/
+# Translator-maintained files. stylua measures CJK strings as single-width and
+# re-wraps lines that are already inside the column limit on screen, so every
+# run churns lines no one edited.
+Locales/

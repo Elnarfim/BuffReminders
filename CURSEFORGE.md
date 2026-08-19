@@ -24,6 +24,10 @@ Choose which buffs you want to track and how you want them to look.
 
 ![BuffReminders Settings - Options](https://github.com/zerbiniandrea/BuffReminders/blob/main/images/settings-options.png?raw=true)
 
+## External Buffs
+
+BuffReminders can also show the buffs you *receive*: Power Infusion, Innervate, Bloodlust, external defensives like Pain Suppression, and Augmentation Evoker buffs. The game draws these icons itself, so they stay visible in combat, in raid encounters, and in Mythic+. Enable the feature under `/br` > Buffs > External Buffs.
+
 ## Limitations
 
 - **Buff counts** only include group members who are alive, connected, visible (not phased), and allied. Dead, offline, or phased players are excluded. In open world, opposing-faction players are not counted.
