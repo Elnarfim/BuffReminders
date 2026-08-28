@@ -3,14 +3,9 @@ local _, BR = ...
 -- ============================================================================
 -- LOCALIZATION (English - Default)
 -- ============================================================================
--- This file defines all user-facing strings for BuffReminders.
--- Keys use PascalCase dot notation: "Section.SubSection.Key"
--- Missing translations fall back to English automatically.
 
--- English strings (used as fallback for missing translations)
 local english = {}
 
--- L reads from the main table first, falls back to english table
 local L = setmetatable({}, {
     __index = english,
 })
@@ -75,8 +70,6 @@ english["Loadout.CombatBlocked"] = "Can't change gear or talents in combat."
 english["Loadout.Instances"] = "%d instances"
 english["Loadout.LimitRaids"] = "Only specific raids"
 english["Loadout.LimitDungeons"] = "Only specific dungeons"
--- Content scope (you can't swap gear/talents once a key or match starts, so the
--- rule only needs the content you're in - no per-difficulty granularity).
 english["Loadout.Scope.OpenWorld"] = "Open World"
 english["Loadout.Scope.Raid"] = "Raid"
 english["Loadout.Scope.Dungeon"] = "Dungeon"
@@ -87,8 +80,6 @@ english["Loadout.Scope.Battleground"] = "Battleground"
 english["Loadout.SpecClass"] = "%s %s"
 english["Loadout.Require.Gear"] = "Equipment set"
 english["Loadout.Require.Talent"] = "Talent"
--- Requirement dropdown only. The check asks whether the player knows the spell,
--- so it also covers granted passives. "Talent" above stays short for the rule list.
 english["Loadout.Require.TalentOption"] = "Talent or known spell"
 english["Loadout.Require.Loadout"] = "Talent loadout"
 -- On-icon "what's wrong" tags (newline wraps them to two lines on the icon)
@@ -182,7 +173,7 @@ english["Badge.Hearty"] = "H"
 english["Badge.Fleeting"] = "F"
 
 -- ============================================================================
--- BUFF NAMES (used in Options panel checkboxes and sound notification list)
+-- BUFF NAMES
 -- ============================================================================
 -- Raid
 english["Buff.ArcaneIntellect"] = "Arcane Intellect"
@@ -339,28 +330,68 @@ english["Sidebar.Display"] = "Display"
 english["Sidebar.Alerts"] = "Alerts"
 -- Externals (present-based display)
 english["Externals.Title"] = "External Buffs"
-english["Externals.PageNote"] =
-    "The game marks these buffs secret and draws the icons itself, so the addon never sees their data. That is why they stay visible in combat - and why only buffs on you can be shown, with nothing to customize beyond size and spacing."
-english["Externals.Enable"] = "Enable external buffs"
-english["Externals.EnableTooltip"] = "Show a row of icons for the buffs selected below while they are active on you."
-english["Externals.DisabledReason"] = "Enable external buffs first."
-english["Externals.EnableElsewhere"] = "Enable external buffs on the Buffs > External Buffs page first."
+english["Externals.PageNote"] = "The game draws these icons, so they stay visible in combat. Only buffs on you can be shown."
+english["Externals.NoneTracked"] = "Track at least one buff on the Buffs > External Buffs page first."
+english["Externals.Sound"] = "Sound alert"
+english["Externals.Sound.Tooltip"] =
+    "Every buff you track plays this sound when it lands on you. Select None for silence.|nTo give one buff its own sound, click the link at the end of its row.|nA change during a boss fight applies when the fight ends."
+english["Externals.Sound.Hint"] = "Each buff can override this from its row."
+english["Externals.Sound.Link"] = "Sound"
+english["Externals.Sound.Silent"] = "Silent"
+english["Externals.Sound.Change"] = "Click to change it."
+english["Externals.Sound.Plays"] = "The game plays %s when this buff lands on you."
+english["Externals.Sound.Silenced"] = "This buff plays no sound."
+english["Externals.Sound.SilentByDefault"] = "This buff lands too often for the shared sound. Override it to add one."
+english["Externals.Sound.NoAlert"] = "No sound alert is set. Click to give this buff its own sound."
+english["Externals.Sound.Override.Desc"] =
+    "Give this buff its own sound. While this is off, the buff plays the sound alert of the page."
+english["DisabledReason.SoundOverride"] = "Turn on Override to select a sound for this buff."
+english["Externals.SelectAll"] = "All"
+english["Externals.SelectAll.Tooltip"] = "Track every buff in this group."
+english["Externals.SelectNone"] = "None"
+english["Externals.SelectNone.Tooltip"] = "Stop tracking every buff in this group."
 english["Externals.Defensives"] = "External Defensives"
 english["Externals.GroupBuffs"] = "Group Buffs"
 english["Externals.Movement"] = "Movement"
 english["Externals.Aggro"] = "Threat Redirects"
 english["Externals.Augmentation"] = "Augmentation"
--- Groups Bloodlust/Heroism/Time Warp/Fury of the Aspects/Primal Rage/Ancient Hysteria
 english["Externals.Bloodlust"] = "Bloodlust"
--- Groups the three barriers Mass Barrier casts on allies (Ice/Blazing/Prismatic)
 english["Externals.MassBarrier"] = "Mass Barrier"
--- Groups Blessing of Summer/Autumn/Winter/Spring
 english["Externals.BlessingOfSeasons"] = "Blessing of the Seasons"
 english["Externals.DurationSize"] = "Countdown size"
 english["Externals.Appearance"] = "Appearance"
 english["Externals.AppearanceNote"] =
     "While these buffs are secret the game forbids restyling their icons, so changes made in combat apply as soon as you leave it. Unlock the frames to drag the row."
+english["Externals.ShowSwipe"] = "Show duration swipe"
+english["Externals.ShowSwipe.Desc"] =
+    "Draw a dark sweep over the icon. The sweep uncovers the icon as the buff runs out."
+english["Externals.ShowTooltips"] = "Show tooltips"
+english["Externals.ShowTooltips.Desc"] =
+    "Show the game's buff tooltip when the mouse is on an icon. The icons never take clicks, only mouse movement."
 english["Externals.MasqueNote"] = "Masque cannot skin these icons: their size reads back as a secret value."
+english["Externals.Sound.Claimed"] = "%s already plays a sound for this spell ID."
+-- Externals: the player's own entries
+english["Externals.Custom"] = "Your Buffs"
+english["Externals.Custom.SpellID"] = "Spell ID"
+english["Externals.Custom.Name"] = "Name"
+english["Externals.Custom.Add"] = "Add"
+english["Externals.Custom.Edit"] = "Edit"
+english["Externals.Custom.Delete"] = "Delete this buff"
+english["Externals.Custom.Empty"] = "No buffs of your own yet."
+english["Externals.Custom.SpellIDs"] = "Spell IDs"
+english["Externals.Custom.RemoveID"] = "Remove this spell ID"
+english["Externals.Custom.Hint"] =
+    "Use the aura ID from the buff tooltip, not the ability ID. Commas group several IDs into one icon."
+english["Externals.Custom.Unknown"] = "Unknown ID %d"
+english["Externals.Custom.AlreadyIn"] = "already in %s"
+english["Externals.Custom.RowTooltip"] = "Spell IDs: %s"
+english["Externals.Custom.Grab"] = "my buffs"
+english["Externals.Custom.GrabTitle"] = "Buffs on you now"
+english["Externals.Custom.Grab.Tooltip"] =
+    "Pick from the buffs on you now that no entry covers. The one you pick fills the field."
+english["Externals.Custom.GrabEmpty"] =
+    "No new buffs on you. The game hides your buffs in combat, in boss fights and in keystone runs."
+english["Externals.Custom.GrabMore"] = "and %d more"
 
 -- Page titles
 english["Page.General"] = "General"
@@ -383,9 +414,6 @@ english["DisabledReason.PvPDisabled"] = "This category is hidden in PvP entirely
 -- ============================================================================
 -- OPTIONS: SOUND ALERTS
 -- ============================================================================
--- Sound alerts are set per buff in the buff panel (BuffPanel); the sound
--- dropdown + Preview button live there. The old standalone Sounds page and
--- add/edit dialog were retired, so only the in-panel labels remain.
 english["Options.Sound.Preview"] = "Preview"
 english["Options.Preview"] = "Preview"
 
@@ -467,10 +495,10 @@ english["Options.Visibility"] = "Visibility"
 -- ============================================================================
 english["Options.Healthstone.LowStock"] = "Warn when low"
 english["Options.Healthstone.LowStock.Desc"] =
-    "Show a soft warning when you have healthstones but not enough. Missing healthstones (0) are always tracked regardless of this setting."
-english["Options.Healthstone.Threshold"] = "Warn when having"
+    "Show a soft warning when your healthstone has few charges left. A missing healthstone always shows. This setting does not change that."
+english["Options.Healthstone.Threshold"] = "Warn at charges"
 english["Options.Healthstone.Threshold.Desc"] =
-    "Show a low-stock warning when you have this many healthstones or fewer.\n\n|cffffcc001:|r Warn when you have exactly 1.\n|cffffcc002:|r Warn when you have 1 or 2."
+    "Show the low-stock warning when your healthstone has this many charges or fewer.\n\n|cffffcc001:|r Warn on the last charge.\n|cffffcc002:|r Warn on the last two charges."
 english["Options.Repair.Threshold"] = "Warn below"
 english["Options.Repair.Threshold.Desc"] =
     "Show the repair reminder when any equipped item's durability drops below this percentage."
@@ -537,8 +565,11 @@ english["Options.TextPositions.Align.Right"] = "Right"
 english["Options.ClickToCast"] = "Click to cast"
 english["Options.ClickToCast.DescFull"] =
     "Make buff icons clickable to cast the corresponding spell (out of combat only). Only works for spells your character can cast."
+english["Options.RightClickSnooze"] = "Right-click to snooze"
+english["Options.RightClickSnooze.Desc"] =
+    "Right-click a consumable icon to snooze its reminders. If this option is off, right-click uses the consumable, like left-click."
 english["Options.ClickToCast.SnoozeNote"] =
-    "Right-click a consumable to snooze its reminders until the next loading screen (|cFFFFD100/br snooze|r always works)."
+    "A snooze hides the consumable reminders until the next loading screen. The |cFFFFD100/br snooze|r command always works."
 english["Options.HoverHighlight"] = "Hover highlight"
 english["Options.HoverHighlight.Desc"] = "Show a subtle highlight when hovering over clickable buff icons."
 english["Options.RequestBuffInChat"] = "Request missing buffs in chat"
@@ -550,7 +581,7 @@ english["Options.ChatRequest.Cooldown.Desc"] =
 english["Options.ChatRequest.Cooldown.Hint"] = "Requests not showing up in chat? Turn this off."
 english["Options.ChatRequest.ResetAll"] = "Reset All"
 english["ChatRequests.PerBuffMessages"] = "Per-buff messages"
--- Chat request messages (keyed by buff.key, sent as-is via SendChatMessage)
+-- Chat request messages
 -- EU/US translators: leave untranslated so chat messages stay in English.
 -- Asian translators: translate these so chat messages match your locale.
 english["ChatRequest.intellect"] = "Arcane Intellect buff pls"
@@ -685,8 +716,6 @@ english["Options.Layout"] = "Layout"
 english["Options.SplitFrame"] = "Split into separate frame"
 english["Options.SplitFrame.Desc"] = "Display this category's buffs in a separate, independently movable frame"
 
--- Stacking Order section (Layout page): one ordered list across all non-split
--- categories, driving each category's priority field.
 english["Options.DisplayOrder"] = "Stacking Order"
 
 -- Layout page
@@ -696,51 +725,20 @@ english["Layout.NoDetached"] =
 english["Layout.FrameNotFound"] =
     "This frame doesn't currently exist in-game.\nIt will appear in anchor dropdowns once its addon creates it."
 
--- Buff panel (uniform per-buff settings dialog)
+-- Buff panel
 english["BuffPanel.SettingsLink"] = "Settings"
 english["BuffRow.SettingsLink.Tooltip"] = "Sound alert, show mode, and detach options for this buff."
--- Row captions: the gold "option: value" line under buffs with their own
--- options (All Buffs page). %s is the current value. The trailing "clickable
--- link" chevron is appended in code (_BuffRow.lua), not stored here, so
--- translators never handle the raw escape.
-english["BuffRow.Caption.Poisons"] = "Poisons: %s"
-english["BuffRow.Caption.PoisonsUnset"] = "Choose which poisons you use"
-english["BuffRow.Caption.Runeforge"] = "Runeforge: %s"
-english["BuffRow.Caption.RuneforgeUnset"] = "Set your runeforge per spec"
-english["BuffRow.Caption.Healthstone"] = "Low-stock alert: below %d"
-english["BuffRow.Caption.Repair"] = "Reminds below %d%% durability"
-english["BuffRow.Caption.HealthstoneOff"] = "Low-stock alert: off"
-english["BuffRow.Caption.SoulstoneHidden"] = "Hidden while on cooldown"
-english["BuffRow.Caption.SoulstoneShown"] = "Shown while on cooldown"
-english["BuffRow.Caption.SoulstonePinned"] = "Always cast on %s"
-english["BuffRow.Caption.BronzeHidden"] = "Hidden in combat"
-english["BuffRow.Caption.BronzeShown"] = "Shown in combat"
-english["BuffRow.Caption.TravelIgnored"] = "Travel Form ignored"
-english["BuffRow.Caption.TravelCounts"] = "Travel Form counts as wrong"
-english["BuffRow.Caption.PetPassiveCombat"] = "Warns in combat only"
-english["BuffRow.Caption.PetPassiveAlways"] = "Warns anywhere"
-english["BuffRow.Caption.FelOn"] = "Uses Fel Domination"
-english["BuffRow.Caption.FelOff"] = "Fel Domination off"
-english["BuffRow.Caption.FoodTimerOn"] = "Shows expiry timer"
-english["BuffRow.Caption.FoodTimerOff"] = "No expiry timer"
-english["BuffRow.Caption.MageFoodAll"] = "Shows in all instances"
-english["BuffRow.Caption.MageFoodDungeon"] = "Dungeons only"
-english["BuffRow.Caption.MageFoodRaid"] = "Raids only"
--- Trailing link on the All Buffs row: a gold "Extras" for any buff with its own
--- options (vs the gray "Settings" for the rest); the specific option is named
--- inside the drawer. The two rich editors keep their name for the drawer's
--- "Edit X" door.
 english["BuffRow.Extras"] = "Extras"
 english["BuffRow.Option.Poisons"] = "Poisons"
 english["BuffRow.Option.Runeforge"] = "Runeforge"
--- Row state glyph tooltips (the small sound / pin markers left of the link).
+-- Row state glyphs
 english["BuffRow.Glyph.Sound"] = "Sound alert"
 english["BuffRow.Glyph.Detached"] = "Detached icon"
 english["BuffRow.Glyph.Detached.Desc"] =
     "This icon is placed freely on screen. Manage it in the buff's Settings or on the Layout page."
 english["BuffRow.Glyph.New"] = "New buff"
 english["BuffRow.Glyph.New.Desc"] = "Added in the latest update."
--- Drawer door to a buff's focused editor (poison/runeforge). %s = option name.
+-- %s is the option name
 english["BuffPanel.EditOption"] = "Edit %s"
 english["BuffPanel.Show"] = "Show"
 english["BuffPanel.MageFoodContent"] = "Where"
@@ -754,13 +752,13 @@ english["BuffPanel.Detached.Desc"] =
     "Pull this buff out of its category into its own independently positioned frame.\nPosition it from the Layout page or by unlocking frames."
 english["BuffPanel.CasterAlways"] = "Warlocks always see it"
 english["BuffPanel.CasterAlways.Desc"] =
-    "Warlocks (who provide this) always see the reminder; everyone else only on ready check."
+    "Warlocks always see the reminder; everyone else only on ready check."
 english["DisabledReason.NotDetached"] = "This buff isn't detached - it sits inside its category frame."
 english["DisabledReason.CasterAlways"] = 'Only applies in ready-check mode. Switch "Show" back to ready check first.'
 english["Options.DisplayOrder.Note"] =
     "How categories stack inside the combined frame, from top to bottom. Split categories live in their own frames and don't participate."
 
--- Detached Icons (inline manager on the Layout page).
+-- Detached Icons
 english["DetachedIcons.Reattach"] = "Return to category"
 english["DetachedIcons.ResetPos"] = "Reset position"
 
@@ -918,22 +916,34 @@ english["CustomBuff.AddButton"] = "+ Add Custom Buff"
 english["CustomBuff.Empty"] = "No custom buffs yet. Add one below."
 english["CustomBuff.RestrictedNote"] =
     "Hidden in combat, boss encounters and Mythic+ - WoW blocks aura reads there. Bar glow detection works in combat."
-english["CustomBuff.SpellIDs"] = "Spell IDs:"
-english["CustomBuff.Lookup"] = "Lookup"
+english["CustomBuff.SpellIDs"] = "Spell IDs"
 english["CustomBuff.AddSpellID"] = "+ Add Spell ID"
-english["CustomBuff.Name"] = "Name:"
-english["CustomBuff.Text"] = "Text:"
-english["CustomBuff.LineBreakHint"] = "(use \\n for line break)"
-english["CustomBuff.Appearance"] = "APPEARANCE"
-english["CustomBuff.BuffTracking"] = "BUFF TRACKING"
-english["CustomBuff.Requirements"] = "REQUIREMENTS"
-english["CustomBuff.ShowIn"] = "SHOW IN"
-english["CustomBuff.ClickAction"] = "CLICK ACTION"
+english["CustomBuff.Text"] = "Overlay text"
+english["CustomBuff.LineBreakHint"] = "Type \\n for a line break."
+
+-- Custom buff dialog tabs
+english["CustomBuff.Tab.Buff"] = "Buff"
+english["CustomBuff.Tab.Rules"] = "Rules"
+english["CustomBuff.Tab.Click"] = "Click"
+
+-- Custom buff dialog section headers
+english["CustomBuff.Section.Track"] = "Spells"
+english["CustomBuff.Section.ShowIcon"] = "Display"
+english["CustomBuff.Section.Who"] = "Character"
+english["CustomBuff.Section.Item"] = "Required item"
+english["CustomBuff.Section.Where"] = "Where it shows"
+english["CustomBuff.Section.OnClick"] = "Click action"
+
+-- Custom buff dialog header
+english["CustomBuff.NamePlaceholder"] = "Name this reminder"
+english["CustomBuff.NoSpellYet"] = "No spell yet - add an ID below"
 
 -- Custom buff mode toggles
 english["CustomBuff.WhenActive"] = "When active"
 english["CustomBuff.WhenMissing"] = "When missing"
 english["CustomBuff.OnlyIfSpellKnown"] = "Only if spell known"
+english["CustomBuff.ShowWhen"] = "Show"
+english["CustomBuff.Expiration.Disabled"] = "The expiration warning applies only to a buff you show when missing."
 
 -- Custom buff class dropdown
 english["Class.Any"] = "Any"
@@ -952,51 +962,56 @@ english["Class.Warlock"] = "Warlock"
 english["Class.Warrior"] = "Warrior"
 
 -- Custom buff fields
-english["CustomBuff.Spec"] = "Spec:"
-english["CustomBuff.Class"] = "Class:"
-english["CustomBuff.RequireItem"] = "Require item:"
+english["CustomBuff.Spec"] = "Spec"
+english["CustomBuff.Class"] = "Class"
+english["CustomBuff.RequireItem"] = "Item ID"
 english["CustomBuff.RequireItem.EquippedBags"] = "Equipped/Bags"
 english["CustomBuff.RequireItem.Equipped"] = "Equipped"
 english["CustomBuff.RequireItem.InBags"] = "In bags"
-english["CustomBuff.RequireItem.Hint"] = "item ID - hide if not found"
-english["CustomBuff.ItemCooldown"] = "Cooldown:"
+english["CustomBuff.ItemCooldown"] = "Cooldown"
 english["CustomBuff.ItemCooldown.Any"] = "Any"
 english["CustomBuff.ItemCooldown.OffCooldown"] = "Off cooldown"
 english["CustomBuff.ItemCooldown.OnCooldown"] = "On cooldown"
+english["CustomBuff.RequireItem.Mode"] = "Location"
+english["CustomBuff.RequireItem.Disabled"] = "Set an item ID first."
 
 -- Bar glow options
 english["CustomBuff.BarGlow.WhenGlowing"] = "Detect when glowing"
 english["CustomBuff.BarGlow.WhenNotGlowing"] = "Detect when not glowing"
 english["CustomBuff.BarGlow.Disabled"] = "Disabled"
-english["CustomBuff.BarGlow"] = "Bar glow:"
+english["CustomBuff.BarGlow"] = "Bar glow"
 english["CustomBuff.BarGlow.Title"] = "Action bar glow fallback"
 english["CustomBuff.BarGlow.Desc"] =
     "Fallback detection using action bar spell glows during M+/PvP/combat when buff API is restricted. Disable if you only want buff presence tracking."
 
 -- Ready check / level
 english["CustomBuff.ReadyCheckOnly"] = "Only on ready check"
-english["CustomBuff.Level"] = "Level:"
+english["CustomBuff.Level"] = "Level"
 english["CustomBuff.Level.Any"] = "Any level"
 english["CustomBuff.Level.Max"] = "Max level only"
 english["CustomBuff.Level.BelowMax"] = "Below max level"
+english["CustomBuff.Content"] = "Content"
 
 -- Click action
 english["CustomBuff.Action.None"] = "None"
 english["CustomBuff.Action.Spell"] = "Spell"
 english["CustomBuff.Action.Item"] = "Item"
 english["CustomBuff.Action.Macro"] = "Macro"
-english["CustomBuff.Action.OnClick"] = "On click:"
+english["CustomBuff.Action.OnClick"] = "Runs"
 english["CustomBuff.Action.Title"] = "Click action"
 english["CustomBuff.Action.Desc"] =
     "What happens when you click this buff icon. Spell casts a spell, Item uses an item, Macro runs a macro command."
 english["CustomBuff.Action.MacroHint"] = "e.g. /use item:12345\\n/use 13"
+english["CustomBuff.Action.SpellID"] = "Spell ID"
+english["CustomBuff.Action.ItemID"] = "Item ID"
+english["CustomBuff.Action.MacroText"] = "Macro"
+english["CustomBuff.Action.SpellHint"] = "This can differ from the tracked spell. Track the buff, cast the ability."
 
 -- Save/Cancel/Delete
 english["CustomBuff.Save"] = "Save"
-english["CustomBuff.ValidateError"] = "Please validate at least one spell ID"
+english["CustomBuff.ValidateError"] = "Add one valid spell ID to save."
 
 -- Custom buff status
-english["CustomBuff.InvalidID"] = "Invalid ID"
 english["CustomBuff.NotFound"] = "Not found"
 english["CustomBuff.NotFoundRetry"] = "Not found (try again)"
 english["CustomBuff.Error"] = "Error:"
@@ -1089,7 +1104,7 @@ english["Options.GlobalTag.Title"] = "Applies everywhere"
 english["Options.GlobalTag.Desc"] =
     "This setting is stored once for the whole addon.\nChanging it here changes it for every category, not just this one."
 
--- Disabled-control explanations (shown on hover while the control is disabled)
+-- Disabled-control explanations
 english["Component.DisabledReason.Title"] = "Why is this disabled?"
 english["DisabledReason.GrowDirection"] =
     'Grow direction needs this category in its own frame.\nEnable "Split into separate frame" in the Layout section first.'
@@ -1103,6 +1118,7 @@ english["DisabledReason.LevelingOverride"] =
 english["DisabledReason.ExpiringInCombat"] =
     '"In combat" hiding is enabled, so everything is already hidden during combat.'
 english["DisabledReason.HealthstoneThreshold"] = 'Enable "Warn when low" first.'
+english["DisabledReason.ClickToCast"] = 'Turn on "Click to cast" first.'
 english["DisabledReason.UseDefaultThreshold"] = 'Uncheck "Use default threshold" to set a category-specific value.'
 
 -- Direction labels

@@ -25,8 +25,8 @@ local mmax = math.max
 local abs = math.abs
 local wipe = wipe
 
----Build the tab body. The frame's height is set on every rebuild; onResize
----notifies the page so it can grow or shrink the scroll content.
+---Build the tab body. Every rebuild sets the frame height. BuildTab then calls
+---onResize, so the page can grow or shrink the scroll content.
 local function BuildTab(frame, contentWidth, onResize)
     local layout = Components.VerticalLayout(frame, { x = COL_PADDING, y = PAGE_TOP_PADDING })
 
@@ -81,8 +81,8 @@ local function BuildTab(frame, contentWidth, onResize)
             if exists then
                 text:SetText(name)
             else
-                -- Flag unresolvable names instead of letting them silently
-                -- never show up in the anchor dropdowns.
+                -- An unresolvable name never appears in the anchor dropdowns.
+                -- The marker makes that visible.
                 text:SetText(name .. " |cffe0b34d!|r")
                 row:EnableMouse(true)
                 row:SetScript("OnEnter", function()
@@ -124,9 +124,8 @@ local function BuildTab(frame, contentWidth, onResize)
     addBtn:SetSize(50, 22)
     addBtn:SetPoint("LEFT", addInput, "RIGHT", 6, 0)
 
-    -- Pointing at a frame is the only way to learn its name without /framestack,
-    -- so the list that holds typed names offers it too. The panel steps aside for
-    -- the pick: it covers the middle of the screen, where the frames are.
+    -- The panel hides for the pick. It covers the middle of the screen, where the
+    -- target frames are.
     local pickBtn = CreateButton(addRow, L["Mover.PickFrame"], function()
         BR.Options.Hide()
         BR.Movers.PickFrame(function(name)
@@ -149,12 +148,11 @@ local function BuildTab(frame, contentWidth, onResize)
 
     Rebuild()
 
-    -- A name can arrive from the mover popup as well as from this tab, so the list
-    -- follows the data rather than the button that changed it.
+    -- A name can arrive from the mover popup as well as from this tab. The list
+    -- follows the data, not the button that changed it.
     BR.CallbackRegistry:RegisterCallback("CustomAnchorsChanged", Rebuild)
 
-    -- Re-render on show so a profile switch is reflected the next time the
-    -- tab is visible.
+    -- A profile switch replaces the list, so the tab renders again on show.
     tinsert(BR.RefreshableComponents, {
         Refresh = function()
             if frame:IsVisible() then

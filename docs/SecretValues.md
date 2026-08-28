@@ -382,6 +382,53 @@ Mechanics confirmed by reading `Blizzard_AuraContainer/` source at tag `12.1.0`:
   buffs on assistable units, and harmful buffs on non-assistable units."_ The player is
   assistable, so `"HELPFUL"` + `includeSpellIDs` on `"player"` is allowed. A **debuff on
   yourself is not** - which is why this can never become a debuff-reminder path.
+- **Assistability is re-checked at RUNTIME, and the check fails OPEN.** The rule above is not
+  only a declaration-time validation.
+  `AuraContainerUtil.CanApplyIdentityCandidateFilters` + `DoesAuraPassCandidateFilters` apply
+  `includeSpellIDs` to a helpful aura **only while `UnitCanAssist("player", unit)` holds**. When
+  that fails, the spell-ID filter is **skipped entirely** and the aura passes on its filter
+  string alone - so a group asking for one spell renders **every buff on the player**, wearing
+  the tracked buffs' styling.
+
+  Assistability drops in three states, none of them obvious:
+
+  | State | Window |
+  | --- | --- |
+  | Vehicle ride | The whole ride, starting at the **boarding** transition |
+  | Cinematic (in-world cutscenes included) | Start to end |
+  | Faction flip (Pandaren choice) | The transition |
+
+  **`UNIT_FACTION` on the player is the only edge a cinematic fires.** `UNIT_FLAGS` does not.
+  `CINEMATIC_STOP` / `STOP_MOVIE` cover the skip paths only, whose faction restore can order
+  ahead of the edge. So `UNIT_FACTION` is mandatory, and the movie events are a safety net -
+  not the reverse.
+
+  Two traps in the recovery:
+
+  1. **Membership is cached per aura instance**, and `UNIT_AURA` re-parses only what changed. So
+     the degraded parse **outlives** the state that caused it, with no aura edge guaranteed to
+     follow. Something must force a full rebuild.
+  2. **A rebuild taken while still degraded re-bakes the wrong set.** The restore lands a
+     measurable moment _after_ the event, so a probe read on the event still says degraded.
+     Nothing announces the restore, so recovery needs a **settle watch**: probe on a short
+     ticker, act on the first clean read, give up after a couple of seconds and leave the
+     display hidden for the next edge to re-arm.
+
+  The handling is: **suppress, don't render**. Hide the display for the degraded window rather
+  than show the full buff set, then rebuild once assistability is verified back. `UnitCanAssist`
+  reads the local player, whose identity is never secret, but guard it anyway - and fail **open**
+  here (#4.4), against the addon's usual direction: this display exists to run in combat, so an
+  unreadable probe must not blank it for a whole fight. The vehicle branch of the probe uses
+  `UnitUsingVehicle`, not `UnitInVehicle` - it also reads true across the boarding and exiting
+  transitions, where the filters are already degraded.
+- **A live group does not re-parse present auras when its filters change.**
+  `SetAuraGroupCandidateFilters` on an existing group stores the payload, but the auras already
+  on the unit keep the membership they were parsed with (same per-instance cache as above). So
+  ticking a buff that is **already active** shows nothing until that aura is reapplied.
+  `AuraContainerPrivateMixin:OnShow_Intrinsic` calls `UpdateAllAuras`, so wrapping the whole
+  reconfigure in a container `Hide()` / `Show()` pair forces the reparse - and costs nothing,
+  because the container is hidden only for the duration of the config writes. Do this on **every**
+  reconfigure, not only on filter edits.
 - **Empty slots hide themselves.** `CustomAuraButtonPrivateMixin:ApplyVisibility` is
   `self:SetShown(secretwrap(auraData ~= nil))`. No occlusion trick needed, and the shown state
   is secret-wrapped so it can't be read back.
@@ -665,6 +712,17 @@ liberally as the first line of any branch that touches combat data.
   general model are solid; the exact namespace signatures are **verify-before-use**. The
   display primitives are likely never needed (see #2), but `C_RestrictedActions.IsRestricted`
   is worth confirming as a cleaner replacement for the combat/encounter/M+ gating.
+- **`C_Secrets` has the two functions that would replace our derivations - NOT ADOPTED, needs
+  a PTR/live check.** Shipping addons call `C_Secrets.ShouldAurasBeSecret()` and
+  `C_Secrets.ShouldSpellAuraBeSecret(spellID)` today, so the namespace is real and these two
+  members exist. `ShouldAurasBeSecret()` is a first-class answer for restricted-context
+  detection and would retire the combat/encounter/M+ derivation together with the PvP gap
+  below. `ShouldSpellAuraBeSecret(spellID)` is a runtime answer for one spell and would retire
+  the hand-maintained `Data/AuraWhitelist.lua`. Neither is adopted. Confirm the return values
+  match our model in all four restricted contexts before swapping either one in - a wrong
+  answer from `ShouldSpellAuraBeSecret` turns every buff into a false "missing".
+  `HasSecretRestrictions`, `ShouldUnitIdentityBeSecret` and `CanCompareUnitTokens` are also in
+  use in the wild and are worth the same look for #3.8's identity guards.
 - **PvP matches are a restricted context we do not model (open, #3.9).** The 12.1 notes name
   combat, encounters, M+ **and PvP matches**; our `isAuraRestricted` covers the first three, so
   a non-whitelisted buff may read `nil` in a battleground or arena and surface as a false

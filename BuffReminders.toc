@@ -55,6 +55,8 @@ Data\AuraWhitelist.lua
 Data\ConsumableItems.lua
 Data\Pets.lua
 Data\Externals.lua
+Data\AlertSounds.lua
+Core\Sounds.lua
 Core\ChatRequest.lua
 Core\ConsumableMemory.lua
 Core\TargetMemory.lua
@@ -69,6 +71,7 @@ Core\ImportExport.lua
 Display\Movers.lua
 Display\SecureButtons.lua
 Display\AuraTracker.lua
+Display\AuraSounds.lua
 Core\Bootstrap.lua
 Options\Context.lua
 Options\WhatsNew.lua

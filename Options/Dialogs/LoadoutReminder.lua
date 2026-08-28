@@ -16,39 +16,23 @@ local BORDER_R, BORDER_G, BORDER_B = unpack(BR.Colors.Border)
 
 local wipe = wipe
 
-local DIALOG_WIDTH = 440
-local CONTENT_LEFT = 20
+local DIALOG_WIDTH = 396
+local CONTENT_LEFT = 18
 local CONTENT_W = DIALOG_WIDTH - CONTENT_LEFT * 2
--- Shared label column so every labeled row (name / require / target / content)
--- lines its control up at the same x.
-local LABEL_W = 110
-local DROPDOWN_W = 200
+-- Shared label column so every labeled row lines its control up at the same x.
+local LABEL_W = 100
+local DROPDOWN_W = 180
 -- Fixed-height slot that holds all three requirement targets (gear / talent /
 -- loadout); only one is shown at a time, so the form below it never reflows.
 local TARGET_SLOT_H = 44
-local BUTTON_BAR = 44
+local BUTTON_BAR = 40
 
 local loadoutDialog = nil
 
--- Player-facing content tiers. Gear and talents can't be swapped once a key is
--- inserted or a match starts, so per-difficulty granularity buys nothing - the
--- rule only needs to know which content you're in. Arena and Battleground are
--- split out (different setups); Dungeon covers every difficulty including M+.
--- Open World and Delve exist so you can be reminded to swap back to your
--- everyday build after content (both let you freely swap, so reminders there
--- stay actionable).
-local CONTENT_VALUES = { "openWorld", "dungeon", "delve", "raid", "arena", "battleground" }
-local SCOPE_LABEL = {
-    openWorld = "Loadout.Scope.OpenWorld",
-    raid = "Loadout.Scope.Raid",
-    dungeon = "Loadout.Scope.Dungeon",
-    delve = "Loadout.Scope.Delve",
-    arena = "Loadout.Scope.Arena",
-    battleground = "Loadout.Scope.Battleground",
-}
+local LOADOUT_SCOPES = BR.Options.LoadoutScopes
 
--- Monotonic per-session counter appended to the key so two rules of the same
--- require type created within the same second can't collide (time() is 1s res).
+-- Per-session counter in the key. time() has one-second resolution, so two rules
+-- of the same require type in the same second can collide without it.
 local keyCounter = 0
 local function GenerateKey(suffix)
     keyCounter = keyCounter + 1
@@ -70,7 +54,6 @@ local function LayoutSeparator(layout, parent)
     sep:SetWidth(CONTENT_W)
 end
 
--- Delete confirmation dialog for loadout reminders
 StaticPopupDialogs["BUFFREMINDERS_DELETE_LOADOUT"] = {
     text = L["Dialog.DeleteLoadout"],
     button1 = L["Options.Delete"],
@@ -110,11 +93,7 @@ local function Show(existingKey, refreshPanelCallback)
     title:SetPoint("TOP", 0, -12)
     title:SetText(editingRule and L["Loadout.Edit"] or L["Loadout.Add"])
 
-    local closeBtn = CreateFrame("Button", nil, dialog, "UIPanelCloseButton")
-    closeBtn:SetPoint("TOPRIGHT", -2, -2)
-    closeBtn:SetScript("OnClick", function()
-        dialog:Hide()
-    end)
+    BR.Options.Helpers.AddCloseButton(dialog)
 
     -- ---- editable state (read on save) ----------------------------------
     local requireType = (editingRule and editingRule.require) or "gear"
@@ -123,9 +102,9 @@ local function Show(existingKey, refreshPanelCallback)
     local sets = BR.Loadouts.ListEquipmentSets()
     local selectedSetID = editingRule and editingRule.gear and editingRule.gear.setID
 
-    -- loadout (per current spec). The picker merges WoW named loadouts and Talent
-    -- Loadout Ex loadouts into one list; each entry carries a source-tagged string
-    -- id so the two id spaces (WoW numeric configID vs TLEx name) can't collide.
+    -- loadout (per current spec). The picker merges WoW loadouts and Talent Loadout
+    -- Ex loadouts into one list. Each entry carries a source-tagged string id,
+    -- because a numeric WoW configID and a TLEx name can collide.
     local specID = BR.Loadouts.GetCurrentSpecID()
     local loadoutEntries = {}
     for _, lo in ipairs(BR.Loadouts.ListLoadouts(specID)) do
@@ -329,11 +308,9 @@ local function Show(existingKey, refreshPanelCallback)
     local RenderDynamic, RecomputeHeight -- forward decls
 
     local contentOpts = {}
-    for _, v in ipairs(CONTENT_VALUES) do
-        contentOpts[#contentOpts + 1] = { value = v, label = L[SCOPE_LABEL[v]] }
+    for _, tier in ipairs(LOADOUT_SCOPES) do
+        contentOpts[#contentOpts + 1] = { value = tier.value, label = L[tier.labelKey] }
     end
-    -- Content is single-select and mutually exclusive -> a dropdown reads as
-    -- "pick one" and stays on one line.
     local contentDropdown = Components.Dropdown(dialog, {
         label = L["Loadout.Content"],
         labelWidth = LABEL_W,
@@ -352,11 +329,10 @@ local function Show(existingKey, refreshPanelCallback)
     })
     layout:Add(contentDropdown, nil, COMPONENT_GAP)
 
-    -- Everything below the content chips is rebuilt whenever the scope changes, so
-    -- the difficulty row and instance list always match the selected content. The
-    -- container is created ONCE (a normal build-time child of the dialog) and only
-    -- its children are swapped on rebuild - recreating the frame at runtime left it
-    -- rendering nothing.
+    -- Everything below the content dropdown is rebuilt when the scope changes, so the
+    -- difficulty row and instance list always match the selected content. The container
+    -- is created once at build time and only its children are swapped; a frame created
+    -- at runtime here renders nothing.
     local dynTopY = layout:GetY()
     local dynFrame = CreateFrame("Frame", nil, dialog)
     dynFrame:SetPoint("TOPLEFT", CONTENT_LEFT, dynTopY)
@@ -378,9 +354,9 @@ local function Show(existingKey, refreshPanelCallback)
 
     RenderDynamic = function()
         for _, w in ipairs(dynChildren) do
-            -- Drop auto-registered holders (instance checkboxes have a `get`) from
-            -- the global refresh registry, else RefreshAll keeps invoking their
-            -- :Refresh() forever and pins the closed dialog from GC.
+            -- Drop auto-registered holders (instance checkboxes have a `get`) from the
+            -- global refresh registry. If they stay, RefreshAll calls their :Refresh()
+            -- forever and keeps the closed dialog alive.
             Components.Unregister(w)
             w:Hide()
             if w.SetParent then
@@ -395,10 +371,8 @@ local function Show(existingKey, refreshPanelCallback)
             return w
         end
 
-        -- Specific-instance narrowing (raid / dungeon only). A pill toggle that
-        -- matches the ready-check toggle below it; flipping it on reveals an
-        -- indented two-column grid of the current content's instances. Off reverts
-        -- the rule to "any instance" of the selected content.
+        -- Specific-instance narrowing (raid / dungeon only). If the toggle is off, the
+        -- rule matches any instance of the selected content.
         local instOpts = InstancesForScope()
         if #instOpts > 0 then
             local limitLabel = (scope == "raid") and L["Loadout.LimitRaids"] or L["Loadout.LimitDungeons"]
@@ -459,6 +433,7 @@ local function Show(existingKey, refreshPanelCallback)
 
     RecomputeHeight = function()
         dialog:SetHeight(-dynTopY + (dynFrame.consumedHeight or 0) + SECTION_GAP + READY_H + BUTTON_BAR)
+        BR.ApplyDialogScale(dialog)
     end
 
     RenderDynamic()
