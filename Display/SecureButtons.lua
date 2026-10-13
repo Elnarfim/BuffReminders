@@ -814,7 +814,7 @@ local function RefreshConsumableCache()
                                 end
                             end
                             -- ConsumableMemory looks the item up by the spell it casts.
-                            local okSpell, _, useSpellID = pcall(GetItemSpell, itemID)
+                            local okSpell, _, useSpellID = pcall(C_Item.GetItemSpell, itemID)
                             if okSpell and useSpellID then
                                 bucket.useSpellID = useSpellID
                             end

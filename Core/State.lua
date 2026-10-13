@@ -3112,7 +3112,7 @@ local function ResolveOffHandType()
         end
         return
     end
-    local _, _, _, _, _, itemClassID, itemSubClassID = GetItemInfoInstant(offhandItemID)
+    local _, _, _, _, _, itemClassID, itemSubClassID = C_Item.GetItemInfoInstant(offhandItemID)
     if not itemClassID then
         -- Item data is not available yet (intermittent right after login/reload).
         -- Leave the cache unset so the next refresh retries. A stale "none" here
