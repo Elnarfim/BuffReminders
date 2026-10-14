@@ -216,27 +216,20 @@ local GetOutline = DisplayFonts.GetOutline
 local Masque = LibStub("Masque", true)
 local masqueGroup = Masque and Masque:Group("BuffReminders")
 
-local function IsMasqueActive()
-    return masqueGroup ~= nil and not masqueGroup.db.Disabled
-end
-
 -- Global API table for external addon integration
 BuffReminders = {}
 
 local BUFF_TABLES = BR.BUFF_TABLES
 
 local RaidBuffs = BUFF_TABLES.raid
-local PresenceBuffs = BUFF_TABLES.presence
-local TargetedBuffs = BUFF_TABLES.targeted
 local SelfBuffs = BUFF_TABLES.self
-local PetBuffs = BUFF_TABLES.pet
 local CustomBuffs = BUFF_TABLES.custom
 local LoadoutRules = BUFF_TABLES.loadout
 
 -- Build buff key -> setting key mapping (resolves individual keys to groupId when grouped)
 local buffKeyToSettingKey = {}
-for _, buffArray in ipairs({ RaidBuffs, PresenceBuffs, TargetedBuffs, SelfBuffs, PetBuffs, BUFF_TABLES.consumable }) do
-    for _, buff in ipairs(buffArray) do
+for _, category in ipairs(BR.STATIC_CATEGORIES) do
+    for _, buff in ipairs(BUFF_TABLES[category]) do
         if buff.groupId then
             buffKeyToSettingKey[buff.key] = buff.groupId
         end
@@ -905,14 +898,6 @@ local function GetCachedGlowSettings(category, kind)
     return cached
 end
 
--- The glow overlay is a child of the frame, so frame:Hide() hides it and pauses
--- its OnUpdate (WoW does not fire OnUpdate on hidden frames). When the frame shows
--- again, the glow animation continues from the same point.
--- SetExpirationGlow clears a glow that a re-shown frame no longer needs.
-local function HideFrame(frame)
-    frame:Hide()
-end
-
 ---Show a frame with overlay text styling
 ---@param frame BuffFrame
 ---@param overlayText? string
@@ -1063,7 +1048,7 @@ end
 
 -- Apply icon zoom and border sizing (single source of truth for Masque vs native styling)
 local function UpdateIconStyling(frame, catSettings)
-    if IsMasqueActive() then
+    if BR.Masque.IsActive() then
         -- Masque controls styling; hide the native border (Masque manages its own textures via ReSkin)
         frame.border:Hide()
         return
@@ -2810,7 +2795,9 @@ UpdateDisplay = function(refreshMode)
         if not reusableVisibleKeys[key] then
             local frame = buffFrames[key]
             if frame then
-                HideFrame(frame)
+                -- The glow overlay is a child of the frame, so Hide() pauses its OnUpdate.
+                -- On re-show the glow continues, and SetExpirationGlow clears it if not needed.
+                frame:Hide()
                 InvalidateCachedItems(frame)
                 UpdatePetLabels(frame, nil)
                 if frame.extraFrames then
@@ -2906,15 +2893,6 @@ local function StartUpdates()
     dirtyMode = "full"
     lastUpdateTime = GetTime()
     UpdateDisplay("full")
-end
-
--- Stop update ticker (preserved for easy revert when Blizzard re-protects spells)
-local function StopTicker() -- luacheck: ignore 211
-    if updateTicker then
-        updateTicker:Cancel()
-        updateTicker = nil
-    end
-    -- OnUpdate handler stays active so SetDirty() works during combat
 end
 
 -- Forward declaration for ReparentBuffFrames (defined after InitializeFrames)
@@ -3096,9 +3074,6 @@ local function GetBuffDisplayName(key)
     return key
 end
 
-local DETACH_OFFSET_X = 40
-local DETACH_OFFSET_Y = -40
-
 ---Compute a sensible default position for a newly-detached icon: the source
 ---category's saved CENTER-anchored position offset by (40, -40). Falls back
 ---to the main frame's saved position, then to (0, 0). Keeps detached icons
@@ -3106,6 +3081,7 @@ local DETACH_OFFSET_Y = -40
 ---@param key string Buff key
 ---@return number x, number y
 local function ComputeSmartDetachPosition(key)
+    local DETACH_OFFSET_X, DETACH_OFFSET_Y = 40, -40
     local db = BR.profile
     local catSettings = db.categorySettings
     local category = GetCategoryForBuff(key)
@@ -3398,7 +3374,7 @@ local function UpdateVisuals()
             end
         end
     end
-    if IsMasqueActive() then
+    if BR.Masque.IsActive() then
         masqueGroup:ReSkin()
     end
     UpdateDisplay()
