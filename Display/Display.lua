@@ -344,10 +344,6 @@ local buffFrames = {}
 -- consumers run on every display cycle and must not rescan the full frame table.
 local buffFramesByCategory = {}
 local updateTicker
-
--- "Decor Duel" prop-hunt brawl: hide-and-seek as furniture, buff reminders are
--- meaningless and visually defeat the purpose. Identified by its unique difficulty ID.
-local DECOR_DUEL_DIFFICULTY_ID = 253
 local testMode = false
 local eventFrame -- forward declaration; created later in file
 
@@ -429,8 +425,6 @@ local function UpdateAuraEventRegistration()
         SetDirty("group") -- catch group changes missed while narrowed
     end
 end
-local petDismountSuppressed = false -- Suppress pet eval briefly after dismount (pet respawn delay)
-local wasMounted = IsMounted()
 
 local categoryFrames = {}
 local detachedFrames = {} -- Per-icon detached container frames (shown when an icon is detached)
@@ -2427,50 +2421,7 @@ UpdateDisplay = function(refreshMode)
     if testMode then
         GenerateTestEntries()
     else
-        local isDead = UnitIsDeadOrGhost("player")
-        if isDead then
-            HideAllDisplayFrames()
-            return
-        end
-
-        local db = BR.profile
-
-        if BR.BuffState.GetDifficultyID() == DECOR_DUEL_DIFFICULTY_ID then
-            HideAllDisplayFrames()
-            return
-        end
-
-        if db.showOnlyInGroup and BR.BuffState.IsAlone() then
-            HideAllDisplayFrames()
-            return
-        end
-
-        if db.hideWhileResting and GameContext.IsResting() then
-            HideAllDisplayFrames()
-            return
-        end
-
-        if db.hideInCombat and GameContext.IsInCombat() then
-            HideAllDisplayFrames()
-            return
-        end
-
-        if db.hideAllInVehicle and GameContext.IsInVehicle() then
-            HideAllDisplayFrames()
-            return
-        end
-
-        if db.hideWhileMounted and IsMounted() then
-            HideAllDisplayFrames()
-            return
-        end
-
-        if db.hideInLegacyInstances and BR.BuffState.IsLegacyInstance() then
-            HideAllDisplayFrames()
-            return
-        end
-
-        if db.hideWhileLeveling and GameContext.GetPlayerLevel() < GameContext.GetMaxExpansionLevel() then
+        if BR.BuffState.GetHideAllReason(BR.profile) then
             HideAllDisplayFrames()
             return
         end
@@ -3328,9 +3279,6 @@ BR.Display.UpdateVisuals = UpdateVisuals
 BR.Display.UpdateActionButtons = function(category)
     return BR.SecureButtons.UpdateActionButtons(category)
 end
-BR.Display.IsPetDismountSuppressed = function()
-    return petDismountSuppressed
-end
 BR.Display.IsTestMode = function()
     return testMode
 end
@@ -3663,19 +3611,6 @@ eventHandlers.PET_STABLE_UPDATE = function()
     SetDirty()
 end
 
-eventHandlers.PLAYER_MOUNT_DISPLAY_CHANGED = function()
-    local mounted = IsMounted()
-    if wasMounted and not mounted then
-        petDismountSuppressed = true
-        C_Timer.After(1.5, function()
-            petDismountSuppressed = false
-            SetDirty()
-        end)
-    end
-    wasMounted = mounted
-    SetDirty()
-end
-
 eventHandlers.PLAYER_DIFFICULTY_CHANGED = function()
     SetDirty()
 end
@@ -3701,6 +3636,7 @@ eventHandlers.PLAYER_UPDATE_RESTING = function()
 end
 eventHandlers.PLAYER_LEVEL_UP = eventHandlers.PLAYER_UPDATE_RESTING
 eventHandlers.UPDATE_EXPANSION_LEVEL = eventHandlers.PLAYER_UPDATE_RESTING
+eventHandlers.PLAYER_MOUNT_DISPLAY_CHANGED = eventHandlers.PLAYER_UPDATE_RESTING
 eventHandlers.SPELL_ACTIVATION_OVERLAY_GLOW_SHOW = eventHandlers.PLAYER_UPDATE_RESTING
 eventHandlers.SPELL_ACTIVATION_OVERLAY_GLOW_HIDE = eventHandlers.PLAYER_UPDATE_RESTING
 

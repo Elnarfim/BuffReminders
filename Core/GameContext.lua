@@ -2,8 +2,9 @@ local _, BR = ...
 
 -- Maps game events to the caches that each event makes stale, and owns the player flags
 -- (combat, rest, level, vehicle), the context windows (ready check, dungeon and delve
--- entry, PvP prep) and the action-bar glow state. The Display event dispatcher calls
--- HandleEvent before the Display handler runs, so each handler reads fresh values.
+-- entry, PvP prep), the dismount pause for pet checks and the action-bar glow state.
+-- The Display event dispatcher calls HandleEvent before the Display handler runs, so each
+-- handler reads fresh values.
 -- GameContextChanged asks for the render that a change needs; urgent = true asks for it now.
 
 ---@class GameContextEventSpec
@@ -24,6 +25,10 @@ local maxExpansionLevel = GetMaxLevelForPlayerExpansion()
 -- gates only the hideInPvPMatch setting.
 local inPvPPrepPhase = false
 
+-- A pet respawns with a delay after a dismount, so pet checks pause for a short time.
+local wasMounted = IsMounted()
+local petDismountSuppressed = false
+
 -- Each window is open while its timer exists.
 local readyCheckTimer
 local instanceEntryTimer
@@ -31,6 +36,7 @@ local delveEntryTimer
 
 local READY_CHECK_SECONDS = 15
 local ENTRY_WINDOW_SECONDS = 30
+local DISMOUNT_SUPPRESS_SECONDS = 1.5
 local SOULWELL_SPELL_IDS = { [29893] = true, [6201] = true } -- Create Soulwell, Create Healthstone
 
 local _, playerClass = UnitClass("player")
@@ -141,6 +147,12 @@ end
 local function ExpireReadyCheck()
     readyCheckTimer = nil
     NotifyChanged(true)
+end
+
+-- A second dismount inside the window does not restart it, so the first timer ends it.
+local function EndDismountSuppression()
+    petDismountSuppressed = false
+    NotifyChanged(false)
 end
 
 -- Catches glows that were up before the overlay events were registered.
@@ -290,6 +302,16 @@ local EVENT_CACHES = {
     UPDATE_INVENTORY_DURABILITY = { caches = { "durability" } },
     BAG_UPDATE_DELAYED = { caches = { "item", "repairSource", "consumables" } },
     NEW_MOUNT_ADDED = { caches = { "repairSource" } },
+    PLAYER_MOUNT_DISPLAY_CHANGED = {
+        handle = function()
+            local mounted = IsMounted()
+            if wasMounted and not mounted then
+                petDismountSuppressed = true
+                C_Timer.After(DISMOUNT_SUPPRESS_SECONDS, EndDismountSuppression)
+            end
+            wasMounted = mounted
+        end,
+    },
 }
 
 ---@type table<string, fun()>
@@ -389,6 +411,11 @@ end
 ---@return boolean inPvPPrepPhase True in a battleground or arena before the match starts
 function GameContext.IsPvPPrepPhase()
     return inPvPPrepPhase
+end
+
+---@return boolean suppressed True for 1.5 seconds after a dismount
+function GameContext.IsPetDismountSuppressed()
+    return petDismountSuppressed
 end
 
 ---The refresh path calls this for each tracked spell, so it stays a plain table read.

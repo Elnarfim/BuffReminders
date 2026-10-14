@@ -2411,7 +2411,7 @@ end
 -- Pet summon reminders. A summon has no duration, so nothing tracks expiration.
 local function RefreshPet()
     local petVisible = IsCategoryVisibleForContent("pet")
-    if IsMounted() or BR.Display.IsPetDismountSuppressed() then
+    if IsMounted() or GameContext.IsPetDismountSuppressed() then
         petVisible = false
     end
     local petPassiveHidden = BR.profile.petPassiveOnlyInCombat and not UnitAffectingCombat("player")
@@ -2853,6 +2853,45 @@ BuffState.IsRestricted = BR.Restrictions.AurasRestricted
 ---@return boolean
 function BuffState.IsAlone()
     return GetNumGroupMembers() <= 1
+end
+
+-- The "Decor Duel" brawl is hide-and-seek as furniture. Only its difficulty ID identifies it.
+local DECOR_DUEL_DIFFICULTY_ID = 253
+
+---@alias HideAllReason "dead"|"decorDuel"|"solo"|"resting"|"combat"|"vehicle"|"mounted"|"legacyInstance"|"leveling"
+
+---The reason to hide every display frame, or nil to show them. Safe to call every render pass.
+---@param db table The active profile
+---@return HideAllReason?
+function BuffState.GetHideAllReason(db)
+    if UnitIsDeadOrGhost("player") then
+        return "dead"
+    end
+    if GetDifficultyIDCached() == DECOR_DUEL_DIFFICULTY_ID then
+        return "decorDuel"
+    end
+    if db.showOnlyInGroup and BuffState.IsAlone() then
+        return "solo"
+    end
+    if db.hideWhileResting and GameContext.IsResting() then
+        return "resting"
+    end
+    if db.hideInCombat and GameContext.IsInCombat() then
+        return "combat"
+    end
+    if db.hideAllInVehicle and GameContext.IsInVehicle() then
+        return "vehicle"
+    end
+    if db.hideWhileMounted and IsMounted() then
+        return "mounted"
+    end
+    if db.hideInLegacyInstances and BuffState.IsLegacyInstance() then
+        return "legacyInstance"
+    end
+    if db.hideWhileLeveling and GameContext.GetPlayerLevel() < GameContext.GetMaxExpansionLevel() then
+        return "leveling"
+    end
+    return nil
 end
 
 ---Whether any group member is assigned the HEALER role (cached; invalidated on
