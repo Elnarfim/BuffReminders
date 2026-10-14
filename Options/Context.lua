@@ -283,7 +283,8 @@ function Helpers.AddOverrideRow(parent, layout, opts)
         end
     end
     refreshState()
-    table.insert(BR.RefreshableComponents, { Refresh = refreshState })
+    stateText.Refresh = refreshState
+    table.insert(BR.RefreshableComponents, stateText)
 
     layout:Add(holder, nil, COMPONENT_GAP)
     return holder

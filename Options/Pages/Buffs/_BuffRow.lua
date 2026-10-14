@@ -199,7 +199,8 @@ local function CreateBuffRow(
         end
     end
     syncTrailing()
-    tinsert(BR.RefreshableComponents, { Refresh = syncTrailing })
+    settingsBtn.Refresh = syncTrailing
+    tinsert(BR.RefreshableComponents, settingsBtn)
 
     -- Clamp the label so it (and its trailing info icon) can never run under the
     -- trailing cluster, whatever the buff name's length or which glyphs show.
