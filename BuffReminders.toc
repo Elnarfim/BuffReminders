@@ -49,6 +49,7 @@ Core\Restrictions.lua
 Core\TextPositions.lua
 Core\Profiles.lua
 Core\Migrations.lua
+Core\GameContext.lua
 Data\Buffs.lua
 Data\Defaults.lua
 Data\Beneficiaries.lua

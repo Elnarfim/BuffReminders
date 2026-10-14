@@ -195,6 +195,7 @@ local random = math.random
 local tinsert, tremove, tsort, tconcat = table.insert, table.remove, table.sort, table.concat
 
 local L = BR.L
+local GameContext = BR.GameContext
 
 -- Shared constants (from Core.lua)
 local DEFAULT_BORDER_SIZE = BR.DEFAULT_BORDER_SIZE
@@ -3722,18 +3723,6 @@ local eventHandlers = {}
 
 eventHandlers.PLAYER_ENTERING_WORLD = function()
     BR.BuffState.SetConsumablesDismissed(false)
-    -- Invalidate caches on zone change (the spec can auto-switch on entry)
-    BR.BuffState.InvalidateContentTypeCache()
-    BR.BuffState.InvalidateAuraTrackableCache()
-    BR.BuffState.InvalidateSpellCache()
-    BR.BuffState.InvalidateSpecCache()
-    BR.BuffState.InvalidateOffHandCache()
-    BR.BuffState.InvalidatePetCache()
-    BR.BuffState.InvalidateStanceCache()
-    BR.BuffState.InvalidateLoadoutCache()
-    BR.BuffState.InvalidateRepairSourceCache()
-    BR.BuffState.InvalidateDurabilityCache()
-    BR.PetHelpers.InvalidatePetActions()
     -- Sync flags with current state (in case of reload)
     inCombat = InCombatLockdown()
     isResting = IsResting()
@@ -3776,7 +3765,8 @@ eventHandlers.PLAYER_ENTERING_WORLD = function()
             end
         end)
     end
-    BR.SecureButtons.InvalidateConsumableCache()
+    -- The first action-button setup above can scan the bags, so this clear must come after it.
+    GameContext.Invalidate("consumables")
     -- Instance entry can flip IsInGroup(2) without firing GROUP_ROSTER_UPDATE
     -- (e.g. solo dungeon entry); refresh chat-request prefix here too.
     BR.SecureButtons.RefreshChatRequestMacros()
@@ -3844,7 +3834,8 @@ eventHandlers.ZONE_CHANGED_NEW_AREA = function()
     -- GetInstanceInfo() still returns stale data when this event fires,
     -- so defer the cache invalidation + refresh.
     C_Timer.After(0.5, function()
-        BR.BuffState.InvalidateContentTypeCache()
+        -- ShouldTriggerDelveEntry below reads the content type in this same callback.
+        GameContext.Invalidate("contentType")
         -- Instance-group state can flip here without GROUP_ROSTER_UPDATE
         -- (delves and follower dungeons have no loading screen)
         UpdateAuraEventRegistration()
@@ -3872,7 +3863,6 @@ eventHandlers.ZONE_CHANGED = RefreshRepairAction
 eventHandlers.ZONE_CHANGED_INDOORS = RefreshRepairAction
 
 eventHandlers.GROUP_ROSTER_UPDATE = function()
-    BR.BuffState.InvalidateHealerCache()
     UpdateAuraEventRegistration()
     SetDirty("group")
     -- Refresh chat-request macrotext so prefix tracks party↔raid↔instance
@@ -3886,7 +3876,6 @@ eventHandlers.GROUP_FORMED = eventHandlers.GROUP_ROSTER_UPDATE
 -- Roles can change without the roster changing (someone re-assigns their role),
 -- which flips whether the refreshment-table reminder shows.
 eventHandlers.PLAYER_ROLES_ASSIGNED = function()
-    BR.BuffState.InvalidateHealerCache()
     SetDirty("group")
 end
 
@@ -3966,7 +3955,6 @@ eventHandlers.UNIT_PHASE = eventHandlers.UNIT_FLAGS
 
 eventHandlers.UNIT_PET = function(arg1)
     if arg1 == "player" then
-        BR.BuffState.InvalidatePetCache()
         SetDirty("full")
     end
 end
@@ -3976,13 +3964,11 @@ eventHandlers.PET_BAR_UPDATE = function()
 end
 
 eventHandlers.UPDATE_SHAPESHIFT_FORM = function()
-    BR.BuffState.InvalidateStanceCache()
     SetDirty()
 end
 eventHandlers.UPDATE_SHAPESHIFT_FORMS = eventHandlers.UPDATE_SHAPESHIFT_FORM
 
 eventHandlers.PET_STABLE_UPDATE = function()
-    BR.PetHelpers.InvalidatePetActions()
     SetDirty()
 end
 
@@ -4000,7 +3986,6 @@ eventHandlers.PLAYER_MOUNT_DISPLAY_CHANGED = function()
 end
 
 eventHandlers.PLAYER_DIFFICULTY_CHANGED = function()
-    BR.BuffState.InvalidateContentTypeCache()
     SetDirty()
 end
 
@@ -4009,7 +3994,6 @@ end
 -- difficulty key) must repopulate. Belt-and-suspenders alongside
 -- PLAYER_DIFFICULTY_CHANGED, which is not guaranteed to fire for every member.
 eventHandlers.CHALLENGE_MODE_START = function()
-    BR.BuffState.InvalidateContentTypeCache()
     SetDirty()
 end
 eventHandlers.CHALLENGE_MODE_COMPLETED = eventHandlers.CHALLENGE_MODE_START
@@ -4067,71 +4051,43 @@ eventHandlers.PLAYER_SPECIALIZATION_CHANGED = function(arg1)
     if arg1 ~= "player" then
         return
     end
-    -- Invalidate caches when player changes spec
-    BR.BuffState.InvalidateSpellCache()
-    BR.BuffState.InvalidateOffHandCache()
-    BR.BuffState.InvalidatePetCache()
-    BR.BuffState.InvalidateStanceCache()
-    BR.BuffState.InvalidateLoadoutCache()
     PruneGlowingSpells()
-
-    BR.PetHelpers.InvalidatePetActions()
-    BR.SecureButtons.InvalidateConsumableCache()
     BR.SecureButtons.RefreshOverlaySpells()
-    UpdateDisplay() -- cache invalidation + immediate feedback
-    -- Spells can become available shortly after spec swap; refresh once more.
-    -- The loadout verdicts go too: an external loadout addon rebuilds its own list
-    -- on a short delay, so the verdict read on the event itself can be stale.
+    UpdateDisplay() -- immediate feedback
+    -- Spells can become available shortly after a spec swap. An external loadout addon
+    -- rebuilds its list after a short delay, so the loadout verdicts clear again too.
     C_Timer.After(0.5, function()
         if not InCombatLockdown() then
             BR.SecureButtons.RefreshOverlaySpells()
         end
-        BR.BuffState.InvalidateLoadoutCache()
+        GameContext.Invalidate("loadout")
         SetDirty()
     end)
 end
 
 eventHandlers.TRAIT_CONFIG_UPDATED = function()
     BR.Display.LogLoadoutChange()
-    -- Invalidate spell cache when talents change (within same spec)
-    BR.BuffState.InvalidateSpellCache()
-    BR.BuffState.InvalidatePetCache()
-    BR.BuffState.InvalidateStanceCache()
-    BR.BuffState.InvalidateLoadoutCache()
     PruneGlowingSpells()
-    BR.PetHelpers.InvalidatePetActions()
     BR.SecureButtons.RefreshOverlaySpells()
     SetDirty()
-    -- An external loadout addon answers from a list it rebuilds on a short delay of
-    -- its own. The verdict read now can hold the previous build, so drop it and ask
-    -- again once that rebuild lands.
+    -- An external loadout addon rebuilds its list after a short delay, so the loadout
+    -- verdicts clear again.
     C_Timer.After(0.5, function()
-        BR.BuffState.InvalidateLoadoutCache()
+        GameContext.Invalidate("loadout")
         SetDirty()
     end)
 end
 
 eventHandlers.SPELLS_CHANGED = function()
     -- Catch delayed spell availability after spec/talent changes (noisy event, keep cheap)
-    BR.BuffState.InvalidateSpellCache()
-    BR.BuffState.InvalidatePetCache()
-    BR.BuffState.InvalidateStanceCache()
-    BR.BuffState.InvalidateLoadoutCache()
-    BR.PetHelpers.InvalidatePetActions()
     SetDirty()
 end
 
 eventHandlers.PLAYER_EQUIPMENT_CHANGED = function()
-    BR.BuffState.InvalidateItemCache()
-    BR.BuffState.InvalidateOffHandCache()
-    BR.BuffState.InvalidateLoadoutCache()
-    BR.BuffState.InvalidateDurabilityCache()
-
     SetDirty()
 end
 
 eventHandlers.UPDATE_INVENTORY_DURABILITY = function()
-    BR.BuffState.InvalidateDurabilityCache()
     SetDirty()
 end
 
@@ -4144,9 +4100,6 @@ eventHandlers.EQUIPMENT_SETS_CHANGED = function()
 end
 
 eventHandlers.BAG_UPDATE_DELAYED = function()
-    BR.BuffState.InvalidateItemCache()
-    BR.BuffState.InvalidateRepairSourceCache()
-    BR.SecureButtons.InvalidateConsumableCache()
     SetDirty()
     BR.SecureButtons.UpdateActionButtons("consumable")
     BR.SecureButtons.UpdateActionButtons("utility")
@@ -4154,7 +4107,6 @@ end
 
 -- A newly collected repair mount changes the repair reminder's click action.
 eventHandlers.NEW_MOUNT_ADDED = function()
-    BR.BuffState.InvalidateRepairSourceCache()
     BR.SecureButtons.UpdateActionButtons("utility")
 end
 
@@ -4180,6 +4132,7 @@ end
 eventHandlers.UNIT_SPELLCAST_START = eventHandlers.UNIT_SPELLCAST_SUCCEEDED
 
 eventFrame:SetScript("OnEvent", function(_, event, arg1, arg2, arg3)
+    GameContext.HandleEvent(event, arg1, arg2, arg3)
     local handler = eventHandlers[event]
     if handler then
         handler(arg1, arg2, arg3)

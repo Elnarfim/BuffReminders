@@ -1760,3 +1760,5 @@ BR.SecureButtons = {
     BADGE_COLORS = BADGE_COLORS,
     ReapplyPetSpecIconIfHovered = ReapplyPetSpecIconIfHovered,
 }
+
+BR.GameContext.RegisterCache("consumables", InvalidateConsumableCache)

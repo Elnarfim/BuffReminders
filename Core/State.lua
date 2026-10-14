@@ -3572,3 +3572,16 @@ BR.StateHelpers = {
 }
 
 BR.BuffState = BuffState
+
+BR.GameContext.RegisterCache("contentType", BuffState.InvalidateContentTypeCache)
+BR.GameContext.RegisterCache("auraTrackable", BuffState.InvalidateAuraTrackableCache)
+BR.GameContext.RegisterCache("spell", BuffState.InvalidateSpellCache)
+BR.GameContext.RegisterCache("spec", BuffState.InvalidateSpecCache)
+BR.GameContext.RegisterCache("healer", BuffState.InvalidateHealerCache)
+BR.GameContext.RegisterCache("offHand", BuffState.InvalidateOffHandCache)
+BR.GameContext.RegisterCache("item", BuffState.InvalidateItemCache)
+BR.GameContext.RegisterCache("durability", BuffState.InvalidateDurabilityCache)
+BR.GameContext.RegisterCache("repairSource", BuffState.InvalidateRepairSourceCache)
+BR.GameContext.RegisterCache("loadout", BuffState.InvalidateLoadoutCache)
+BR.GameContext.RegisterCache("pet", BuffState.InvalidatePetCache)
+BR.GameContext.RegisterCache("stance", BuffState.InvalidateStanceCache)

@@ -251,3 +251,5 @@ BR.PetHelpers = {
     GetFelguardAction = BuildFelguardAction,
     InvalidatePetActions = InvalidatePetActions,
 }
+
+BR.GameContext.RegisterCache("petActions", InvalidatePetActions)
