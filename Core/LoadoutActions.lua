@@ -106,16 +106,33 @@ local function LoadWoWLoadout(rule)
     return true
 end
 
+---@return boolean opened
+local function OpenTalentUI()
+    if PlayerSpellsUtil and PlayerSpellsUtil.OpenToClassTalentsTab then
+        PlayerSpellsUtil.OpenToClassTalentsTab()
+        return true
+    elseif ToggleTalentFrame then
+        ToggleTalentFrame()
+        return true
+    end
+    return false
+end
+
 ---Act on a clicked reminder: equip the gear set, load the talent loadout, or open
 ---the talent UI.
 ---@param rule LoadoutRule
 function LoadoutActions.ApplyFix(rule)
     if InCombatLockdown() then
-        UIErrorsFrame:AddMessage(BR.L["Loadout.CombatBlocked"], 1, 0.3, 0.3)
+        print("|cff00ccffBuffReminders:|r " .. BR.L["Loadout.CombatBlocked"])
         return
     end
     if rule.require == "gear" and rule.gear and rule.gear.setID then
-        pcall(C_EquipmentSet.UseEquipmentSet, rule.gear.setID)
+        local ok, equipped = pcall(C_EquipmentSet.UseEquipmentSet, rule.gear.setID)
+        -- Only an explicit false is a failure. The return value of a successful
+        -- equip is not documented.
+        if not ok or equipped == false then
+            print("|cff00ccffBuffReminders:|r " .. BR.L["Loadout.EquipFailed"])
+        end
         return
     end
     -- Talent Loadout Ex loadouts are not WoW configs, so they fall through to
@@ -128,13 +145,10 @@ function LoadoutActions.ApplyFix(rule)
     end
     -- talent / external loadout / unresolved: open the talent UI so the user
     -- finishes by hand.
-    pcall(function()
-        if PlayerSpellsUtil and PlayerSpellsUtil.OpenToClassTalentsTab then
-            PlayerSpellsUtil.OpenToClassTalentsTab()
-        elseif ToggleTalentFrame then
-            ToggleTalentFrame()
-        end
-    end)
+    local ok, opened = pcall(OpenTalentUI)
+    if not (ok and opened) then
+        print("|cff00ccffBuffReminders:|r " .. BR.L["Loadout.OpenTalentsFailed"])
+    end
 end
 
 BR.LoadoutActions = LoadoutActions
