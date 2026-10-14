@@ -17,6 +17,17 @@ local CUSTOM_BUFF_PREFIX = "!BR_CB_"
 local TAG_PATTERN = "^!BR_(%a+)_(.*)$"
 local DEFLATE_CONFIG = { level = 9 }
 
+-- Shareable profile settings with no entry in BR.defaults. A profile string carries
+-- these keys too, and an import replaces them. Runtime memory (rememberedConsumables)
+-- and debugMode stay local.
+local EXTRA_PROFILE_KEYS = {
+    "customBuffs",
+    "detachedIcons",
+    "buffSounds",
+    "readyCheckOnlyOverrides",
+    "customAnchorFrames",
+}
+
 -- A tag names both the payload encoding and the kind of data it carries, so an
 -- import entry point can refuse a string meant for a different one.
 local TAGS = {
@@ -124,12 +135,10 @@ local function ExportSettings(sourceProfile)
         end
     end
 
-    if prof.customBuffs then
-        export.customBuffs = DeepCopy(prof.customBuffs)
-    end
-
-    if prof.detachedIcons then
-        export.detachedIcons = DeepCopy(prof.detachedIcons)
+    for _, key in ipairs(EXTRA_PROFILE_KEYS) do
+        if prof[key] ~= nil then
+            export[key] = DeepCopy(prof[key])
+        end
     end
 
     local result = SerializeTable(export)
@@ -154,8 +163,9 @@ local function ImportSettings(prefixedStr)
             BR.profile[key] = nil
         end
     end
-    BR.profile.customBuffs = nil
-    BR.profile.detachedIcons = nil
+    for _, key in ipairs(EXTRA_PROFILE_KEYS) do
+        BR.profile[key] = nil
+    end
 
     for k, v in pairs(data) do
         BR.profile[k] = DeepCopy(v)
