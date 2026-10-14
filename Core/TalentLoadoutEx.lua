@@ -205,6 +205,7 @@ function TalentLoadoutEx.ListLoadouts()
     if not IsAvailable() then
         return out
     end
+    -- The other addon owns the saved-variables shape, so a read error ends the list early.
     pcall(function()
         local specTable = GetSpecTable()
         if not specTable then

@@ -791,6 +791,7 @@ local function RefreshConsumableCache()
                         if not buckets[category] then
                             buckets[category] = {}
                         end
+                        -- A failed count skips the item until the next bag scan.
                         local ok, count = pcall(C_Item.GetItemCount, itemID, false, true)
                         count = (ok and count) or 0
                         if count > 0 then

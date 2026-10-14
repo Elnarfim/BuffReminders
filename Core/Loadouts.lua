@@ -303,6 +303,7 @@ end
 ---@return { name: string, configID: number }[]
 function Loadouts.ListLoadouts(specID)
     local out = {}
+    -- An API error ends the list early. Callers handle a short or empty list.
     pcall(function()
         if not (C_ClassTalents and C_Traits) then
             return
@@ -325,6 +326,7 @@ end
 ---@return { setID: number, name: string, icon: number }[]
 function Loadouts.ListEquipmentSets()
     local out = {}
+    -- An API error ends the list early. Callers handle a short or empty list.
     pcall(function()
         if not C_EquipmentSet then
             return
@@ -345,6 +347,7 @@ end
 ---@return { id: number, mapID: number?, name: string, icon: number?, kind: string }[]
 function Loadouts.ListCurrentInstances()
     local out = {}
+    -- An API error ends only the dungeon list early, so the raid list below still loads.
     pcall(function()
         if C_ChallengeMode and C_ChallengeMode.GetMapTable then
             local maps = C_ChallengeMode.GetMapTable()

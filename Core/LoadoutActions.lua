@@ -32,6 +32,7 @@ local syncGen = 0
 
 local function StampLastSelected(specID, configID)
     if C_ClassTalents.UpdateLastSelectedSavedConfigID then
+        -- A failure here leaves only the dropdown label stale. The loadout itself is applied.
         pcall(C_ClassTalents.UpdateLastSelectedSavedConfigID, specID, configID)
     end
     -- Blizzard bug: an ALREADY-OPEN talent frame does not re-read the last-selected
@@ -42,6 +43,7 @@ local function StampLastSelected(specID, configID)
     local tab = PlayerSpellsFrame and PlayerSpellsFrame.TalentsFrame
     local dropdown = tab and tab.LoadSystem
     if dropdown and dropdown.SetSelectionID then
+        -- As with the stamp above, a failure leaves only the label stale.
         pcall(dropdown.SetSelectionID, dropdown, configID)
     end
 end

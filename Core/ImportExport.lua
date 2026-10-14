@@ -64,14 +64,15 @@ local function StripPrefix(str)
 end
 
 -- Serialize a Lua table to a deflate-compressed, print-encoded payload (no prefix).
+-- On failure, returns nil and the error text.
 local function SerializeTable(tbl)
     local success, cbor = pcall(C_EncodingUtil.SerializeCBOR, tbl)
     if not success then
-        return nil
+        return nil, tostring(cbor)
     end
     local compressed = LibDeflate:CompressDeflate(cbor, DEFLATE_CONFIG)
     if not compressed then
-        return nil
+        return nil, "compression failed"
     end
     return LibDeflate:EncodeForPrint(compressed)
 end
@@ -141,9 +142,9 @@ local function ExportSettings(sourceProfile)
         end
     end
 
-    local result = SerializeTable(export)
+    local result, err = SerializeTable(export)
     if not result then
-        return nil, "Failed to serialize settings"
+        return nil, "Failed to serialize settings: " .. tostring(err)
     end
     return COMPRESSED_PREFIX .. result
 end
@@ -400,9 +401,9 @@ local function ExportCustomBuff(key)
     local payload = DeepCopy(buff)
     payload.key = nil
 
-    local result = SerializeTable(payload)
+    local result, err = SerializeTable(payload)
     if not result then
-        return nil, "Failed to serialize custom buff"
+        return nil, "Failed to serialize custom buff: " .. tostring(err)
     end
     return CUSTOM_BUFF_PREFIX .. result
 end
