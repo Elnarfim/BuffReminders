@@ -231,6 +231,7 @@ function BR.Profiles.RefreshAfterProfileChange()
     if BR.Display and BR.Display.BuildCustomBuffArray then
         BR.Display.BuildCustomBuffArray()
     end
+    BR.GameContext.RebuildGlowRegistry()
 
     if BR.Display and BR.Display.BuildLoadoutRulesArray then
         BR.Display.BuildLoadoutRulesArray()

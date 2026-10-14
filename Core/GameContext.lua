@@ -1,10 +1,10 @@
 local _, BR = ...
 
 -- Maps game events to the caches that each event makes stale, and owns the player flags
--- (combat, rest, level, vehicle) and the context windows (ready check, dungeon and delve
--- entry, PvP prep). The Display event dispatcher calls HandleEvent before the Display
--- handler runs, so each handler reads fresh values. GameContextChanged asks for the render
--- that a change needs; urgent = true asks for it now.
+-- (combat, rest, level, vehicle), the context windows (ready check, dungeon and delve
+-- entry, PvP prep) and the action-bar glow state. The Display event dispatcher calls
+-- HandleEvent before the Display handler runs, so each handler reads fresh values.
+-- GameContextChanged asks for the render that a change needs; urgent = true asks for it now.
 
 ---@class GameContextEventSpec
 ---@field caches? string[] Cache ids to clear, in order
@@ -32,6 +32,20 @@ local delveEntryTimer
 local READY_CHECK_SECONDS = 15
 local ENTRY_WINDOW_SECONDS = 30
 local SOULWELL_SPELL_IDS = { [29893] = true, [6201] = true } -- Create Soulwell, Create Healthstone
+
+local _, playerClass = UnitClass("player")
+local IsSpellOverlayed = C_SpellActivationOverlay and C_SpellActivationOverlay.IsSpellOverlayed
+
+---@class GlowRegistryEntry
+---@field buff table
+---@field category string
+
+-- Spell IDs whose action-bar overlay glow is up. The overlay events set any spell ID,
+-- so this set does not depend on the registry.
+---@type table<number, true>
+local glowingSpells = {}
+---@type table<number, GlowRegistryEntry>
+local glowSpellToBuff = {}
 
 local GameContext = {}
 
@@ -129,6 +143,29 @@ local function ExpireReadyCheck()
     NotifyChanged(true)
 end
 
+-- Catches glows that were up before the overlay events were registered.
+local function SeedGlowingSpells()
+    if not IsSpellOverlayed then
+        return
+    end
+    for spellID, entry in pairs(glowSpellToBuff) do
+        if (not entry.buff.class or entry.buff.class == playerClass) and IsSpellOverlayed(spellID) then
+            glowingSpells[spellID] = true
+        end
+    end
+end
+
+-- A talent swap can drop a spell while its glow is up. The matching
+-- SPELL_ACTIVATION_OVERLAY_GLOW_HIDE never arrives, so the flag outlives the
+-- spell and fires again when the talent returns.
+local function PruneGlowingSpells()
+    for spellID in pairs(glowingSpells) do
+        if not IsPlayerSpell(spellID) then
+            glowingSpells[spellID] = nil
+        end
+    end
+end
+
 local SPELL_SET = { "spell", "pet", "stance", "loadout", "petActions" }
 local CONTENT_TYPE = { caches = { "contentType" } }
 local HEALER = { caches = { "healer" } }
@@ -158,6 +195,7 @@ local EVENT_CACHES = {
             inVehicle = UnitInVehicle("player") == true
             ComputePvPPrep()
             C_Timer.After(1, OnEnteredWorldSettled)
+            SeedGlowingSpells()
         end,
     },
     ZONE_CHANGED_NEW_AREA = {
@@ -234,8 +272,19 @@ local EVENT_CACHES = {
     PLAYER_SPECIALIZATION_CHANGED = {
         playerOnly = true,
         caches = { "spell", "spec", "offHand", "pet", "stance", "loadout", "petActions", "consumables" },
+        handle = PruneGlowingSpells,
     },
-    TRAIT_CONFIG_UPDATED = { caches = SPELL_SET },
+    TRAIT_CONFIG_UPDATED = { caches = SPELL_SET, handle = PruneGlowingSpells },
+    SPELL_ACTIVATION_OVERLAY_GLOW_SHOW = {
+        handle = function(spellID)
+            glowingSpells[spellID] = true
+        end,
+    },
+    SPELL_ACTIVATION_OVERLAY_GLOW_HIDE = {
+        handle = function(spellID)
+            glowingSpells[spellID] = nil
+        end,
+    },
     SPELLS_CHANGED = { caches = SPELL_SET },
     PLAYER_EQUIPMENT_CHANGED = { caches = { "item", "offHand", "loadout", "durability" } },
     UPDATE_INVENTORY_DURABILITY = { caches = { "durability" } },
@@ -341,5 +390,74 @@ end
 function GameContext.IsPvPPrepPhase()
     return inPvPPrepPhase
 end
+
+---The refresh path calls this for each tracked spell, so it stays a plain table read.
+---@param spellID number
+---@return boolean
+function GameContext.IsSpellGlowing(spellID)
+    return glowingSpells[spellID] == true
+end
+
+---@param buff table
+---@return boolean
+local function IsGlowTracked(buff)
+    if buff.enchantID or buff.customCheck or buff.glowMode == "disabled" then
+        return false
+    end
+    if buff.readyCheckOnly then
+        local db = BR.profile
+        local overrides = db and db.readyCheckOnlyOverrides
+        return overrides ~= nil and overrides[buff.groupId or buff.key] == false
+    end
+    return true
+end
+
+---Add the spell IDs of the buff to the glow registry, if the buff qualifies.
+---@param buff table
+---@param category string
+function GameContext.RegisterGlowBuff(buff, category)
+    if not IsGlowTracked(buff) then
+        return
+    end
+    for _, id in ipairs(BR.Icons.AsSpellList(buff.spellID)) do
+        if id and id ~= 0 then
+            glowSpellToBuff[id] = { buff = buff, category = category }
+        end
+    end
+end
+
+---@param spellIDs number|number[]
+function GameContext.UnregisterGlowSpell(spellIDs)
+    local ids = type(spellIDs) == "table" and spellIDs or { spellIDs }
+    for _, id in ipairs(ids) do
+        if id then
+            glowSpellToBuff[id] = nil
+        end
+    end
+end
+
+---Wipe the glow registry and fill it from the buff tables and the active profile.
+function GameContext.RebuildGlowRegistry()
+    wipe(glowSpellToBuff)
+    local buffTables = BR.BUFF_TABLES
+    -- A loadout rule checks a talent, not an aura, so it never joins.
+    for category, buffs in pairs(buffTables) do
+        if category ~= "custom" and category ~= "loadout" then
+            for _, buff in ipairs(buffs) do
+                GameContext.RegisterGlowBuff(buff, category)
+            end
+        end
+    end
+    -- Custom buffs register last, so a custom buff keeps a spell ID that a built-in buff also uses.
+    for _, buff in ipairs(buffTables.custom) do
+        GameContext.RegisterGlowBuff(buff, "custom")
+    end
+end
+
+BR.CallbackRegistry:RegisterCallback("SettingChanged", function(_, path)
+    if path == "readyCheckOnlyOverrides" or path:find("^readyCheckOnlyOverrides%.") then
+        GameContext.RebuildGlowRegistry()
+    end
+end)
 
 BR.GameContext = GameContext

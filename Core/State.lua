@@ -2104,19 +2104,13 @@ local function TrySetEntryExpiring(entry, remaining, threshold, shouldGlow)
     return false
 end
 
--- Cached reference to Display.IsSpellGlowing (resolved once per Refresh cycle)
-local cachedIsSpellGlowing = nil
-
----Check if any of a buff's spell IDs are glowing on the action bar (via Display layer)
+---Check if any of a buff's spell IDs are glowing on the action bar.
 ---This path replaces ShouldShow* in restricted contexts, so it repeats the spec
 ---and spell-known gates. Without them a glow flag for an uncastable spell shows
 ---a reminder.
 ---@param buff table Buff entry with spellID field
 ---@return boolean
 local function IsAnySpellGlowing(buff)
-    if not cachedIsSpellGlowing then
-        return false
-    end
     if buff.requireSpecId and GetPlayerSpecId() ~= buff.requireSpecId then
         return false
     end
@@ -2126,13 +2120,13 @@ local function IsAnySpellGlowing(buff)
     end
     if type(spellID) == "table" then
         for _, id in ipairs(spellID) do
-            if IsPlayerSpellCached(id) and cachedIsSpellGlowing(id) then
+            if IsPlayerSpellCached(id) and GameContext.IsSpellGlowing(id) then
                 return true
             end
         end
         return false
     end
-    return IsPlayerSpellCached(spellID) and cachedIsSpellGlowing(spellID)
+    return IsPlayerSpellCached(spellID) and GameContext.IsSpellGlowing(spellID)
 end
 
 -- Coverage category: the reminder counts how many group members miss the buff.
@@ -2704,9 +2698,6 @@ function BuffState.Refresh(refreshMode)
     refreshMode = refreshMode or "full"
     local groupOnly = refreshMode == "group"
     nextTimedChangeIn = nil
-
-    -- Cache Display.IsSpellGlowing once per refresh cycle (State.lua loads before Display)
-    cachedIsSpellGlowing = BR.Display and BR.Display.IsSpellGlowing
 
     -- Reset entries that will be recomputed this cycle.
     for _, entry in pairs(BuffState.entries) do

@@ -359,7 +359,6 @@ local eventFrame -- forward declaration; created later in file
 ---@type TestModeData?
 local testModeData = nil
 local playerClass = nil -- Cached player class, set once on init
-local glowingSpells = {} -- Track which spell IDs are currently glowing (for action bar glow fallback)
 
 -- Dirty flag system: events set dirty=true, OnUpdate checks flag with throttle
 local dirty = false
@@ -731,75 +730,8 @@ local function InvalidateBuffIconBySpellID(spellID)
     end
 end
 
--- Reverse lookup: spellID -> buff entry (for glow fallback detection across all categories)
-local glowSpellToBuff = {}
-
---- Register a buff's spellID(s) in the glow fallback lookup table
-local function RegisterGlowBuff(buff, catName)
-    local ids = BR.Icons.AsSpellList(buff.spellID)
-    for _, id in ipairs(ids) do
-        if id and id ~= 0 then
-            glowSpellToBuff[id] = { buff = buff, category = catName }
-        end
-    end
-end
-
---- Unregister spellID(s) from the glow fallback lookup table
----@param spellID number|number[] Single spell ID or table of spell IDs
-local function UnregisterGlowSpell(spellID)
-    local ids = type(spellID) == "table" and spellID or { spellID }
-    for _, id in ipairs(ids) do
-        if id then
-            glowSpellToBuff[id] = nil
-        end
-    end
-end
-
-for catName, category in pairs(BUFF_TABLES) do
-    for _, buff in ipairs(category) do
-        local skipReadyCheck = buff.readyCheckOnly
-        if skipReadyCheck then
-            local db = BR.profile
-            local overrides = db and db.readyCheckOnlyOverrides
-            local overrideKey = buff.groupId or buff.key
-            if overrides and overrides[overrideKey] == false then
-                skipReadyCheck = false
-            end
-        end
-        if not buff.enchantID and not buff.customCheck and not skipReadyCheck and buff.glowMode ~= "disabled" then
-            RegisterGlowBuff(buff, catName)
-        end
-    end
-end
-
--- Seed glowingSpells with any already-active overlay glows (covers login/reload/zone change)
-local IsSpellOverlayed = C_SpellActivationOverlay and C_SpellActivationOverlay.IsSpellOverlayed
-local function SeedGlowingSpells()
-    if not IsSpellOverlayed then
-        return
-    end
-    for spellID, entry in pairs(glowSpellToBuff) do
-        if (not entry.buff.class or entry.buff.class == playerClass) and IsSpellOverlayed(spellID) then
-            glowingSpells[spellID] = true
-        end
-    end
-end
-
--- A talent swap can drop a spell while its glow is up. The matching
--- SPELL_ACTIVATION_OVERLAY_GLOW_HIDE never arrives, so the flag outlives the
--- spell and would fire again if the talent returns.
-local function PruneGlowingSpells()
-    for spellID in pairs(glowingSpells) do
-        if not IsPlayerSpell(spellID) then
-            glowingSpells[spellID] = nil
-        end
-    end
-end
-
 -- Forward declarations
 local UpdateDisplay, ToggleTestMode
--- TODO: Blizzard will re-restrict aura APIs in PvP; uncomment fallback display when that happens
--- local UpdateFallbackDisplay, RenderPetEntries
 local ResetLayoutSignatures
 
 -- Reusable tables for UpdateDisplay (wiped each cycle to avoid per-call allocation)
@@ -894,8 +826,6 @@ end
 ---@param cachedGlow? {typeIndex: number, color: number[], size: number}
 ---@return boolean true (for anyVisible chaining)
 local function ShowTextFrame(frame, overlayText, shouldGlow, category, cachedGlow)
-    -- Hide stackCount/overlays - ShowTextFrame can be called from fallback paths
-    -- (UpdateFallbackDisplay) that do not go through RenderVisibleEntry's cleanup.
     frame.stackCount:Hide()
     if frame.statLabel then
         frame.statLabel:Hide()
@@ -1784,7 +1714,7 @@ local function HideAllDisplayFrames()
     -- returns early without calling mainFrame:Show(), leaving frames invisible.
     lastMainSignature = ""
     wipe(lastSplitSignatures)
-    -- Also hide individual buff frames (so they do not reappear when mainFrame is shown by fallback)
+    -- Also hide individual buff frames
     for _, frame in pairs(buffFrames) do
         frame:Hide()
         if frame.extraFrames then
@@ -1795,108 +1725,6 @@ local function HideAllDisplayFrames()
     end
     BR.SecureButtons.HideAllSecureFrames()
 end
-
--- Update the fallback display (shows tracked buffs via action bar glow during PvP/Arena)
--- Shows glow-based frames + pet frames, then collects ALL visible frames for unified positioning
--- TODO: Blizzard will re-restrict aura APIs in PvP; uncomment when fallback display is needed again
--- UpdateFallbackDisplay = function()
---     if not mainFrame then
---         return
---     end
---
---     -- Show frames for any glowing spells (skip whenNotGlowing buffs - handled in second pass)
---     local seenKeys = {}
---     local GetPlayerSpecId = BR.StateHelpers.GetPlayerSpecId
---     for spellID, _ in pairs(glowingSpells) do
---         local entry = glowSpellToBuff[spellID]
---         if entry then
---             local buff = entry.buff
---             local mode = buff.glowMode or "whenGlowing"
---             if mode == "whenGlowing" and (not buff.class or buff.class == playerClass) and not seenKeys[buff.key] then
---                 -- Skip targeted buffs when solo (they require a group target)
---                 local skipSolo = entry.category == "targeted" and GetNumGroupMembers() == 0
---                 -- Skip buffs requiring a specific spec
---                 local skipSpec = buff.requireSpecId and GetPlayerSpecId() ~= buff.requireSpecId
---                 if not skipSolo and not skipSpec then
---                     seenKeys[buff.key] = true
---                     local frame = buffFrames[buff.key]
---                     if frame and IsBuffEnabled(buff.key) then
---                         ShowTextFrame(frame, buff.overlayText)
---                     end
---                 end
---             end
---         end
---     end
---
---     -- Second pass: show whenNotGlowing buffs where NONE of their spells are glowing
---     local invertedHasGlow = {}
---     for spellID, _ in pairs(glowingSpells) do
---         local entry = glowSpellToBuff[spellID]
---         if entry and (entry.buff.glowMode == "whenNotGlowing") then
---             invertedHasGlow[entry.buff.key] = true
---         end
---     end
---     for _, entry in pairs(glowSpellToBuff) do
---         local buff = entry.buff
---         if buff.glowMode == "whenNotGlowing" and not seenKeys[buff.key] and not invertedHasGlow[buff.key] then
---             seenKeys[buff.key] = true
---             if not buff.class or buff.class == playerClass then
---                 local skipSpec = buff.requireSpecId and GetPlayerSpecId() ~= buff.requireSpecId
---                 if not skipSpec then
---                     local frame = buffFrames[buff.key]
---                     if frame and IsBuffEnabled(buff.key) then
---                         ShowTextFrame(frame, buff.overlayText)
---                     end
---                 end
---             end
---         end
---     end
---
---     -- Pet frames are non-secure and customCheck works in all contexts
---     BR.BuffState.Refresh()
---     RenderPetEntries()
---
---     -- Collect ALL visible frames (glow + pet + pet extra frames) for unified positioning
---     local shownByCategory = {}
---     local mainFrameBuffs = {}
---     for _, frame in pairs(buffFrames) do
---         if frame:IsShown() and frame.buffCategory then
---             local category = frame.buffCategory
---             if IsCategorySplit(category) then
---                 if not shownByCategory[category] then
---                     shownByCategory[category] = {}
---                 end
---                 shownByCategory[category][#shownByCategory[category] + 1] = frame
---             else
---                 mainFrameBuffs[#mainFrameBuffs + 1] = frame
---             end
---             -- Include expanded pet extra frames in the same list
---             if frame.extraFrames then
---                 for _, extra in ipairs(frame.extraFrames) do
---                     if extra:IsShown() then
---                         if IsCategorySplit(category) then
---                             shownByCategory[category][#shownByCategory[category] + 1] = extra
---                         else
---                             mainFrameBuffs[#mainFrameBuffs + 1] = extra
---                         end
---                     end
---                 end
---             end
---         end
---     end
---
---     if #mainFrameBuffs > 0 or next(shownByCategory) then
---         for category, frames in pairs(shownByCategory) do
---             PositionSplitCategory(category, frames)
---         end
---         if #mainFrameBuffs > 0 then
---             PositionMainContainer(mainFrameBuffs)
---         end
---         BR.Movers.UpdateAnchor()
---     else
---         HideAllDisplayFrames()
---     end
--- end
 
 -- Eating icon texture ID (from State.lua, matches the eating channel aura icon)
 local EATING_ICON = BR.EATING_AURA_ICON
@@ -2510,27 +2338,6 @@ local function ApplyPetDisplayMode(frame, entry, frameList)
     end
 end
 
--- Render pet category entries (pet frames are non-secure and customCheck works in all contexts)
--- TODO: Blizzard will re-restrict aura APIs in PvP; uncomment when fallback display is needed again
--- RenderPetEntries = function()
---     local petEntries = BR.BuffState.visibleByCategory.pet
---     if not petEntries or #petEntries == 0 then
---         return
---     end
---     if not petEntries._sorted then
---         tsort(petEntries, function(a, b)
---             return a.sortOrder < b.sortOrder
---         end)
---     end
---     for _, entry in ipairs(petEntries) do
---         local frame = buffFrames[entry.key]
---         if frame then
---             RenderVisibleEntry(frame, entry)
---             ApplyPetDisplayMode(frame, entry)
---         end
---     end
--- end
-
 -- ============================================================================
 -- CONSUMABLE SNOOZE
 -- ============================================================================
@@ -2604,7 +2411,7 @@ UpdateDisplay = function(refreshMode)
     refreshMode = refreshMode or "full"
     local groupOnly = refreshMode == "group"
 
-    -- Clear per-cycle caches (before early exits - fallback paths also use these)
+    -- Clear per-cycle caches (before early exits)
     wipe(categorySettingsCache)
     if not groupOnly then
         wipe(expiringGlowCache)
@@ -2977,9 +2784,7 @@ local function CreateCustomBuffFrameRuntime(customBuff)
     local frame = CreateBuffFrame(customBuff, "custom")
     RegisterBuffFrame(customBuff.key, frame, "custom")
     tinsert(CustomBuffs, customBuff)
-    if customBuff.glowMode ~= "disabled" then
-        RegisterGlowBuff(customBuff, "custom")
-    end
+    GameContext.RegisterGlowBuff(customBuff, "custom")
     if BR.SecureButtons then
         BR.SecureButtons.UpdateActionButtons("custom")
     end
@@ -3132,7 +2937,7 @@ end
 local function RemoveCustomBuffFrame(key)
     local frame = buffFrames[key]
     if frame then
-        UnregisterGlowSpell(frame.spellIDs)
+        GameContext.UnregisterGlowSpell(frame.spellIDs)
         -- Clean up click overlay (unregister state driver before hiding)
         if frame.clickOverlay and not InCombatLockdown() then
             UnregisterStateDriver(frame.clickOverlay, "visibility")
@@ -3193,7 +2998,7 @@ BR.CustomBuffs = {
     UpdateFrame = function(key, spellIDValue, displayName)
         local frame = buffFrames[key]
         if frame then
-            UnregisterGlowSpell(frame.spellIDs)
+            GameContext.UnregisterGlowSpell(frame.spellIDs)
             local texture = GetBuffTexture(spellIDValue)
             if texture then
                 frame.icon:SetTexture(texture)
@@ -3206,9 +3011,7 @@ BR.CustomBuffs = {
             if customBuff then
                 -- Update frame's buffDef reference so click actions pick up new fields
                 frame.buffDef = customBuff
-                if customBuff.glowMode ~= "disabled" then
-                    RegisterGlowBuff(customBuff, "custom")
-                end
+                GameContext.RegisterGlowBuff(customBuff, "custom")
             end
             if BR.SecureButtons then
                 BR.SecureButtons.UpdateActionButtons("custom")
@@ -3515,7 +3318,6 @@ BR.Display.Update = UpdateDisplay
 BR.Display.ToggleTestMode = ToggleTestMode
 BR.Display.BuildCustomBuffArray = BuildCustomBuffArray
 BR.Display.BuildLoadoutRulesArray = BuildLoadoutRulesArray
-BR.Display.RegisterGlowBuff = RegisterGlowBuff
 BR.Display.SetPlayerClass = function(class)
     playerClass = class
 end
@@ -3541,9 +3343,6 @@ BR.Display.ResetCategoryFramePosition = function(category, x, y)
     end
     BR.Movers.SavePosition(category, x or 0, y or 0)
     BR.CallbackRegistry:TriggerEvent("LayoutRefresh")
-end
-BR.Display.IsSpellGlowing = function(spellID)
-    return glowingSpells[spellID] == true
 end
 
 BR.Masque = {
@@ -3735,7 +3534,6 @@ eventHandlers.PLAYER_ENTERING_WORLD = function()
     -- the repair macro waits for the zone to settle.
     lastRepairMountUsable = nil
     C_Timer.After(1, RefreshRepairAction)
-    SeedGlowingSpells() -- Catch glows that were active before event registration
     if not GameContext.IsInCombat() then
         StartUpdates()
     end
@@ -3896,29 +3694,20 @@ eventHandlers.PVP_MATCH_STATE_CHANGED = function()
     SetDirty()
 end
 
+-- GameContext updates the state for these events; Display only requests the render.
+-- SetDirty cannot be the handler: it takes the first event argument as its mode.
 eventHandlers.PLAYER_UPDATE_RESTING = function()
     SetDirty()
 end
 eventHandlers.PLAYER_LEVEL_UP = eventHandlers.PLAYER_UPDATE_RESTING
 eventHandlers.UPDATE_EXPANSION_LEVEL = eventHandlers.PLAYER_UPDATE_RESTING
-
-eventHandlers.SPELL_ACTIVATION_OVERLAY_GLOW_SHOW = function(arg1)
-    local spellID = arg1
-    glowingSpells[spellID] = true
-    SetDirty()
-end
-
-eventHandlers.SPELL_ACTIVATION_OVERLAY_GLOW_HIDE = function(arg1)
-    local spellID = arg1
-    glowingSpells[spellID] = nil
-    SetDirty()
-end
+eventHandlers.SPELL_ACTIVATION_OVERLAY_GLOW_SHOW = eventHandlers.PLAYER_UPDATE_RESTING
+eventHandlers.SPELL_ACTIVATION_OVERLAY_GLOW_HIDE = eventHandlers.PLAYER_UPDATE_RESTING
 
 eventHandlers.PLAYER_SPECIALIZATION_CHANGED = function(arg1)
     if arg1 ~= "player" then
         return
     end
-    PruneGlowingSpells()
     BR.SecureButtons.RefreshOverlaySpells()
     UpdateDisplay() -- immediate feedback
     -- Spells can become available shortly after a spec swap. An external loadout addon
@@ -3934,7 +3723,6 @@ end
 
 eventHandlers.TRAIT_CONFIG_UPDATED = function()
     BR.Display.LogLoadoutChange()
-    PruneGlowingSpells()
     BR.SecureButtons.RefreshOverlaySpells()
     SetDirty()
     -- An external loadout addon rebuilds its list after a short delay, so the loadout
