@@ -1,8 +1,10 @@
 local _, BR = ...
 
 -- Maps game events to the caches that each event makes stale, and owns the player flags
--- (combat, rest, level, vehicle). The Display event dispatcher calls HandleEvent before
--- the Display handler runs, so each handler reads fresh values.
+-- (combat, rest, level, vehicle) and the context windows (ready check, dungeon and delve
+-- entry, PvP prep). The Display event dispatcher calls HandleEvent before the Display
+-- handler runs, so each handler reads fresh values. GameContextChanged asks for the render
+-- that a change needs; urgent = true asks for it now.
 
 ---@class GameContextEventSpec
 ---@field caches? string[] Cache ids to clear, in order
@@ -17,6 +19,115 @@ local isResting = false
 local inVehicle = false
 local playerLevel = UnitLevel("player")
 local maxExpansionLevel = GetMaxLevelForPlayerExpansion()
+
+-- The aura API stays restricted for the whole match, prep phase included, so this flag
+-- gates only the hideInPvPMatch setting.
+local inPvPPrepPhase = false
+
+-- Each window is open while its timer exists.
+local readyCheckTimer
+local instanceEntryTimer
+local delveEntryTimer
+
+local READY_CHECK_SECONDS = 15
+local ENTRY_WINDOW_SECONDS = 30
+local SOULWELL_SPELL_IDS = { [29893] = true, [6201] = true } -- Create Soulwell, Create Healthstone
+
+local GameContext = {}
+
+---@param urgent boolean
+---@param reason? "zoneSettled" Lets a subscriber run work for one transition
+local function NotifyChanged(urgent, reason)
+    BR.CallbackRegistry:TriggerEvent("GameContextChanged", urgent, reason)
+end
+
+local spellcastFrame = CreateFrame("Frame")
+
+local function ClearInstanceEntry()
+    if instanceEntryTimer then
+        instanceEntryTimer:Cancel()
+        instanceEntryTimer = nil
+    end
+    spellcastFrame:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    spellcastFrame:UnregisterEvent("UNIT_SPELLCAST_START")
+end
+
+spellcastFrame:SetScript("OnEvent", function(_, _, _, _, spellID)
+    if SOULWELL_SPELL_IDS[spellID] then
+        ClearInstanceEntry()
+        NotifyChanged(true)
+    end
+end)
+
+local function StartInstanceEntry()
+    if instanceEntryTimer then
+        instanceEntryTimer:Cancel()
+    end
+    spellcastFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+    spellcastFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
+    instanceEntryTimer = C_Timer.NewTimer(ENTRY_WINDOW_SECONDS, function()
+        ClearInstanceEntry()
+        NotifyChanged(true)
+    end)
+    NotifyChanged(true)
+end
+
+local function ClearDelveEntry()
+    if delveEntryTimer then
+        delveEntryTimer:Cancel()
+        delveEntryTimer = nil
+    end
+end
+
+-- One entry can fire both PLAYER_ENTERING_WORLD and ZONE_CHANGED_NEW_AREA, so an open
+-- window is never restarted.
+local function UpdateDelveEntry()
+    if not BR.BuffState.ShouldTriggerDelveEntry() then
+        ClearDelveEntry()
+        return
+    end
+    if delveEntryTimer then
+        return
+    end
+    delveEntryTimer = C_Timer.NewTimer(ENTRY_WINDOW_SECONDS, function()
+        ClearDelveEntry()
+        NotifyChanged(true)
+    end)
+    NotifyChanged(true)
+end
+
+local function ComputePvPPrep()
+    local _, instanceType = IsInInstance()
+    local inPvPZone = instanceType == "pvp" or instanceType == "arena"
+    inPvPPrepPhase = inPvPZone and C_PvP.GetActiveMatchState() ~= Enum.PvPMatchState.Engaged
+end
+
+local function OnCombatStart()
+    inCombat = true
+    ClearDelveEntry()
+end
+
+local function OnEnteredWorldSettled()
+    if BR.BuffState.ShouldTriggerDungeonEntry() then
+        StartInstanceEntry()
+    else
+        ClearInstanceEntry()
+    end
+    UpdateDelveEntry()
+end
+
+-- A delve has no loading screen, so ZONE_CHANGED_NEW_AREA is its only entry signal.
+-- GetInstanceInfo() still answers for the old zone when that event fires.
+local function OnZoneSettled()
+    GameContext.Invalidate("contentType")
+    NotifyChanged(false, "zoneSettled")
+    UpdateDelveEntry()
+end
+
+local function ExpireReadyCheck()
+    readyCheckTimer = nil
+    NotifyChanged(true)
+end
 
 local SPELL_SET = { "spell", "pet", "stance", "loadout", "petActions" }
 local CONTENT_TYPE = { caches = { "contentType" } }
@@ -45,13 +156,26 @@ local EVENT_CACHES = {
             playerLevel = UnitLevel("player")
             maxExpansionLevel = GetMaxLevelForPlayerExpansion()
             inVehicle = UnitInVehicle("player") == true
+            ComputePvPPrep()
+            C_Timer.After(1, OnEnteredWorldSettled)
         end,
     },
-    PLAYER_REGEN_DISABLED = {
+    ZONE_CHANGED_NEW_AREA = {
         handle = function()
-            inCombat = true
+            C_Timer.After(0.5, OnZoneSettled)
         end,
     },
+    PVP_MATCH_STATE_CHANGED = { handle = ComputePvPPrep },
+    READY_CHECK = {
+        handle = function()
+            if readyCheckTimer then
+                readyCheckTimer:Cancel()
+            end
+            readyCheckTimer = C_Timer.NewTimer(READY_CHECK_SECONDS, ExpireReadyCheck)
+            NotifyChanged(true)
+        end,
+    },
+    PLAYER_REGEN_DISABLED = { handle = OnCombatStart },
     PLAYER_REGEN_ENABLED = {
         handle = function()
             inCombat = inEncounter
@@ -60,7 +184,7 @@ local EVENT_CACHES = {
     ENCOUNTER_START = {
         handle = function()
             inEncounter = true
-            inCombat = true
+            OnCombatStart()
         end,
     },
     ENCOUNTER_END = {
@@ -121,8 +245,6 @@ local EVENT_CACHES = {
 
 ---@type table<string, fun()>
 local invalidators = {}
-
-local GameContext = {}
 
 ---Bind a cache id to the function that clears the cache.
 ---@param id string
@@ -198,6 +320,26 @@ end
 ---@return number maxExpansionLevel The max level of the player's expansion
 function GameContext.GetMaxExpansionLevel()
     return maxExpansionLevel
+end
+
+---@return boolean inReadyCheck True for 15 seconds after a ready check starts
+function GameContext.IsInReadyCheck()
+    return readyCheckTimer ~= nil
+end
+
+---@return boolean inInstanceEntry True for 30 seconds after a grouped dungeon entry, until a soulwell cast
+function GameContext.IsInInstanceEntry()
+    return instanceEntryTimer ~= nil
+end
+
+---@return boolean inDelveEntry True for 30 seconds after a delve entry, until combat starts
+function GameContext.IsInDelveEntry()
+    return delveEntryTimer ~= nil
+end
+
+---@return boolean inPvPPrepPhase True in a battleground or arena before the match starts
+function GameContext.IsPvPPrepPhase()
+    return inPvPPrepPhase
 end
 
 BR.GameContext = GameContext

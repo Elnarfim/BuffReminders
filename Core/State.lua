@@ -127,17 +127,6 @@ local BuffState = {
 local _, playerClass = UnitClass("player")
 local playerName = GetUnitName("player", true)
 
--- Ready check state (set via SetReadyCheckState)
-local inReadyCheck = false
-
--- Instance entry state (set via SetInstanceEntryState)
--- Briefly shows buffs with showOnInstanceEntry when zoning into a dungeon/raid
-local inInstanceEntry = false
-
--- Delve entry state (set via SetDelveEntryState)
--- Briefly shows consumables with showOnInstanceEntry when zoning into a delve
-local inDelveEntry = false
-
 -- Consumables dismissed state (transient, resets on instance change / reload)
 local consumablesDismissed = false
 
@@ -161,14 +150,6 @@ local consumablesDismissed = false
 ---@field legacyInstance boolean? -- legacy loot mode (populated with contentType)
 local instanceCache = {}
 local GetDifficultyIDCached -- forward declaration (defined next to GetCurrentContentType)
-
--- True in the PvP prep phase (before gates open). The `hideInPvPMatch` setting
--- gates buff display once the match starts.
--- Deliberately NOT part of instanceCache: SetPvPPrepPhase manages it explicitly
--- and it must survive the cache invalidation.
--- The aura API is restricted for the entire BG/arena, prep included, so this
--- flag does NOT affect IsRestricted().
-local inPvPPrepPhase = false
 
 -- Maps content type to its difficulty-key lookup table
 local CONTENT_DIFFICULTY_TABLES = {
@@ -1126,13 +1107,13 @@ local function IsCategoryVisibleForContent(category, skipReadyCheck)
         end
     end
     -- Hide category when PvP match is active (past prep phase)
-    if contentType == "pvp" and not inPvPPrepPhase and visibility.hideInPvPMatch then
+    if contentType == "pvp" and not GameContext.IsPvPPrepPhase() and visibility.hideInPvPMatch then
         return false
     end
     -- Per-category ready check filter (skipped when caller handles ready check independently)
     if not skipReadyCheck then
         local catSettings = db.categorySettings and db.categorySettings[category]
-        if catSettings and catSettings.showOnlyOnReadyCheck and not inReadyCheck then
+        if catSettings and catSettings.showOnlyOnReadyCheck and not GameContext.IsInReadyCheck() then
             return false
         end
     end
@@ -1165,7 +1146,7 @@ local function IsCustomBuffVisibleForContent(buff)
         end
     end
 
-    if lc.readyCheckOnly and not inReadyCheck then
+    if lc.readyCheckOnly and not GameContext.IsInReadyCheck() then
         return false
     end
 
@@ -1238,7 +1219,7 @@ local function IsLoadoutRuleVisibleForContent(rule)
         end
     end
 
-    if when.readyCheckOnly and not inReadyCheck then
+    if when.readyCheckOnly and not GameContext.IsInReadyCheck() then
         return false
     end
 
@@ -1814,7 +1795,7 @@ local function IsFreeConsumableVisible(db)
         end
     end
     -- PvP match hiding follows the consumable category's setting
-    if contentType == "pvp" and not inPvPPrepPhase then
+    if contentType == "pvp" and not GameContext.IsPvPPrepPhase() then
         local catVis = db.categoryVisibility and db.categoryVisibility.consumable
         if catVis and catVis.hideInPvPMatch then
             return false
@@ -1961,7 +1942,7 @@ local function PassesPreChecks(buff, presentClasses, db, trackingMode)
     end
 
     -- Ready check gate (for readyCheckOnly buffs like presence buffs)
-    if buff.readyCheckOnly and not inReadyCheck then
+    if buff.readyCheckOnly and not GameContext.IsInReadyCheck() then
         local overrides = db.readyCheckOnlyOverrides
         local settingKey = buff.groupId or buff.key
         if not overrides or overrides[settingKey] ~= false then
@@ -2203,7 +2184,7 @@ local function RefreshSelf(isAuraRestricted, hideExpiring)
             -- Self buff shown only briefly on zone-in - no normal buff checks.
             -- customCheck makes an API call, so it runs after every other gate.
             if
-                inInstanceEntry
+                GameContext.IsInInstanceEntry()
                 and selfVisible
                 and (not buff.class or buff.class == playerClass)
                 and IsBuffEnabled(settingKey)
@@ -2276,7 +2257,7 @@ local function RefreshUtility(db, trackingMode, isAuraRestricted)
     for i, buff in ipairs(UtilityBuffs) do
         local entry = GetOrCreateEntry(buff.key, "utility", i)
         local settingKey = buff.groupId or buff.key
-        local entryOk = not buff.showOnInstanceEntry or inInstanceEntry
+        local entryOk = not buff.showOnInstanceEntry or GameContext.IsInInstanceEntry()
         if
             entryOk
             and not (repairHiddenInCombat and buff.key == "repairGear")
@@ -2313,9 +2294,9 @@ local function RefreshPresence(db, trackingMode, isAuraRestricted, hideExpiring)
                 buff.castOnOthers
             )
             local instanceEntryOk = buff.showOnInstanceEntry
-                and inInstanceEntry
+                and GameContext.IsInInstanceEntry()
                 and (not buff.casterClass or buff.casterClass == playerClass)
-            local readyCheckOk = not buff.readyCheckOnly or inReadyCheck
+            local readyCheckOk = not buff.readyCheckOnly or GameContext.IsInReadyCheck()
             -- Soulstone visibility mode overrides readyCheckOnly
             if buff.key == "soulstone" and not readyCheckOk then
                 local ssMode = db.defaults and db.defaults.soulstoneVisibility or "readyCheck"
@@ -2503,10 +2484,9 @@ local function RefreshConsumables(db, trackingMode, isAuraRestricted, hideExpiri
 
         if buff.showOnInstanceEntry and (db.defaults and db.defaults.delveFoodTimer) then
             -- Instance-entry-only consumable (e.g. delve food): shows for 30s after
-            -- entry, then hides. The Display layer clears the entry state on combat
-            -- start.
+            -- entry, then hides. GameContext ends the window when combat starts.
             if
-                inDelveEntry
+                GameContext.IsInDelveEntry()
                 and catVisible
                 and IsBuffEnabled(settingKey)
                 and PassesPreChecks(buff, nil, db, trackingMode)
@@ -2522,7 +2502,7 @@ local function RefreshConsumables(db, trackingMode, isAuraRestricted, hideExpiri
             local isFreeConsumable = freeVisible and IsFreeConsumable(buff)
             -- Healthstone ready check mode (independent of follow/override content gates)
             local freeReadyCheckOk = true
-            if buff.freeConsumable and not inReadyCheck then
+            if buff.freeConsumable and not GameContext.IsInReadyCheck() then
                 if freeRcMode == "readyCheck" then
                     freeReadyCheckOk = false
                 elseif freeRcMode == "casterOnly" then
@@ -2826,24 +2806,6 @@ function BuffState.Refresh(refreshMode)
     BR.CallbackRegistry:TriggerEvent("BuffStateChanged")
 end
 
----Set the ready check state
----@param state boolean
-function BuffState.SetReadyCheckState(state)
-    inReadyCheck = state
-end
-
----Get the ready check state
----@return boolean
-function BuffState.GetReadyCheckState()
-    return inReadyCheck
-end
-
----Set the instance entry state (briefly shows showOnInstanceEntry buffs)
----@param state boolean
-function BuffState.SetInstanceEntryState(state)
-    inInstanceEntry = state
-end
-
 ---Check if the current zone qualifies for dungeon entry triggers
 ---(grouped dungeons only, excluding M+ and follower dungeons)
 ---@return boolean
@@ -2856,12 +2818,6 @@ function BuffState.ShouldTriggerDungeonEntry()
     end
     local diffKey = GetCurrentDifficultyKey()
     return diffKey ~= "mythicPlus" and diffKey ~= "follower"
-end
-
----Set the delve entry state (briefly shows consumables with showOnInstanceEntry)
----@param state boolean
-function BuffState.SetDelveEntryState(state)
-    inDelveEntry = state
 end
 
 ---Check if the current zone qualifies for delve entry triggers
@@ -2889,12 +2845,6 @@ end
 ---@return boolean
 function BuffState.GetConsumablesDismissed()
     return consumablesDismissed
-end
-
----Set the PvP prep phase flag (true before the gates open).
----@param state boolean
-function BuffState.SetPvPPrepPhase(state)
-    inPvPPrepPhase = state
 end
 
 ---Raw difficultyID from GetInstanceInfo (cached; invalidated with content type)
@@ -3013,9 +2963,6 @@ end
 ---Invalidate content type cache (call on PLAYER_ENTERING_WORLD)
 function BuffState.InvalidateContentTypeCache()
     wipe(instanceCache)
-    -- inPvPPrepPhase is NOT reset here - SetPvPPrepPhase() manages it explicitly.
-    -- A reset here clobbers the prep state when the deferred
-    -- ZONE_CHANGED_NEW_AREA invalidation fires 0.5s after entry to a PvP instance.
 end
 
 ---Invalidate the aura-trackable caches (call on PLAYER_ENTERING_WORLD).

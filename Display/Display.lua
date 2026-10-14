@@ -344,16 +344,10 @@ local buffFrames = {}
 -- consumers run on every display cycle and must not rescan the full frame table.
 local buffFramesByCategory = {}
 local updateTicker
-local readyCheckTimer = nil
-local instanceEntryTimer = nil
-local delveEntryTimer = nil
-local SOULWELL_SPELL_IDS = { [29893] = true, [6201] = true } -- Create Soulwell, Create Healthstone
 
 -- "Decor Duel" prop-hunt brawl: hide-and-seek as furniture, buff reminders are
 -- meaningless and visually defeat the purpose. Identified by its unique difficulty ID.
 local DECOR_DUEL_DIFFICULTY_ID = 253
-local ClearInstanceEntryState -- forward declaration
-local ClearDelveEntryState -- forward declaration
 local testMode = false
 local eventFrame -- forward declaration; created later in file
 
@@ -2081,7 +2075,7 @@ local function ResolveConsumableFrame(frame)
     ApplyItemCooldown(frame, nil)
     local defs = BR.profile.defaults or {}
     if defs.showConsumablesWithoutItems then
-        if defs.showWithoutItemsOnlyOnReadyCheck and not BR.BuffState.GetReadyCheckState() then
+        if defs.showWithoutItemsOnlyOnReadyCheck and not GameContext.IsInReadyCheck() then
             return false
         end
         SetIconDesaturated(frame.icon, true)
@@ -3426,6 +3420,14 @@ CallbackRegistry:RegisterCallback("VisibilityRefresh", function()
     UpdateDisplay()
 end)
 
+CallbackRegistry:RegisterCallback("GameContextChanged", function(_, urgent)
+    if urgent then
+        UpdateDisplay()
+    else
+        SetDirty()
+    end
+end)
+
 -- Structural changes (split categories)
 CallbackRegistry:RegisterCallback("FramesReparent", function()
     ResetLayoutSignatures()
@@ -3678,24 +3680,6 @@ eventFrame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
 eventFrame:RegisterEvent("NEW_MOUNT_ADDED")
 eventFrame:RegisterEvent("PVP_MATCH_STATE_CHANGED")
 
-ClearInstanceEntryState = function()
-    if instanceEntryTimer then
-        instanceEntryTimer:Cancel()
-        instanceEntryTimer = nil
-    end
-    BR.BuffState.SetInstanceEntryState(false)
-    eventFrame:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-    eventFrame:UnregisterEvent("UNIT_SPELLCAST_START")
-end
-
-ClearDelveEntryState = function()
-    if delveEntryTimer then
-        delveEntryTimer:Cancel()
-        delveEntryTimer = nil
-    end
-    BR.BuffState.SetDelveEntryState(false)
-end
-
 -- The repair macro branches on whether the repair mount can be summoned here, and
 -- that answer follows the subzone. Subzone crossings are frequent, so the secure
 -- rebuild waits for a changed verdict. A verdict that changes in combat still
@@ -3716,14 +3700,6 @@ local eventHandlers = {}
 eventHandlers.PLAYER_ENTERING_WORLD = function()
     BR.BuffState.SetConsumablesDismissed(false)
     UpdateAuraEventRegistration()
-    -- Detect PvP prep phase: in a PvP instance but match not yet started.
-    -- Used by the `hideInPvPMatch` visibility setting to gate buff display once
-    -- the match starts. Aura API is restricted for the whole BG/arena regardless.
-    local _, instType = IsInInstance()
-    local inPvPZone = instType == "pvp" or instType == "arena"
-    local matchState = C_PvP.GetActiveMatchState()
-    local isPrep = matchState ~= Enum.PvPMatchState.Engaged
-    BR.BuffState.SetPvPPrepPhase(inPvPZone and isPrep)
     BR.StateHelpers.ScanEatingState()
     BR.Loadouts.EnsureAddonsReady(LoadoutRules)
     DisplayFonts.Resolve()
@@ -3765,38 +3741,6 @@ eventHandlers.PLAYER_ENTERING_WORLD = function()
     end
     -- Delayed update to catch glow events that fire after reload
     C_Timer.After(0.5, SetDirty)
-    -- Show showOnInstanceEntry self buffs briefly when entering a dungeon (not M+)
-    C_Timer.After(1, function()
-        if BR.BuffState.ShouldTriggerDungeonEntry() then
-            if instanceEntryTimer then
-                instanceEntryTimer:Cancel()
-            end
-            BR.BuffState.SetInstanceEntryState(true)
-            eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-            eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
-            UpdateDisplay()
-            instanceEntryTimer = C_Timer.NewTimer(30, function()
-                ClearInstanceEntryState()
-                UpdateDisplay()
-            end)
-        else
-            ClearInstanceEntryState()
-        end
-        -- Show showOnInstanceEntry consumables briefly when entering a delve
-        if BR.BuffState.ShouldTriggerDelveEntry() then
-            if delveEntryTimer then
-                delveEntryTimer:Cancel()
-            end
-            BR.BuffState.SetDelveEntryState(true)
-            UpdateDisplay()
-            delveEntryTimer = C_Timer.NewTimer(30, function()
-                ClearDelveEntryState()
-                UpdateDisplay()
-            end)
-        else
-            ClearDelveEntryState()
-        end
-    end)
     -- Refresh custom buff icons after spell data is fully loaded (talent-modified icons)
     -- and warm up the static icon cache for every buff in one pass so the next menu
     -- open / detached-icons render hits the cached path.
@@ -3814,34 +3758,14 @@ eventHandlers.PLAYER_ENTERING_WORLD = function()
     end)
 end
 
-eventHandlers.ZONE_CHANGED_NEW_AREA = function()
-    -- Delves have no loading screen, so PLAYER_ENTERING_WORLD does not fire.
-    -- GetInstanceInfo() still returns stale data when this event fires,
-    -- so defer the cache invalidation + refresh.
-    C_Timer.After(0.5, function()
-        -- ShouldTriggerDelveEntry below reads the content type in this same callback.
-        GameContext.Invalidate("contentType")
-        -- Instance-group state can flip here without GROUP_ROSTER_UPDATE
-        -- (delves and follower dungeons have no loading screen)
+-- Instance-group state can flip on a zone change without GROUP_ROSTER_UPDATE
+-- (delves and follower dungeons have no loading screen).
+CallbackRegistry:RegisterCallback("GameContextChanged", function(_, _, reason)
+    if reason == "zoneSettled" then
         UpdateAuraEventRegistration()
-        SetDirty()
-        -- Trigger delve entry for showOnInstanceEntry consumables (no loading screen on re-entry)
-        -- Skip if PLAYER_ENTERING_WORLD already started a timer for this entry
-        if BR.BuffState.ShouldTriggerDelveEntry() then
-            if not delveEntryTimer then
-                BR.BuffState.SetDelveEntryState(true)
-                UpdateDisplay()
-                delveEntryTimer = C_Timer.NewTimer(30, function()
-                    ClearDelveEntryState()
-                    UpdateDisplay()
-                end)
-            end
-        else
-            ClearDelveEntryState()
-        end
         RefreshRepairAction()
-    end)
-end
+    end
+end)
 
 -- A subzone can block mounts on its own, so the repair macro tracks both events.
 eventHandlers.ZONE_CHANGED = RefreshRepairAction
@@ -3873,7 +3797,6 @@ end
 
 eventHandlers.PLAYER_REGEN_DISABLED = function()
     UpdateAuraEventRegistration()
-    ClearDelveEntryState()
     SetDirty()
 end
 eventHandlers.ENCOUNTER_START = eventHandlers.PLAYER_REGEN_DISABLED
@@ -3970,10 +3893,6 @@ eventHandlers.CHALLENGE_MODE_COMPLETED = eventHandlers.CHALLENGE_MODE_START
 eventHandlers.CHALLENGE_MODE_RESET = eventHandlers.CHALLENGE_MODE_START
 
 eventHandlers.PVP_MATCH_STATE_CHANGED = function()
-    local state = C_PvP.GetActiveMatchState()
-    -- Prep phase: any state other than Engaged means the match is not active.
-    local isPrep = state ~= Enum.PvPMatchState.Engaged
-    BR.BuffState.SetPvPPrepPhase(isPrep)
     SetDirty()
 end
 
@@ -3982,19 +3901,6 @@ eventHandlers.PLAYER_UPDATE_RESTING = function()
 end
 eventHandlers.PLAYER_LEVEL_UP = eventHandlers.PLAYER_UPDATE_RESTING
 eventHandlers.UPDATE_EXPANSION_LEVEL = eventHandlers.PLAYER_UPDATE_RESTING
-
-eventHandlers.READY_CHECK = function()
-    if readyCheckTimer then
-        readyCheckTimer:Cancel()
-    end
-    BR.BuffState.SetReadyCheckState(true)
-    UpdateDisplay() -- user-facing, must be instant
-    readyCheckTimer = C_Timer.NewTimer(15, function()
-        BR.BuffState.SetReadyCheckState(false)
-        readyCheckTimer = nil
-        UpdateDisplay() -- must be instant
-    end)
-end
 
 eventHandlers.SPELL_ACTIVATION_OVERLAY_GLOW_SHOW = function(arg1)
     local spellID = arg1
@@ -4077,14 +3983,6 @@ eventHandlers.UNIT_ENTERED_VEHICLE = function(arg1)
     end
 end
 eventHandlers.UNIT_EXITED_VEHICLE = eventHandlers.UNIT_ENTERED_VEHICLE
-
-eventHandlers.UNIT_SPELLCAST_SUCCEEDED = function(_, _, arg3)
-    if SOULWELL_SPELL_IDS[arg3] then
-        ClearInstanceEntryState()
-        UpdateDisplay()
-    end
-end
-eventHandlers.UNIT_SPELLCAST_START = eventHandlers.UNIT_SPELLCAST_SUCCEEDED
 
 eventFrame:SetScript("OnEvent", function(_, event, arg1, arg2, arg3)
     GameContext.HandleEvent(event, arg1, arg2, arg3)
