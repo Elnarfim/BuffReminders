@@ -103,7 +103,7 @@ function BR.Profiles.SwitchProfile(name)
     end
     if InCombatLockdown() then
         pendingSwitch = name
-        print("|cffffcc00BuffReminders:|r " .. BR.L["Profile.SwitchQueued"])
+        print("|cff00ccffBuffReminders:|r " .. BR.L["Profile.SwitchQueued"])
         return true
     end
     BR.aceDB:SetProfile(name) -- fires OnProfileChanged -> RefreshAfterProfileChange
@@ -295,6 +295,6 @@ eventFrame:SetScript("OnEvent", function(_, event)
         local name = pendingSwitch
         pendingSwitch = nil
         BR.aceDB:SetProfile(name) -- fires OnProfileChanged -> RefreshAfterProfileChange
-        print("|cffffcc00BuffReminders:|r " .. string.format(BR.L["Profile.Switched"], name))
+        print("|cff00ccffBuffReminders:|r " .. string.format(BR.L["Profile.Switched"], name))
     end
 end)

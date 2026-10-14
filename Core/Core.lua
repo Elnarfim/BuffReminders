@@ -565,7 +565,7 @@ function BR.Config.Set(path, value)
     -- Debug mode only warns; an invalid path still writes.
     local isValid, validatedRefreshType = ValidatePath(segments)
     if not isValid and BR.Config.DebugMode then
-        print("|cffff6600BuffReminders:|r Invalid config path: " .. path)
+        print("|cff00ccffBuffReminders:|r Invalid config path: " .. path)
     end
 
     -- Level 1 reads through the BR.profile proxy metatable: the proxy is an empty
@@ -645,7 +645,7 @@ function BR.Config.SetMulti(changes)
         if #segments > 0 then
             local isValid, validatedRefreshType = ValidatePath(segments)
             if not isValid and BR.Config.DebugMode then
-                print("|cffff6600BuffReminders:|r Invalid config path: " .. path)
+                print("|cff00ccffBuffReminders:|r Invalid config path: " .. path)
             end
 
             -- See BR.Config.Set for why level 1 uses __index and levels 2+ use rawget.
