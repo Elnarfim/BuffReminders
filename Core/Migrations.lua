@@ -13,7 +13,7 @@ local _, BR = ...
 -- and bump DB_VERSION.
 --
 -- The pre-AceDB format conversion (old flat layout -> AceDB) is NOT here:
--- it must run before AceDB:New(), so it lives inline in Display/Display.lua's
+-- it must run before AceDB:New(), so it lives inline in Core/Bootstrap.lua's
 -- ADDON_LOADED handler.
 -- ============================================================================
 

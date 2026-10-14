@@ -2995,25 +2995,25 @@ end
 -- CACHE INVALIDATION
 -- ============================================================================
 
----Invalidate content type cache (call on PLAYER_ENTERING_WORLD)
+---Invalidate content type cache
 function BuffState.InvalidateContentTypeCache()
     wipe(instanceCache)
 end
 
----Invalidate the aura-trackable caches (call on PLAYER_ENTERING_WORLD).
+---Invalidate the aura-trackable caches.
 ---Blizzard can reclassify a spell's secrecy in a mid-session hotfix.
 function BuffState.InvalidateAuraTrackableCache()
     auraTrackableCache = setmetatable({}, { __mode = "k" })
     BR.Restrictions.InvalidateSpellSecrecyCache()
 end
 
----Invalidate spec ID cache (call on PLAYER_ENTERING_WORLD, PLAYER_SPECIALIZATION_CHANGED)
+---Invalidate spec ID cache
 function BuffState.InvalidateSpecCache()
     cachedSpecId = nil
     cachedPlayerRole = nil
 end
 
----Invalidate group-healer cache (call on GROUP_ROSTER_UPDATE, PLAYER_ROLES_ASSIGNED)
+---Invalidate group-healer cache
 function BuffState.InvalidateHealerCache()
     cachedHealerInGroup = nil
 end
@@ -3022,7 +3022,7 @@ end
 ---@return RoleType?
 BuffState.GetPlayerRole = GetPlayerRole
 
----Invalidate spell knowledge cache (call on PLAYER_SPECIALIZATION_CHANGED)
+---Invalidate spell knowledge cache
 function BuffState.InvalidateSpellCache()
     cachedSpellKnowledge = {}
     cachedSpecId = nil
@@ -3093,12 +3093,12 @@ function BuffState.GetPermanentWeaponEnchantID(slot)
     return currentWeaponEnchants.permanentOH
 end
 
----Invalidate off-hand weapon/shield cache (call on PLAYER_EQUIPMENT_CHANGED, PLAYER_SPECIALIZATION_CHANGED)
+---Invalidate off-hand weapon/shield cache
 function BuffState.InvalidateOffHandCache()
     cachedOffHandType = nil
 end
 
----Invalidate item ownership + count caches (call on BAG_UPDATE_DELAYED, PLAYER_EQUIPMENT_CHANGED)
+---Invalidate item ownership + count caches
 function BuffState.InvalidateItemCache()
     cachedItemOwnership = {}
     cachedItemCounts = {}
@@ -3132,8 +3132,7 @@ function BuffState.GetLowestDurability()
     return lowest
 end
 
----Invalidate the durability cache (call on UPDATE_INVENTORY_DURABILITY,
----PLAYER_EQUIPMENT_CHANGED, PLAYER_ENTERING_WORLD)
+---Invalidate the durability cache
 function BuffState.InvalidateDurabilityCache()
     cachedLowestDurability = nil
 end
@@ -3193,8 +3192,7 @@ function BuffState.IsRepairMountUsable()
     return C_MountJournal.GetMountUsabilityByID(mountID, IsIndoors()) == true
 end
 
----Invalidate the repair source cache (call on BAG_UPDATE_DELAYED, NEW_MOUNT_ADDED,
----PLAYER_ENTERING_WORLD)
+---Invalidate the repair source cache
 function BuffState.InvalidateRepairSourceCache()
     cachedRepairSources = nil
 end
@@ -3206,8 +3204,7 @@ function BuffState.GetActiveConsumableSpell(category)
     return activeConsumableSpells[category]
 end
 
----Invalidate loadout state cache (call on PLAYER_SPECIALIZATION_CHANGED,
----TRAIT_CONFIG_UPDATED, SPELLS_CHANGED, PLAYER_EQUIPMENT_CHANGED, EQUIPMENT_SETS_CHANGED)
+---Invalidate loadout state cache
 function BuffState.InvalidateLoadoutCache()
     cachedLoadoutState = {}
 end
@@ -3241,8 +3238,7 @@ function BuffState.IsWrongDemonPet()
     return cachedWrongPetStatus
 end
 
----Invalidate wrong-pet cache (call on UNIT_PET, PLAYER_ENTERING_WORLD,
----PLAYER_SPECIALIZATION_CHANGED, TRAIT_CONFIG_UPDATED, SPELLS_CHANGED)
+---Invalidate wrong-pet cache
 function BuffState.InvalidatePetCache()
     cachedWrongPetStatus = nil
 end
@@ -3416,10 +3412,7 @@ function BuffState.GetExpectedDruidFormID()
     return stanceCache.expectedDruidFormID or nil
 end
 
----Invalidate all stance caches (warrior wrong-stance + priest shadowform +
----druid wrong-form). Call on UPDATE_SHAPESHIFT_FORM, UPDATE_SHAPESHIFT_FORMS,
----PLAYER_SPECIALIZATION_CHANGED, TRAIT_CONFIG_UPDATED, SPELLS_CHANGED,
----PLAYER_ENTERING_WORLD.
+---Invalidate all stance caches (warrior wrong-stance, priest shadowform, druid wrong-form).
 function BuffState.InvalidateStanceCache()
     wipe(stanceCache)
 end
