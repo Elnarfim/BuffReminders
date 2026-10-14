@@ -209,7 +209,7 @@ CallbackRegistry:GenerateCallbackEvents({
     "ExternalsRefresh", -- Fired when the externals display needs reconfiguring
     "CustomAnchorsChanged", -- Fired when the user's anchor-target list gains or loses a name
     "ActiveConsumableChanged", -- Fired when the running consumable aura changes: (category, spellID)
-    "GameContextChanged", -- Fired when the game context changes and needs a render: (urgent, reason?)
+    "RenderRequested", -- A change needs a render: (urgent, reason?)
 })
 BR.CallbackRegistry = CallbackRegistry
 

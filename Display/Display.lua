@@ -3166,7 +3166,7 @@ CallbackRegistry:RegisterCallback("VisibilityRefresh", function()
     UpdateDisplay()
 end)
 
-CallbackRegistry:RegisterCallback("GameContextChanged", function(_, urgent)
+CallbackRegistry:RegisterCallback("RenderRequested", function(_, urgent)
     if urgent then
         UpdateDisplay()
     else
@@ -3484,7 +3484,7 @@ end
 
 -- Instance-group state can flip on a zone change without GROUP_ROSTER_UPDATE
 -- (delves and follower dungeons have no loading screen).
-CallbackRegistry:RegisterCallback("GameContextChanged", function(_, _, reason)
+CallbackRegistry:RegisterCallback("RenderRequested", function(_, _, reason)
     if reason == "zoneSettled" then
         UpdateAuraEventRegistration()
         RefreshRepairAction()

@@ -2185,7 +2185,7 @@ local function RefreshSelf(isAuraRestricted, hideExpiring)
             -- Self buff shown only briefly on zone-in - no normal buff checks.
             -- customCheck makes an API call, so it runs after every other gate.
             if
-                GameContext.IsInInstanceEntry()
+                GameContext.IsInDungeonEntry()
                 and selfVisible
                 and (not buff.class or buff.class == playerClass)
                 and IsBuffEnabled(settingKey)
@@ -2258,7 +2258,7 @@ local function RefreshUtility(db, trackingMode, isAuraRestricted)
     for i, buff in ipairs(UtilityBuffs) do
         local entry = GetOrCreateEntry(buff.key, "utility", i)
         local settingKey = buff.groupId or buff.key
-        local entryOk = not buff.showOnInstanceEntry or GameContext.IsInInstanceEntry()
+        local entryOk = not buff.showOnInstanceEntry or GameContext.IsInDungeonEntry()
         if
             entryOk
             and not (repairHiddenInCombat and buff.key == "repairGear")
@@ -2294,8 +2294,8 @@ local function RefreshPresence(db, trackingMode, isAuraRestricted, hideExpiring)
                 HasCasterForBuff(buff.class, buff.levelRequired),
                 buff.castOnOthers
             )
-            local instanceEntryOk = buff.showOnInstanceEntry
-                and GameContext.IsInInstanceEntry()
+            local dungeonEntryOk = buff.showOnInstanceEntry
+                and GameContext.IsInDungeonEntry()
                 and (not buff.casterClass or buff.casterClass == playerClass)
             local readyCheckOk = not buff.readyCheckOnly or GameContext.IsInReadyCheck()
             -- Soulstone visibility mode overrides readyCheckOnly
@@ -2307,13 +2307,13 @@ local function RefreshPresence(db, trackingMode, isAuraRestricted, hideExpiring)
                     readyCheckOk = playerClass == "WARLOCK"
                 end
             end
-            if not readyCheckOk and not instanceEntryOk then
+            if not readyCheckOk and not dungeonEntryOk then
                 local overrides = db.readyCheckOnlyOverrides
                 local overrideKey = buff.groupId or buff.key
                 readyCheckOk = overrides and overrides[overrideKey] == false
             end
             local showBuff = presenceVisible
-                and (readyCheckOk or instanceEntryOk)
+                and (readyCheckOk or dungeonEntryOk)
                 and scope.show
                 and (not buff.groupOnly or #currentValidUnits > 1) -- solo = 1 entry (player only)
             -- castOnOthers target memory (e.g. Soulstone) updates on every refresh
@@ -3478,7 +3478,7 @@ if LibSpec then
         allySpecCache[sender] = specId
         -- A known ally's spec change alters beneficiary counts, so ask for a render.
         if oldSpec then
-            BR.CallbackRegistry:TriggerEvent("GameContextChanged", false)
+            BR.CallbackRegistry:TriggerEvent("RenderRequested", false)
         end
     end)
 end
