@@ -27,7 +27,6 @@ local C_ClassTalents = C_ClassTalents
 local C_Traits = C_Traits
 local C_EquipmentSet = C_EquipmentSet
 local C_ChallengeMode = C_ChallengeMode
-local C_Spell = C_Spell
 
 local DEFAULT_TALENT_ICON = 133741 -- inv_misc_book_09: generic talent/loadout book icon, last resort
 local DEFAULT_GEAR_ICON = 7539422 -- ui-transmog-showequippedgear: fallback for sets with no icon
@@ -395,8 +394,8 @@ end
 ---@return number|string
 function Loadouts.GetRuleIcon(rule)
     if rule.require == "talent" and rule.spellID then
-        local ok, tex = pcall(C_Spell.GetSpellTexture, rule.spellID)
-        if ok and tex then
+        local tex = BR.Icons.GetBuffTexture(rule.spellID)
+        if tex then
             return tex
         end
     elseif rule.require == "gear" and rule.gear and rule.gear.setID then

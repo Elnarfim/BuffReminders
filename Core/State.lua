@@ -2238,7 +2238,7 @@ local function RefreshSelf(isAuraRestricted, hideExpiring)
                             end
                             if TrySetEntryExpiring(entry, remaining, selfThreshold, selfExGlow) then
                                 if expiringCastID then
-                                    entry.dynamicIcon = C_Spell.GetSpellTexture(expiringCastID)
+                                    entry.dynamicIcon = BR.Icons.GetBuffTexture(expiringCastID)
                                 end
                             end
                         end
@@ -2555,8 +2555,7 @@ local function RefreshConsumables(db, trackingMode, isAuraRestricted, hideExpiri
                         elseif not buff.noExpirationGlow and not hideExpiring then
                             if TrySetEntryExpiring(entry, remainingTime, consThreshold, consExGlow) then
                                 if activeSpellID and type(buff.spellID) == "table" then
-                                    local ok, tex = pcall(C_Spell.GetSpellTexture, activeSpellID)
-                                    entry.dynamicIcon = ok and tex or nil
+                                    entry.dynamicIcon = BR.Icons.GetBuffTexture(activeSpellID)
                                 end
                             end
                         end
@@ -3497,6 +3496,8 @@ BR.StateHelpers = {
     IsCategoryVisibleForContent = IsCategoryVisibleForContent,
     GetBuffSettingKey = GetBuffSettingKey,
     IsBuffEnabled = IsBuffEnabled,
+    IsPlayerSpellCached = IsPlayerSpellCached,
+    AsSpellList = AsSpellList,
 }
 
 BR.BuffState = BuffState
