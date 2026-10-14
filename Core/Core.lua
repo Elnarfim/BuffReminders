@@ -447,7 +447,6 @@ end
 local DynamicRoots = {
     enabledBuffs = "DisplayRefresh",
     categoryVisibility = "DisplayRefresh",
-    splitCategories = "FramesReparent",
     readyCheckOnlyOverrides = "DisplayRefresh",
     detachedIcons = "FramesReparent",
     loadoutReminders = "DisplayRefresh",
@@ -525,7 +524,6 @@ local function ValidatePath(segments)
         return false, nil
     end
 
-    -- Check dynamic roots (enabledBuffs.*, categoryVisibility.*, splitCategories.*)
     if DynamicRoots[root] then
         -- Any subpath is valid for dynamic roots
         return true, DynamicRoots[root]

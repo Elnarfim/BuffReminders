@@ -375,11 +375,6 @@ function GameContext.IsInCombat()
     return inCombat
 end
 
----@return boolean inEncounter True between ENCOUNTER_START and ENCOUNTER_END
-function GameContext.IsInEncounter()
-    return inEncounter
-end
-
 ---@return boolean isResting
 function GameContext.IsResting()
     return isResting

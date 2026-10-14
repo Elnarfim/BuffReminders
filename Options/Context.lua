@@ -769,28 +769,6 @@ function Helpers.CreateDialog(config)
     return controller
 end
 
--- SingletonDialog wraps a builder so the dialog frame is created on first show
--- and reused after that, with Components.RefreshAll() to resync. The builder
--- receives the args passed to Show and must return the dialog frame.
---
--- Use it only for a dialog whose content depends on profile data alone. A
--- dialog whose body varies per invocation must rebuild its body on each Show.
-function Helpers.SingletonDialog(builder)
-    local cached
-    return {
-        Show = function(...)
-            if cached then
-                BR.Components.RefreshAll()
-                cached:Show()
-                return cached
-            end
-            cached = builder(...)
-            cached:Show()
-            return cached
-        end,
-    }
-end
-
 function Helpers.LayoutSeparator(layout, parent)
     local sep = parent:CreateTexture(nil, "ARTWORK")
     sep:SetHeight(1)

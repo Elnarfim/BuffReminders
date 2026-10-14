@@ -325,9 +325,6 @@ local function BuildLoadoutRulesArray()
     end
 end
 
-local GetBuffSettingKey = function(buff)
-    return BR.StateHelpers.GetBuffSettingKey(buff)
-end
 local IsBuffEnabled = function(key)
     return BR.StateHelpers.IsBuffEnabled(key)
 end
@@ -554,8 +551,6 @@ local function BuildCategorySettings(category)
         result.iconZoom = (catSettings and catSettings.iconZoom) or 0
         result.borderSize = (catSettings and catSettings.borderSize) or 2
         result.growDirection = (catSettings and catSettings.growDirection) or "CENTER"
-        result.showExpirationGlow = catSettings and catSettings.showExpirationGlow
-        result.expirationThreshold = (catSettings and catSettings.expirationThreshold)
     else
         result.iconSize = globalDefaults.iconSize or 64
         result.iconWidth = globalDefaults.iconWidth
@@ -567,8 +562,6 @@ local function BuildCategorySettings(category)
         result.iconZoom = globalDefaults.iconZoom or 0
         result.borderSize = globalDefaults.borderSize or 2
         result.growDirection = globalDefaults.growDirection or "CENTER"
-        result.showExpirationGlow = globalDefaults.showExpirationGlow
-        result.expirationThreshold = globalDefaults.expirationThreshold
     end
 
     -- BUFF! text: direct per-category for raid only
@@ -3202,8 +3195,6 @@ if masqueGroup then
 end
 
 BR.Helpers = {
-    GetBuffSettingKey = GetBuffSettingKey,
-    IsBuffEnabled = IsBuffEnabled,
     GetCategorySettings = GetCategorySettings,
     IsCategorySplit = IsCategorySplit,
     IsIconDetached = IsIconDetached,
@@ -3212,15 +3203,6 @@ BR.Helpers = {
     ResetDetachedPosition = ResetDetachedPosition,
     GetCategoryForBuff = GetCategoryForBuff,
     GetBuffDisplayName = GetBuffDisplayName,
-    GetBuffTexture = GetBuffTexture,
-    GetBuffIcons = GetBuffIcons,
-    ApplyDynamicIcon = BR.Icons.ApplyDynamicIcon,
-    PreFillIconCaches = BR.Icons.PreFillIconCaches,
-    DeepCopy = function(...)
-        return BR.ImportExport.DeepCopy(...)
-    end,
-    GetCurrentContentType = BR.StateHelpers.GetCurrentContentType,
-    IsCategoryVisibleForContent = BR.StateHelpers.IsCategoryVisibleForContent,
     ValidateSpellID = ValidateSpellID,
     ValidateItemID = ValidateItemID,
     GenerateCustomBuffKey = GenerateCustomBuffKey,
@@ -3276,9 +3258,6 @@ BR.Display.ToggleLock = ToggleLock
 BR.Display.IsFrameLocked = IsFrameLocked
 BR.Display.SetFrameLocked = SetFrameLocked
 BR.Display.UpdateVisuals = UpdateVisuals
-BR.Display.UpdateActionButtons = function(category)
-    return BR.SecureButtons.UpdateActionButtons(category)
-end
 BR.Display.IsTestMode = function()
     return testMode
 end

@@ -2201,7 +2201,7 @@ local function RefreshSelf(isAuraRestricted, hideExpiring)
                     if useGlowDet then
                         if IsAnySpellGlowing(buff) then
                             SetEntryText(entry, buff.overlayText, selfMissGlow)
-                            BR.Helpers.ApplyDynamicIcon(entry, buff)
+                            BR.Icons.ApplyDynamicIcon(entry, buff)
                         end
                     else
                         local shouldShow = ShouldShowSelfBuff(
@@ -2221,7 +2221,7 @@ local function RefreshSelf(isAuraRestricted, hideExpiring)
                         local show = (wantPresent and shouldShow == false) or (not wantPresent and shouldShow)
                         if show then
                             SetEntryText(entry, buff.overlayText, selfMissGlow)
-                            BR.Helpers.ApplyDynamicIcon(entry, buff)
+                            BR.Icons.ApplyDynamicIcon(entry, buff)
                         elseif
                             shouldShow == false
                             and not wantPresent
@@ -2269,7 +2269,7 @@ local function RefreshUtility(db, trackingMode, isAuraRestricted)
             and (not buff.customCheck or buff.customCheck(isAuraRestricted))
         then
             SetEntryText(entry, buff.overlayTextFn and buff.overlayTextFn() or buff.overlayText, utilityMissGlow)
-            BR.Helpers.ApplyDynamicIcon(entry, buff)
+            BR.Icons.ApplyDynamicIcon(entry, buff)
         end
     end
 end
@@ -2442,7 +2442,7 @@ local function RefreshPet()
             )
             if shouldShow then
                 SetEntryText(entry, buff.overlayText, petMissGlow)
-                BR.Helpers.ApplyDynamicIcon(entry, buff)
+                BR.Icons.ApplyDynamicIcon(entry, buff)
                 if buff.getPetActions then
                     local actions = buff.getPetActions()
                     if actions and #actions > 0 then

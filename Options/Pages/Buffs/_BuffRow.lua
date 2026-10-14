@@ -15,7 +15,7 @@ local Components = BR.Components
 
 local BuffGroups = BR.BuffGroups
 
-local GetBuffIcons = BR.Helpers.GetBuffIcons
+local GetBuffIcons = BR.Icons.GetBuffIcons
 local IsIconDetached = BR.Helpers.IsIconDetached
 
 local UpdateDisplay = BR.Display.Update
@@ -306,4 +306,3 @@ local function RenderBuffArray(parent, x, y, buffArray, rowWidth)
 end
 
 BR.Options.BuffRow.Render = RenderBuffArray
-BR.Options.BuffRow.CreateRow = CreateBuffRow
