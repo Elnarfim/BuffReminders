@@ -187,6 +187,15 @@ local function ImportSettings(prefixedStr)
     end
     p.optionsPanelScale = nil
 
+    -- Pre-v55 strings carry a runtime icon cache on each custom buff (migration [55]).
+    if type(p.customBuffs) == "table" then
+        for _, buff in pairs(p.customBuffs) do
+            if type(buff) == "table" then
+                buff._iconsCache = nil
+            end
+        end
+    end
+
     -- Ensure defaults sub-table exists and has the metatable (DeepCopy produces
     -- a plain table, and old export strings can omit the defaults key).
     if not BR.profile.defaults then

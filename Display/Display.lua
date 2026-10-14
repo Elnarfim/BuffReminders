@@ -714,7 +714,7 @@ local function InvalidateBuffIconBySpellID(spellID)
                 end
             end
             if matches then
-                def._iconsCache = nil
+                BR.Icons.InvalidateBuffIcons(def)
                 local texture = ResolveFrameTexture(frame)
                 if texture then
                     frame.icon:SetTexture(texture)
