@@ -66,6 +66,7 @@ local SpecBeneficiaries = BR.SpecBeneficiaries
 
 -- Sticky target memory for cast-on-others buffs (Core/TargetMemory.lua)
 local TargetMemory = BR.TargetMemory
+local GameContext = BR.GameContext
 
 -- Buffs with class-specific aura variants can resolve to a single spell ID per unit.
 -- This avoids scanning every possible variant for every raid member on each refresh.
@@ -126,10 +127,6 @@ local BuffState = {
 local _, playerClass = UnitClass("player")
 local playerName = GetUnitName("player", true)
 
--- Player level and max expansion level (updated via SetPlayerLevel on PLAYER_LEVEL_UP)
-local playerLevel = UnitLevel("player")
-local maxExpansionLevel = GetMaxLevelForPlayerExpansion()
-
 -- Ready check state (set via SetReadyCheckState)
 local inReadyCheck = false
 
@@ -141,17 +138,8 @@ local inInstanceEntry = false
 -- Briefly shows consumables with showOnInstanceEntry when zoning into a delve
 local inDelveEntry = false
 
--- Vehicle state (set via SetInVehicle)
-local inVehicle = false
-
 -- Consumables dismissed state (transient, resets on instance change / reload)
 local consumablesDismissed = false
-
--- Combat/encounter state (set via SetInCombat by the Display layer). It covers
--- both combat lockdown and boss encounters (ENCOUNTER_START fires before
--- InCombatLockdown() turns true). The flag gates fighting-dependent behavior
--- only; restriction detection is measured in IsRestricted().
-local inCombat = false
 
 -- ============================================================================
 -- CACHED VALUES (invalidated by specific events)
@@ -1114,7 +1102,7 @@ end
 ---@param category CategoryName
 ---@return boolean
 local function IsCategoryVisibleForContent(category, skipReadyCheck)
-    if inVehicle and category ~= "raid" and category ~= "presence" then
+    if GameContext.IsInVehicle() and category ~= "raid" and category ~= "presence" then
         return false
     end
     local db = BR.profile
@@ -1155,7 +1143,7 @@ end
 ---@param buff CustomBuff
 ---@return boolean
 local function IsCustomBuffVisibleForContent(buff)
-    if inVehicle then
+    if GameContext.IsInVehicle() then
         return false
     end
     local lc = buff.loadConditions
@@ -1182,9 +1170,11 @@ local function IsCustomBuffVisibleForContent(buff)
     end
 
     if lc.levelFilter then
-        if lc.levelFilter == "maxLevel" and playerLevel < maxExpansionLevel then
+        if lc.levelFilter == "maxLevel" and GameContext.GetPlayerLevel() < GameContext.GetMaxExpansionLevel() then
             return false
-        elseif lc.levelFilter == "belowMaxLevel" and playerLevel >= maxExpansionLevel then
+        elseif
+            lc.levelFilter == "belowMaxLevel" and GameContext.GetPlayerLevel() >= GameContext.GetMaxExpansionLevel()
+        then
             return false
         end
     end
@@ -1213,7 +1203,7 @@ local LOADOUT_SCOPE_CONTENT = {
 ---@param rule LoadoutRule
 ---@return boolean
 local function IsLoadoutRuleVisibleForContent(rule)
-    if inVehicle then
+    if GameContext.IsInVehicle() then
         return false
     end
     local when = rule.when
@@ -1312,10 +1302,10 @@ local function GetEffectiveTrackingMode(db)
             mode, rank = ApplyOverride(mode, rank, outside)
         end
     end
-    if inCombat then
+    if GameContext.IsInCombat() then
         mode, rank = ApplyOverride(mode, rank, db.combatMode)
     end
-    if playerLevel < maxExpansionLevel then
+    if GameContext.GetPlayerLevel() < GameContext.GetMaxExpansionLevel() then
         mode = ApplyOverride(mode, rank, db.levelingMode)
     end
 
@@ -1424,7 +1414,7 @@ local function CountMissingBuff(spellIDs, buffKey, playerOnly, playersOnly)
         return missing, total, minRemaining
     end
 
-    local countNPCs = includeNPCsInCounting and not inCombat and not playersOnly
+    local countNPCs = includeNPCsInCounting and not GameContext.IsInCombat() and not playersOnly
     for _, data in ipairs(currentValidUnits) do
         -- Skip NPCs unless in whitelisted content. During combat, also skip NPCs
         -- here: NPC-cast raid buff spell IDs (e.g. 432661) are not
@@ -1606,7 +1596,7 @@ local function ShouldShowTargetedBuff(spellIDs, requiredClass, beneficiaryRole, 
         -- contexts like M+, or the target is phased / out of range), so a miss is
         -- ambiguous and must NOT forget the memory. Roster pruning handles
         -- departures, and a retarget overwrites on the next successful scan.
-        if buffKey and not inCombat and hasBuff then
+        if buffKey and not GameContext.IsInCombat() and hasBuff then
             for _, data in ipairs(currentValidUnits) do
                 if not Plain(UnitIsUnit(data.unit, "player")) then
                     local targetHas = UnitHasBuff(data.unit, spellIDs)
@@ -1804,7 +1794,7 @@ end
 ---@param db table Database settings
 ---@return boolean
 local function IsFreeConsumableVisible(db)
-    if inVehicle then
+    if GameContext.IsInVehicle() then
         return false
     end
     local vis = db.defaults and db.defaults.freeConsumableVisibility
@@ -2168,7 +2158,7 @@ end
 local function RefreshRaid(db, trackingMode, hideExpiring, missingCountOnly)
     local raidVisible = IsCategoryVisibleForContent("raid")
     local raidExGlow, raidMissGlow, raidThreshold = GetCategoryGlowSettings("raid")
-    local bronzeHiddenInCombat = inCombat and db.bronzeHideInCombat
+    local bronzeHiddenInCombat = GameContext.IsInCombat() and db.bronzeHideInCombat
     for i, buff in ipairs(RaidBuffs) do
         local entry = GetOrCreateEntry(buff.key, "raid", i)
         local scope =
@@ -2282,7 +2272,7 @@ end
 local function RefreshUtility(db, trackingMode, isAuraRestricted)
     local utilityVisible = IsCategoryVisibleForContent("utility")
     local _, utilityMissGlow = GetCategoryGlowSettings("utility")
-    local repairHiddenInCombat = inCombat and db.defaults and db.defaults.repairHideInCombat ~= false
+    local repairHiddenInCombat = GameContext.IsInCombat() and db.defaults and db.defaults.repairHideInCombat ~= false
     for i, buff in ipairs(UtilityBuffs) do
         local entry = GetOrCreateEntry(buff.key, "utility", i)
         local settingKey = buff.groupId or buff.key
@@ -2354,7 +2344,7 @@ local function RefreshPresence(db, trackingMode, isAuraRestricted, hideExpiring)
             local scanned = false
             if
                 isOwnCaster
-                and not inCombat
+                and not GameContext.IsInCombat()
                 and #currentValidUnits > 1
                 and IsBuffEnabled(buff.key)
                 and (not isAuraRestricted or IsAuraTrackable(buff))
@@ -2836,24 +2826,6 @@ function BuffState.Refresh(refreshMode)
     BR.CallbackRegistry:TriggerEvent("BuffStateChanged")
 end
 
----Set the player level (called on PLAYER_LEVEL_UP)
----@param level number
-function BuffState.SetPlayerLevel(level)
-    playerLevel = level
-end
-
----Set the max expansion level (called on UPDATE_EXPANSION_LEVEL)
----@param level number
-function BuffState.SetMaxExpansionLevel(level)
-    maxExpansionLevel = level
-end
-
----@return number playerLevel
----@return number maxExpansionLevel
-function BuffState.GetLevelInfo()
-    return playerLevel, maxExpansionLevel
-end
-
 ---Set the ready check state
 ---@param state boolean
 function BuffState.SetReadyCheckState(state)
@@ -2898,18 +2870,6 @@ function BuffState.ShouldTriggerDelveEntry()
     return BR.IsInDelve()
 end
 
----Set the vehicle state
----@param state boolean
-function BuffState.SetInVehicle(state)
-    inVehicle = state
-end
-
----Get the vehicle state
----@return boolean
-function BuffState.GetInVehicle()
-    return inVehicle
-end
-
 ---Check if the current instance is legacy content (cached alongside content type)
 ---@return boolean
 function BuffState.IsLegacyInstance()
@@ -2929,13 +2889,6 @@ end
 ---@return boolean
 function BuffState.GetConsumablesDismissed()
     return consumablesDismissed
-end
-
----Set the combat/encounter state.
----Called by the Display layer on ENCOUNTER_START, PLAYER_REGEN_DISABLED, etc.
----@param state boolean
-function BuffState.SetInCombat(state)
-    inCombat = state
 end
 
 ---Set the PvP prep phase flag (true before the gates open).

@@ -416,12 +416,6 @@ local function IsTrackedDisplayUnit(unit)
     return unit == "player" or unit == "pet" or unit:match("^party%d+$") ~= nil or unit:match("^raid%d+$") ~= nil
 end
 
--- Track combat state via events (InCombatLockdown() can lag behind PLAYER_REGEN_DISABLED).
--- inCombat reflects both player regen and boss encounter state; it feeds the
--- fighting-dependent gates in State.lua, not restriction detection.
-local inCombat = false
-local inEncounter = false
-
 -- Narrow UNIT_AURA to player+pet whenever group payloads cannot matter: in
 -- combat/encounters they are secret and fail closed in GroupAuraUpdateMatters
 -- (the 3s ticker owns group refresh there), and solo there are no group units.
@@ -430,7 +424,7 @@ local inEncounter = false
 -- GroupAuraUpdateMatters.
 local auraEventsNarrow -- nil forces the first call to register
 local function UpdateAuraEventRegistration()
-    local narrow = inCombat or not IsInGroup()
+    local narrow = GameContext.IsInCombat() or not IsInGroup()
     if narrow == auraEventsNarrow then
         return
     end
@@ -442,7 +436,6 @@ local function UpdateAuraEventRegistration()
         SetDirty("group") -- catch group changes missed while narrowed
     end
 end
-local isResting = false
 local petDismountSuppressed = false -- Suppress pet eval briefly after dismount (pet respawn delay)
 local wasMounted = IsMounted()
 
@@ -2651,17 +2644,17 @@ UpdateDisplay = function(refreshMode)
             return
         end
 
-        if db.hideWhileResting and isResting then
+        if db.hideWhileResting and GameContext.IsResting() then
             HideAllDisplayFrames()
             return
         end
 
-        if db.hideInCombat and inCombat then
+        if db.hideInCombat and GameContext.IsInCombat() then
             HideAllDisplayFrames()
             return
         end
 
-        if db.hideAllInVehicle and BR.BuffState.GetInVehicle() then
+        if db.hideAllInVehicle and GameContext.IsInVehicle() then
             HideAllDisplayFrames()
             return
         end
@@ -2676,8 +2669,7 @@ UpdateDisplay = function(refreshMode)
             return
         end
 
-        local playerLevel, maxExpansionLevel = BR.BuffState.GetLevelInfo()
-        if db.hideWhileLeveling and playerLevel < maxExpansionLevel then
+        if db.hideWhileLeveling and GameContext.GetPlayerLevel() < GameContext.GetMaxExpansionLevel() then
             HideAllDisplayFrames()
             return
         end
@@ -3723,12 +3715,6 @@ local eventHandlers = {}
 
 eventHandlers.PLAYER_ENTERING_WORLD = function()
     BR.BuffState.SetConsumablesDismissed(false)
-    -- Sync flags with current state (in case of reload)
-    inCombat = InCombatLockdown()
-    isResting = IsResting()
-    BR.BuffState.SetPlayerLevel(UnitLevel("player"))
-    BR.BuffState.SetMaxExpansionLevel(GetMaxLevelForPlayerExpansion())
-    BR.BuffState.SetInCombat(inCombat)
     UpdateAuraEventRegistration()
     -- Detect PvP prep phase: in a PvP instance but match not yet started.
     -- Used by the `hideInPvPMatch` visibility setting to gate buff display once
@@ -3738,7 +3724,6 @@ eventHandlers.PLAYER_ENTERING_WORLD = function()
     local matchState = C_PvP.GetActiveMatchState()
     local isPrep = matchState ~= Enum.PvPMatchState.Engaged
     BR.BuffState.SetPvPPrepPhase(inPvPZone and isPrep)
-    BR.BuffState.SetInVehicle(UnitInVehicle("player") == true)
     BR.StateHelpers.ScanEatingState()
     BR.Loadouts.EnsureAddonsReady(LoadoutRules)
     DisplayFonts.Resolve()
@@ -3775,7 +3760,7 @@ eventHandlers.PLAYER_ENTERING_WORLD = function()
     lastRepairMountUsable = nil
     C_Timer.After(1, RefreshRepairAction)
     SeedGlowingSpells() -- Catch glows that were active before event registration
-    if not inCombat then
+    if not GameContext.IsInCombat() then
         StartUpdates()
     end
     -- Delayed update to catch glow events that fire after reload
@@ -3880,8 +3865,6 @@ eventHandlers.PLAYER_ROLES_ASSIGNED = function()
 end
 
 eventHandlers.PLAYER_REGEN_ENABLED = function()
-    inCombat = inEncounter
-    BR.BuffState.SetInCombat(inCombat)
     UpdateAuraEventRegistration()
     BR.StateHelpers.ScanEatingState()
     BR.SecureButtons.RefreshOverlaySpells()
@@ -3889,26 +3872,13 @@ eventHandlers.PLAYER_REGEN_ENABLED = function()
 end
 
 eventHandlers.PLAYER_REGEN_DISABLED = function()
-    inCombat = true
-    BR.BuffState.SetInCombat(true)
     UpdateAuraEventRegistration()
     ClearDelveEntryState()
     SetDirty()
 end
-
-eventHandlers.ENCOUNTER_START = function()
-    inEncounter = true
-    inCombat = true
-    BR.BuffState.SetInCombat(true)
-    UpdateAuraEventRegistration()
-    ClearDelveEntryState()
-    SetDirty()
-end
+eventHandlers.ENCOUNTER_START = eventHandlers.PLAYER_REGEN_DISABLED
 
 eventHandlers.ENCOUNTER_END = function()
-    inEncounter = false
-    inCombat = inCombat and InCombatLockdown()
-    BR.BuffState.SetInCombat(inCombat)
     UpdateAuraEventRegistration()
     SetDirty()
 end
@@ -4008,19 +3978,10 @@ eventHandlers.PVP_MATCH_STATE_CHANGED = function()
 end
 
 eventHandlers.PLAYER_UPDATE_RESTING = function()
-    isResting = IsResting()
     SetDirty()
 end
-
-eventHandlers.PLAYER_LEVEL_UP = function(arg1)
-    BR.BuffState.SetPlayerLevel(arg1)
-    SetDirty()
-end
-
-eventHandlers.UPDATE_EXPANSION_LEVEL = function()
-    BR.BuffState.SetMaxExpansionLevel(GetMaxLevelForPlayerExpansion())
-    SetDirty()
-end
+eventHandlers.PLAYER_LEVEL_UP = eventHandlers.PLAYER_UPDATE_RESTING
+eventHandlers.UPDATE_EXPANSION_LEVEL = eventHandlers.PLAYER_UPDATE_RESTING
 
 eventHandlers.READY_CHECK = function()
     if readyCheckTimer then
@@ -4112,16 +4073,10 @@ end
 
 eventHandlers.UNIT_ENTERED_VEHICLE = function(arg1)
     if arg1 == "player" then
-        BR.BuffState.SetInVehicle(true)
         UpdateDisplay()
     end
 end
-eventHandlers.UNIT_EXITED_VEHICLE = function(arg1)
-    if arg1 == "player" then
-        BR.BuffState.SetInVehicle(false)
-        UpdateDisplay()
-    end
-end
+eventHandlers.UNIT_EXITED_VEHICLE = eventHandlers.UNIT_ENTERED_VEHICLE
 
 eventHandlers.UNIT_SPELLCAST_SUCCEEDED = function(_, _, arg3)
     if SOULWELL_SPELL_IDS[arg3] then

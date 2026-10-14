@@ -1,12 +1,22 @@
 local _, BR = ...
 
--- Maps game events to the caches that each event makes stale.
--- The Display event dispatcher calls HandleEvent before the Display handler runs,
--- so each handler reads fresh values.
+-- Maps game events to the caches that each event makes stale, and owns the player flags
+-- (combat, rest, level, vehicle). The Display event dispatcher calls HandleEvent before
+-- the Display handler runs, so each handler reads fresh values.
 
 ---@class GameContextEventSpec
----@field caches string[] Cache ids to clear, in order
+---@field caches? string[] Cache ids to clear, in order
 ---@field playerOnly? boolean The event applies only when arg1 is "player"
+---@field handle? fun(...) Runs after the cache clears, with the event payload
+
+-- The combat flag tracks events, because InCombatLockdown() can lag behind PLAYER_REGEN_DISABLED
+-- and ENCOUNTER_START. It gates fighting-dependent behavior, not restriction detection.
+local inCombat = false
+local inEncounter = false
+local isResting = false
+local inVehicle = false
+local playerLevel = UnitLevel("player")
+local maxExpansionLevel = GetMaxLevelForPlayerExpansion()
 
 local SPELL_SET = { "spell", "pet", "stance", "loadout", "petActions" }
 local CONTENT_TYPE = { caches = { "contentType" } }
@@ -29,6 +39,62 @@ local EVENT_CACHES = {
             "durability",
             "petActions",
         },
+        handle = function()
+            inCombat = InCombatLockdown()
+            isResting = IsResting()
+            playerLevel = UnitLevel("player")
+            maxExpansionLevel = GetMaxLevelForPlayerExpansion()
+            inVehicle = UnitInVehicle("player") == true
+        end,
+    },
+    PLAYER_REGEN_DISABLED = {
+        handle = function()
+            inCombat = true
+        end,
+    },
+    PLAYER_REGEN_ENABLED = {
+        handle = function()
+            inCombat = inEncounter
+        end,
+    },
+    ENCOUNTER_START = {
+        handle = function()
+            inEncounter = true
+            inCombat = true
+        end,
+    },
+    ENCOUNTER_END = {
+        handle = function()
+            inEncounter = false
+            inCombat = inCombat and InCombatLockdown()
+        end,
+    },
+    PLAYER_UPDATE_RESTING = {
+        handle = function()
+            isResting = IsResting()
+        end,
+    },
+    PLAYER_LEVEL_UP = {
+        handle = function(level)
+            playerLevel = level
+        end,
+    },
+    UPDATE_EXPANSION_LEVEL = {
+        handle = function()
+            maxExpansionLevel = GetMaxLevelForPlayerExpansion()
+        end,
+    },
+    UNIT_ENTERED_VEHICLE = {
+        playerOnly = true,
+        handle = function()
+            inVehicle = true
+        end,
+    },
+    UNIT_EXITED_VEHICLE = {
+        playerOnly = true,
+        handle = function()
+            inVehicle = false
+        end,
     },
     GROUP_ROSTER_UPDATE = HEALER,
     GROUP_FORMED = HEALER,
@@ -85,7 +151,7 @@ local function InvalidateAll(ids)
     end
 end
 
----Clear the caches that EVENT_CACHES binds to the event. Safe to call for every event.
+---Apply the EVENT_CACHES entry for the event. Safe to call for every event.
 ---@param event string
 ---@param ... any The event payload
 function GameContext.HandleEvent(event, ...)
@@ -96,7 +162,42 @@ function GameContext.HandleEvent(event, ...)
     if entry.playerOnly and (...) ~= "player" then
         return
     end
-    InvalidateAll(entry.caches)
+    if entry.caches then
+        InvalidateAll(entry.caches)
+    end
+    if entry.handle then
+        entry.handle(...)
+    end
+end
+
+---@return boolean inCombat True in combat or in a boss encounter
+function GameContext.IsInCombat()
+    return inCombat
+end
+
+---@return boolean inEncounter True between ENCOUNTER_START and ENCOUNTER_END
+function GameContext.IsInEncounter()
+    return inEncounter
+end
+
+---@return boolean isResting
+function GameContext.IsResting()
+    return isResting
+end
+
+---@return boolean inVehicle True when the player is in a vehicle
+function GameContext.IsInVehicle()
+    return inVehicle
+end
+
+---@return number playerLevel
+function GameContext.GetPlayerLevel()
+    return playerLevel
+end
+
+---@return number maxExpansionLevel The max level of the player's expansion
+function GameContext.GetMaxExpansionLevel()
+    return maxExpansionLevel
 end
 
 BR.GameContext = GameContext
