@@ -34,10 +34,16 @@ local function GetSpellTextureCached(id)
 end
 
 local function ClearSpellTextureMisses()
+    local cleared = false
     for id, texture in pairs(spellTextureCache) do
         if texture == false then
             spellTextureCache[id] = nil
+            cleared = true
         end
+    end
+    -- A cached icon list can lack the texture of a cleared miss.
+    if cleared then
+        wipe(buffIconsCache)
     end
 end
 BR.GameContext.RegisterCache("spellTextureMisses", ClearSpellTextureMisses)
