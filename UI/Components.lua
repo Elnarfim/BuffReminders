@@ -3720,18 +3720,15 @@ end
 
 ---Refresh all registered components (call on panel OnShow)
 ---
----Auto-prunes orphaned component frames as it goes: any holder that has been
----SetParent(nil)'d (the teardown signal for a transient widget in a dialog or
----re-rendered list) is dropped from the registry instead of refreshed. This is
----a safety net behind explicit Components.Unregister calls -- a call site that
----forgets to unregister does not leak a holder that fires :Refresh() forever
----and pins its dead dialog alive. Plain refresh hooks (tables without a frame)
----have no GetParent and are never pruned, so persistent page hooks survive.
----Iterate in reverse so table.remove during the walk is safe.
+---Drops each holder whose ancestry no longer reaches UIParent instead of
+---refreshing it. A teardown unparents a body frame, not each holder, so a
+---direct GetParent() check misses the holders inside that body.
+---Plain refresh hooks (tables without a frame) have no GetParent and are never
+---pruned. Iterate in reverse so table.remove during the walk is safe.
 function Components.RefreshAll()
     for i = #RefreshableComponents, 1, -1 do
         local component = RefreshableComponents[i]
-        if component.GetParent and component:GetParent() == nil then
+        if component.GetParent and IsDetached(component) then
             table.remove(RefreshableComponents, i)
         elseif component.Refresh then
             component:Refresh()
