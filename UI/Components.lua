@@ -1186,7 +1186,12 @@ local ToggleColors = {
 ---@return Frame
 function Components.Toggle(parent, config)
     local colors = ToggleColors
-    local checked = config.checked or false
+    local checked
+    if config.get then
+        checked = config.get() and true or false
+    else
+        checked = config.checked or false
+    end
 
     local TRACK_W = 32
     local LABEL_GAP = 6
