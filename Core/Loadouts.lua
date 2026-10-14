@@ -210,9 +210,9 @@ local function IsTLXRule(rule)
 end
 Loadouts.IsTLXRule = IsTLXRule
 
----Prepare the external addons the given rules depend on. Runs one time for each
----session, and only for a rule set that asks an external addon a question: the
----load it needs is a client-wide one, so an unrelated profile must not pay for it.
+---Prepare the external addons the given rules depend on. Runs only for a rule set
+---that asks an external addon a question: the load it needs is a client-wide one,
+---so an unrelated profile must not pay for it.
 ---@param rules LoadoutRule[]
 function Loadouts.EnsureAddonsReady(rules)
     for _, rule in ipairs(rules) do

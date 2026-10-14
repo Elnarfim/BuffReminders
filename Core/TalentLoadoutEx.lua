@@ -79,13 +79,13 @@ local loadRequested = false
 ---initializer without player action. It registers that initializer on the addon's
 ---load event and never requests the load itself. The load alone can leave the
 ---talent frame without a tree, so `IsReady` still decides whether answers count.
----Runs one time for each session.
+---Runs until one load request succeeds.
 function TalentLoadoutEx.EnsureReady()
     if loadRequested or InCombatLockdown() or not IsAvailable() or IsReady() then
         return
     end
-    loadRequested = true
-    pcall(C_AddOns.LoadAddOn, "Blizzard_PlayerSpells")
+    local ok, loaded = pcall(C_AddOns.LoadAddOn, "Blizzard_PlayerSpells")
+    loadRequested = ok and loaded or false
 end
 
 -- Resolve the stored loadout list for the current class + spec. The addon keys its
