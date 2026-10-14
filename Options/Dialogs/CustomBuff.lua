@@ -1031,8 +1031,6 @@ local function SaveBuff(ctx)
         CreateCustomBuffFrameRuntime(customBuff)
     end
 
-    -- requireItemMode can change on save, so the ownership cache must go.
-    BR.BuffState.InvalidateItemCache()
     return true
 end
 

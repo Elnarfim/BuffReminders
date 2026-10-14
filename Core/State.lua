@@ -191,7 +191,7 @@ local cachedPlayerRole = nil
 local cachedOffHandType = nil -- nil = not yet checked, "weapon" | "shield" | "none"
 
 -- Item ownership cache
----@type table<number, boolean>
+---@type table<string, table<number, boolean>>
 local cachedItemOwnership = {}
 
 -- Lowest equipped-item durability ratio (0-1). The 18-slot scan is a read-only
@@ -580,19 +580,26 @@ end
 ---@param mode? "owned"|"equipped"|"bags" -- "owned" (default) = bags or equipped
 ---@return boolean
 local function HasItemByMode(itemID, mode)
-    if cachedItemOwnership[itemID] ~= nil then
-        return cachedItemOwnership[itemID]
+    mode = mode or "owned"
+    local byItem = cachedItemOwnership[mode]
+    if not byItem then
+        byItem = {}
+        cachedItemOwnership[mode] = byItem
+    end
+    local cached = byItem[itemID]
+    if cached ~= nil then
+        return cached
     end
     local result
     if mode == "equipped" then
         result = HasItemEquipped(itemID)
     elseif mode == "bags" then
         result = HasItemInBags(itemID)
-    else -- "owned" or nil (default)
+    else -- "owned" (default)
         local ok, count = pcall(C_Item.GetItemCount, itemID)
         result = (ok and count ~= nil and count > 0) or HasItemEquipped(itemID)
     end
-    cachedItemOwnership[itemID] = result
+    byItem[itemID] = result
     return result
 end
 

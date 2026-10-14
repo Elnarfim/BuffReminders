@@ -428,9 +428,6 @@ local function ImportCustomBuff(str)
     db.enabledBuffs[key] = true
 
     BR.CustomBuffs.CreateRuntime(buff)
-    -- requireItemMode decides how ownership is read, so the cached answer for a
-    -- shared item ID can be wrong for the new entry.
-    BR.BuffState.InvalidateItemCache()
     return key
 end
 
