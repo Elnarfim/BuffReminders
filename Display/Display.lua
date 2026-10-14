@@ -4142,6 +4142,7 @@ eventHandlers.SPELLS_CHANGED = function()
     BR.BuffState.InvalidateStanceCache()
     BR.BuffState.InvalidateLoadoutCache()
     BR.PetHelpers.InvalidatePetActions()
+    SetDirty()
 end
 
 eventHandlers.PLAYER_EQUIPMENT_CHANGED = function()
