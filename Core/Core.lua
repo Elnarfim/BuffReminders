@@ -1032,11 +1032,12 @@ end
 -- ============================================================================
 -- SPELL NAME CACHE
 -- ============================================================================
--- A spell name is immutable for a given spellID within a session.
+-- A spell name is immutable for a given spellID within a session. A miss stays
+-- cached until a spell data event clears the misses.
 
 local spellNameCache = {}
 
----Get spell name with caching (immutable per session)
+---Get spell name with caching
 ---@param spellID number
 ---@return string?
 function BR.GetSpellName(spellID)
@@ -1046,6 +1047,15 @@ function BR.GetSpellName(spellID)
         spellNameCache[spellID] = name
     end
     return name or nil
+end
+
+---Drop the cached misses, so the next BR.GetSpellName reads the API again.
+function BR.ClearSpellNameMisses()
+    for spellID, name in pairs(spellNameCache) do
+        if name == false then
+            spellNameCache[spellID] = nil
+        end
+    end
 end
 
 ---Create a buff icon texture with standard formatting

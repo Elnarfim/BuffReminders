@@ -28,6 +28,7 @@ local function AsSpellList(val)
 end
 
 ---Resolve a spell ID to its texture, with caching. Returns nil if the API cannot resolve it yet.
+---A miss stays cached until a spell data event clears the misses.
 ---@param id number
 ---@return number? textureID
 local function GetSpellTextureCached(id)
@@ -42,6 +43,15 @@ local function GetSpellTextureCached(id)
     spellTextureCache[id] = texture or false
     return texture
 end
+
+local function ClearSpellTextureMisses()
+    for id, texture in pairs(spellTextureCache) do
+        if texture == false then
+            spellTextureCache[id] = nil
+        end
+    end
+end
+BR.GameContext.RegisterCache("spellTextureMisses", ClearSpellTextureMisses)
 
 ---Get spell texture from a single spell ID. For a buff def use GetBuffIcons(buff)[1]
 ---instead, so that buff.icons takes priority over the raw spellID lookup.

@@ -198,6 +198,8 @@ local EVENT_CACHES = {
             "repairSource",
             "durability",
             "petActions",
+            "spellTextureMisses",
+            "spellNameMisses",
         },
         handle = function()
             inCombat = InCombatLockdown()
@@ -297,7 +299,9 @@ local EVENT_CACHES = {
             glowingSpells[spellID] = nil
         end,
     },
-    SPELLS_CHANGED = { caches = SPELL_SET },
+    SPELLS_CHANGED = {
+        caches = { "spell", "pet", "stance", "loadout", "petActions", "spellTextureMisses", "spellNameMisses" },
+    },
     PLAYER_EQUIPMENT_CHANGED = { caches = { "item", "offHand", "loadout", "durability" } },
     UPDATE_INVENTORY_DURABILITY = { caches = { "durability" } },
     BAG_UPDATE_DELAYED = { caches = { "item", "repairSource", "consumables" } },
@@ -326,6 +330,9 @@ function GameContext.RegisterCache(id, fn)
     end
     invalidators[id] = fn
 end
+
+-- Core.lua loads before this file, so its spell name cache registers here.
+GameContext.RegisterCache("spellNameMisses", BR.ClearSpellNameMisses)
 
 ---Clear one cache. An unknown id is a programming error.
 ---@param id string
