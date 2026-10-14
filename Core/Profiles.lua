@@ -270,10 +270,6 @@ function BR.Profiles.RefreshAfterProfileChange()
         BR.SecureButtons.RefreshChatRequestMacros()
     end
 
-    if BR.BuffState then
-        BR.BuffState.Refresh()
-    end
-
     if BR.Movers then
         if BR.Movers.RepositionAllFrames then
             BR.Movers.RepositionAllFrames()

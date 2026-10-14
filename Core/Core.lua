@@ -206,7 +206,6 @@ CallbackRegistry:GenerateCallbackEvents({
     "LayoutRefresh", -- Fired when layout needs recalculation (spacing, direction)
     "FramesReparent", -- Fired when frames need reparenting (split category change)
     "VisibilityRefresh", -- Fired when visibility toggles change (hide-when, show-only-in-group)
-    "BuffStateChanged", -- Fired when buff state entries are recomputed
     "ExternalsRefresh", -- Fired when the externals display needs reconfiguring
     "CustomAnchorsChanged", -- Fired when the user's anchor-target list gains or loses a name
     "ActiveConsumableChanged", -- Fired when the running consumable aura changes: (category, spellID)

@@ -4,7 +4,7 @@ local _, BR = ...
 -- BUFF STATE MODULE
 -- ============================================================================
 -- Pure data layer: computes "what buffs are missing" without any UI concerns.
--- Display layer subscribes to BuffStateChanged events to render.
+-- The display render loop calls BuffState.Refresh, then reads the entries.
 
 -- ============================================================================
 -- TYPE DEFINITIONS
@@ -2800,8 +2800,6 @@ function BuffState.Refresh(refreshMode)
     end
 
     BuffState.lastUpdate = GetTime()
-
-    BR.CallbackRegistry:TriggerEvent("BuffStateChanged")
 end
 
 ---Check if the current zone qualifies for dungeon entry triggers
@@ -3486,9 +3484,9 @@ if LibSpec then
             return -- no change
         end
         allySpecCache[sender] = specId
-        -- Trigger display refresh when a known ally changes spec (affects beneficiary counts)
-        if oldSpec and BuffState.Refresh then
-            BuffState.Refresh()
+        -- A known ally's spec change alters beneficiary counts, so ask for a render.
+        if oldSpec then
+            BR.CallbackRegistry:TriggerEvent("GameContextChanged", false)
         end
     end)
 end
