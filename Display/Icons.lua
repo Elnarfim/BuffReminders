@@ -16,17 +16,6 @@ local spellTextureCache = {}
 -- Weak keys: custom buff defs are SavedVariables tables, so the cache must not be a field on them.
 local buffIconsCache = setmetatable({}, { __mode = "k" })
 
--- Reusable single-element buffer to avoid { spellID } allocations in hot loops.
--- SAFETY: callers must consume the result immediately - the buffer is overwritten on next call.
-local singleSpellBuf = {}
-local function AsSpellList(val)
-    if type(val) == "table" then
-        return val
-    end
-    singleSpellBuf[1] = val
-    return singleSpellBuf
-end
-
 ---Resolve a spell ID to its texture, with caching. Returns nil if the API cannot resolve it yet.
 ---A miss stays cached until a spell data event clears the misses.
 ---@param id number
@@ -175,7 +164,6 @@ local function ResolveFrameTexture(frame)
 end
 
 BR.Icons = {
-    AsSpellList = AsSpellList,
     GetBuffTexture = GetBuffTexture,
     GetBuffIcons = GetBuffIcons,
     ApplyDynamicIcon = ApplyDynamicIcon,

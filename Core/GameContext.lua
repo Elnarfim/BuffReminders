@@ -444,23 +444,13 @@ end
 ---Add the spell IDs of the buff to the glow registry, if the buff qualifies.
 ---@param buff table
 ---@param category string
-function GameContext.RegisterGlowBuff(buff, category)
+local function RegisterGlowBuff(buff, category)
     if not IsGlowTracked(buff) then
         return
     end
-    for _, id in ipairs(BR.Icons.AsSpellList(buff.spellID)) do
+    for _, id in ipairs(BR.StateHelpers.AsSpellList(buff.spellID)) do
         if id and id ~= 0 then
             glowSpellToBuff[id] = { buff = buff, category = category }
-        end
-    end
-end
-
----@param spellIDs number|number[]
-function GameContext.UnregisterGlowSpell(spellIDs)
-    local ids = type(spellIDs) == "table" and spellIDs or { spellIDs }
-    for _, id in ipairs(ids) do
-        if id then
-            glowSpellToBuff[id] = nil
         end
     end
 end
@@ -473,13 +463,13 @@ function GameContext.RebuildGlowRegistry()
     for category, buffs in pairs(buffTables) do
         if category ~= "custom" and category ~= "loadout" then
             for _, buff in ipairs(buffs) do
-                GameContext.RegisterGlowBuff(buff, category)
+                RegisterGlowBuff(buff, category)
             end
         end
     end
     -- Custom buffs register last, so a custom buff keeps a spell ID that a built-in buff also uses.
     for _, buff in ipairs(buffTables.custom) do
-        GameContext.RegisterGlowBuff(buff, "custom")
+        RegisterGlowBuff(buff, "custom")
     end
 end
 

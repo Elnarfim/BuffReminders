@@ -2728,7 +2728,7 @@ local function CreateCustomBuffFrameRuntime(customBuff)
     local frame = CreateBuffFrame(customBuff, "custom")
     RegisterBuffFrame(customBuff.key, frame, "custom")
     tinsert(CustomBuffs, customBuff)
-    GameContext.RegisterGlowBuff(customBuff, "custom")
+    GameContext.RebuildGlowRegistry()
     if BR.SecureButtons then
         BR.SecureButtons.UpdateActionButtons("custom")
     end
@@ -2881,7 +2881,6 @@ end
 local function RemoveCustomBuffFrame(key)
     local frame = buffFrames[key]
     if frame then
-        GameContext.UnregisterGlowSpell(frame.spellIDs)
         -- Clean up click overlay (unregister state driver before hiding)
         if frame.clickOverlay and not InCombatLockdown() then
             UnregisterStateDriver(frame.clickOverlay, "visibility")
@@ -2932,6 +2931,7 @@ local function RemoveCustomBuffFrame(key)
             break
         end
     end
+    GameContext.RebuildGlowRegistry()
     -- Force layout recalculation so the caller's UpdateDisplay() reclaims the slot
     ResetLayoutSignatures()
 end
@@ -2942,7 +2942,6 @@ BR.CustomBuffs = {
     UpdateFrame = function(key, spellIDValue, displayName)
         local frame = buffFrames[key]
         if frame then
-            GameContext.UnregisterGlowSpell(frame.spellIDs)
             local texture = GetBuffTexture(spellIDValue)
             if texture then
                 frame.icon:SetTexture(texture)
@@ -2951,11 +2950,11 @@ BR.CustomBuffs = {
             frame.spellIDs = spellIDValue
             -- Rebuild array (dialog creates a new object for db.customBuffs[key], staling the old ref)
             BuildCustomBuffArray()
+            GameContext.RebuildGlowRegistry()
             local customBuff = BR.profile and BR.profile.customBuffs and BR.profile.customBuffs[key]
             if customBuff then
                 -- Update frame's buffDef reference so click actions pick up new fields
                 frame.buffDef = customBuff
-                GameContext.RegisterGlowBuff(customBuff, "custom")
             end
             if BR.SecureButtons then
                 BR.SecureButtons.UpdateActionButtons("custom")
