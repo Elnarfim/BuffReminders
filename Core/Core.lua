@@ -408,6 +408,7 @@ local DefaultSettingKeys = {
     petLabelScale = "DisplayRefresh",
     petSpecIconOnHover = "DisplayRefresh",
     useFelDomination = "DisplayRefresh",
+    warlockWrongDemon = "DisplayRefresh",
     -- Font (global-only, lives under defaults)
     fontFace = "VisualsRefresh",
     textOutline = "VisualsRefresh",
@@ -497,6 +498,10 @@ local function ValidatePath(segments)
         -- defaults.textSizes.<item>; nil clears the override
         if segments[2] == "textSizes" and #segments == 3 then
             return true, "VisualsRefresh"
+        end
+        -- defaults.warlockDemon.<world|dungeon|raid|pvp>
+        if segments[2] == "warlockDemon" and #segments == 3 then
+            return true, "DisplayRefresh"
         end
         return false, nil
     end

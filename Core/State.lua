@@ -220,9 +220,9 @@ local cachedLoadoutState = {}
 -- so every satisfied rule can hold this one table.
 local SATISFIED_LOADOUT_STATE = { satisfied = true }
 
--- Wrong-demon-pet cache (nil = unknown/unresolved, recomputed next Refresh).
----@type boolean|nil
-local cachedWrongPetStatus = nil
+-- Creature family of the current pet (false = no pet, nil = unresolved).
+---@type number|false|nil
+local cachedPetFamily = nil
 
 -- Warrior stance spell IDs (single source of truth).
 local STANCE_BATTLE = 386164
@@ -3225,38 +3225,36 @@ function BuffState.InvalidateLoadoutCache()
     cachedLoadoutState = {}
 end
 
----Check whether the player's current pet is not a Felguard (cached).
----Returns false when there is no pet or the pet is a Felguard. If the compare
----hits a secret value, the result stays uncached so later refreshes retry.
+---Check whether the player's current pet is not the desired demon. Returns false
+---when there is no pet or no desired demon. If the family read hits a secret
+---value, the result stays uncached so later refreshes retry.
 ---@return boolean
 function BuffState.IsWrongDemonPet()
-    if cachedWrongPetStatus ~= nil then
-        return cachedWrongPetStatus
-    end
-    if not UnitExists("pet") then
-        cachedWrongPetStatus = false
+    local desired = BR.PetHelpers.GetDesiredWarlockDemon()
+    local families = desired and BR.PetHelpers.WARLOCK_DEMON_FAMILIES[desired.spellID]
+    if not families then
         return false
     end
-    local name, familyID = UnitCreatureFamily("pet")
-    familyID = Plain(familyID)
-    if type(familyID) ~= "number" then
-        -- Pet data is not resolved yet, or is a secret value. Do not cache, so the
-        -- next Refresh retries.
-        return false
+    if cachedPetFamily == nil then
+        if not UnitExists("pet") then
+            cachedPetFamily = false
+        else
+            local _, familyID = UnitCreatureFamily("pet")
+            familyID = Plain(familyID)
+            if type(familyID) ~= "number" then
+                -- Pet data is not resolved yet, or is a secret value. Do not cache, so the
+                -- next Refresh retries.
+                return false
+            end
+            cachedPetFamily = familyID
+        end
     end
-    name = Plain(name)
-    if name == nil then
-        -- The name resolved to a secret. Leave it uncached and treat the pet as
-        -- "not wrong" this pass (fail-closed).
-        return false
-    end
-    cachedWrongPetStatus = familyID ~= 29 and name ~= "Felguard"
-    return cachedWrongPetStatus
+    return cachedPetFamily ~= false and not families[cachedPetFamily]
 end
 
 ---Invalidate wrong-pet cache
 function BuffState.InvalidatePetCache()
-    cachedWrongPetStatus = nil
+    cachedPetFamily = nil
 end
 
 ---Resolve the active stance's spell ID, or nil if unstanced/unresolved (cached).

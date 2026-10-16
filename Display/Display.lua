@@ -2303,7 +2303,9 @@ local function ApplyPetDisplayMode(frame, entry, frameList)
     else
         local gi = entry.petActions.genericIndex or 1
         local preferredAction = entry.petActions[gi]
-        local texture = ResolveFrameTexture(frame)
+        -- A list with genericIndex names one pet to summon, so the icon shows that pet.
+        local texture = entry.petActions.genericIndex and preferredAction and preferredAction.icon
+            or ResolveFrameTexture(frame)
         if texture then
             frame.icon:SetTexture(texture)
         end
