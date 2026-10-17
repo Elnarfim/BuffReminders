@@ -51,6 +51,7 @@ local _, BR = ...
 ---@field missingGlowYOffset? number
 ---@field fontFace? string
 ---@field textOutline? "NONE"|"OUTLINE"|"THICKOUTLINE"|"MONOCHROME"|"OUTLINE, MONOCHROME"|"THICKOUTLINE, MONOCHROME"
+---@field slugOutline? boolean
 ---@field showConsumablesWithoutItems? boolean
 ---@field showWithoutItemsOnlyOnReadyCheck? boolean
 ---@field delveFoodOnly? boolean

@@ -412,6 +412,7 @@ local DefaultSettingKeys = {
     -- Font (global-only, lives under defaults)
     fontFace = "VisualsRefresh",
     textOutline = "VisualsRefresh",
+    slugOutline = "VisualsRefresh",
     position = false, -- No auto-refresh, saved directly by movers
 }
 

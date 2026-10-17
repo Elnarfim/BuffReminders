@@ -104,6 +104,7 @@ BR.defaults = {
         -- iconWidth: nil = same as iconSize (square). Set explicitly for non-square icons.
         textSize = 20,
         textOutline = "OUTLINE",
+        slugOutline = true,
         iconAlpha = 1,
         textAlpha = 1,
         textColor = { 1, 1, 1 },

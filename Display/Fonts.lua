@@ -162,9 +162,9 @@ local function Resolve()
     else
         outline = outline or "OUTLINE"
     end
-    -- Plain outlines render through the client's Slug text path. MONOCHROME
-    -- combinations keep the classic rasterized outline.
-    if outline == "OUTLINE" or outline == "THICKOUTLINE" then
+    -- MONOCHROME combinations always keep the classic rasterized outline.
+    local useSlug = not defaults or defaults.slugOutline ~= false
+    if useSlug and (outline == "OUTLINE" or outline == "THICKOUTLINE") then
         outline = outline .. ", SLUG"
     end
 

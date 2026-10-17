@@ -439,6 +439,10 @@ english["Options.TextOutline.Thick"] = "Thick Outline"
 english["Options.TextOutline.Monochrome"] = "Monochrome"
 english["Options.TextOutline.OutlineMono"] = "Outline + Monochrome"
 english["Options.TextOutline.ThickMono"] = "Thick + Monochrome"
+english["Options.SlugOutline"] = "Smooth outline"
+english["Options.SlugOutline.Desc"] =
+    "Draws the outline with the client's Slug text renderer. The edges are smoother, but the outline can look slightly thicker."
+english["Options.SlugOutline.Disabled"] = 'Only applies to the "Outline" and "Thick Outline" styles.'
 
 -- ============================================================================
 -- OPTIONS: GLOW SETTINGS
