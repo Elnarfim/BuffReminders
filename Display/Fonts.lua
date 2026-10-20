@@ -1,8 +1,8 @@
 ---@class BR
 local _, BR = ...
 
--- Fonts for the display layer. The options panel typeface is a separate
--- system (UI/Fonts.lua).
+-- Fonts for the display layer. Options panel text uses the stock GameFont objects,
+-- except for the font previews.
 --
 -- At login the client can report a successful SetFont without a real apply,
 -- and can revert a verified apply when the async load of the font file
@@ -161,6 +161,11 @@ local function Resolve()
         outline = ""
     else
         outline = outline or "OUTLINE"
+    end
+    -- MONOCHROME combinations always keep the classic rasterized outline.
+    local useSlug = not defaults or defaults.slugOutline ~= false
+    if useSlug and (outline == "OUTLINE" or outline == "THICKOUTLINE") then
+        outline = outline .. ", SLUG"
     end
 
     if path ~= fontPath then

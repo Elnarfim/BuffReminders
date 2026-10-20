@@ -1,5 +1,5 @@
-## Interface: 120100
-# WOW_INTERFACE_TARGETS: mainline
+## Interface: 120105
+# WOW_INTERFACE_TARGETS: standard
 ## Title: BuffReminders
 ## Notes: Track missing buffs at a glance
 ## Author: zerbi
@@ -49,6 +49,7 @@ Core\Restrictions.lua
 Core\TextPositions.lua
 Core\Profiles.lua
 Core\Migrations.lua
+Core\GameContext.lua
 Data\Buffs.lua
 Data\Defaults.lua
 Data\Beneficiaries.lua
