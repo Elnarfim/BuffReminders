@@ -21,7 +21,7 @@ local DEFLATE_CONFIG = { level = 9 }
 
 -- Shareable profile settings with no entry in BR.defaults. A profile string carries
 -- these keys too, and an import replaces them. Runtime memory (rememberedConsumables)
--- and debugMode stay local.
+-- stays local.
 local EXTRA_PROFILE_KEYS = {
     "customBuffs",
     "detachedIcons",

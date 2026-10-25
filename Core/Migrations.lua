@@ -24,7 +24,7 @@ local max = math.max
 
 BR.Migrations = {}
 
-BR.Migrations.DB_VERSION = 57
+BR.Migrations.DB_VERSION = 58
 
 -- Run pending migrations against the profile `db`, using code `defaults` for
 -- fallbacks. `ctx` carries the Display.lua file-scope values the migrations
@@ -1163,6 +1163,20 @@ function BR.Migrations.Run(db, defaults, ctx)
                     if type(externals.sounds) == "table" then
                         externals.sounds.ancestralProtection = nil
                     end
+                end
+            end
+        end,
+
+        -- [58] /br debug leaves: no code reads debugMode, so this pass clears the
+        -- dead flag in every profile.
+        [58] = function()
+            local profiles = BR.aceDB and BR.aceDB.sv and BR.aceDB.sv.profiles
+            if not profiles then
+                return
+            end
+            for _, profile in pairs(profiles) do
+                if type(profile) == "table" then
+                    profile.debugMode = nil
                 end
             end
         end,

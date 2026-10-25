@@ -3355,18 +3355,8 @@ local function SlashHandler(msg)
             end
         end
         BR.Components.RefreshAll()
-    elseif cmd == "debug" then
-        BR.profile.debugMode = not BR.profile.debugMode
-        if BR.profile.debugMode then
-            print("|cff00ccffBuffReminders:|r " .. L["Display.DebugEnabled"])
-        else
-            print("|cff00ccffBuffReminders:|r " .. L["Display.DebugDisabled"])
-        end
     elseif cmd == "runedebug" then
         BR.Display.PrintRuneDebug()
-    elseif cmd == "spelldebug" then
-        local arg = msg:match("^%S+%s+(%S+)")
-        BR.Display.PrintSpellDebug(arg and arg:lower())
     elseif cmd == "secretdebug" then
         local arg = msg:match("^%S+%s+(%S+)")
         BR.Display.PrintSecretDebug(arg)
@@ -3686,7 +3676,6 @@ eventHandlers.PLAYER_SPECIALIZATION_CHANGED = function(arg1)
 end
 
 eventHandlers.TRAIT_CONFIG_UPDATED = function()
-    BR.Display.LogLoadoutChange()
     BR.SecureButtons.RefreshOverlaySpells()
     SetDirty()
     -- An external loadout addon rebuilds its list after a short delay, so the loadout

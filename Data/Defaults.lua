@@ -70,7 +70,6 @@ local BR = ns
 ---@field rememberedConsumables? table<number, table<string, number>> Spec ID -> category -> spell ID
 ---@field customAnchorFrames? string[]
 ---@field position? CategoryPosition
----@field debugMode? boolean
 
 ---@type BRProfile
 BR.defaults = {
