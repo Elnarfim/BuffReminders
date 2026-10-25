@@ -1626,29 +1626,15 @@ local function ShouldShowTargetedBuff(spellIDs, requiredClass, beneficiaryRole, 
 end
 
 ---Check if player should cast their self buff or weapon imbue (returns true if missing)
----@param spellID SpellID
----@param requiredClass ClassName
----@param enchantID? number For weapon imbues, checks if this enchant is on either weapon
----@param requiresSpell? number Only show if player knows this spell
----@param excludeSpell? number Hide if player knows this spell
----@param buffIdOverride? number|number[] Separate buff ID(s) to check (if different from spellID)
----@param customCheck? fun(): boolean? Custom check function for complex buff logic
----@param requireSpecId? number Only show if player's current spec matches (WoW spec ID)
+---@param buff SelfBuff|CustomBuff
 ---@param skipSpellKnownCheck? boolean Skip the "player knows spell" check (for custom buffs)
----@param requiresBuffWithEnchant? boolean When true, require both enchant AND buff (for Paladin Rites)
 ---@return boolean? Returns nil if player can't/shouldn't use this buff
-local function ShouldShowSelfBuff(
-    spellID,
-    requiredClass,
-    enchantID,
-    requiresSpell,
-    excludeSpell,
-    buffIdOverride,
-    customCheck,
-    requireSpecId,
-    skipSpellKnownCheck,
-    requiresBuffWithEnchant
-)
+local function ShouldShowSelfBuff(buff, skipSpellKnownCheck)
+    local spellID = buff.spellID --[[@as SpellID]]
+    local requiredClass, requireSpecId = buff.class, buff.requireSpecId
+    local enchantID, requiresSpell, excludeSpell = buff.enchantID, buff.requiresSpellID, buff.excludeSpellID
+    local buffIdOverride, customCheck = buff.buffIdOverride, buff.customCheck
+    local requiresBuffWithEnchant = buff.requiresBuffWithEnchant
     if requiredClass and playerClass ~= requiredClass then
         return nil
     end
@@ -2223,18 +2209,7 @@ local function RefreshSelf(isAuraRestricted, hideExpiring)
                             BR.Icons.ApplyDynamicIcon(entry, buff)
                         end
                     else
-                        local shouldShow = ShouldShowSelfBuff(
-                            buff.spellID,
-                            buff.class,
-                            buff.enchantID,
-                            buff.requiresSpellID,
-                            buff.excludeSpellID,
-                            buff.buffIdOverride,
-                            buff.customCheck,
-                            buff.requireSpecId,
-                            nil, -- skipSpellKnownCheck
-                            buff.requiresBuffWithEnchant
-                        )
+                        local shouldShow = ShouldShowSelfBuff(buff)
                         -- showWhenPresent inverts the logic (e.g., Burning Rush: show when active)
                         local wantPresent = buff.showWhenPresent
                         local show = (wantPresent and shouldShow == false) or (not wantPresent and shouldShow)
@@ -2449,18 +2424,7 @@ local function RefreshPet()
         local settingKey = buff.groupId or buff.key
 
         if IsBuffEnabled(settingKey) and petVisible and not (buff.key == "petPassive" and petPassiveHidden) then
-            local shouldShow = ShouldShowSelfBuff(
-                buff.spellID,
-                buff.class,
-                buff.enchantID,
-                buff.requiresSpellID,
-                buff.excludeSpellID,
-                buff.buffIdOverride,
-                buff.customCheck,
-                buff.requireSpecId,
-                nil, -- skipSpellKnownCheck
-                buff.requiresBuffWithEnchant
-            )
+            local shouldShow = ShouldShowSelfBuff(buff)
             if shouldShow then
                 SetEntryText(entry, buff.overlayText, petMissGlow)
                 BR.Icons.ApplyDynamicIcon(entry, buff)
@@ -2650,18 +2614,8 @@ local function RefreshCustom(isAuraRestricted, hideExpiring)
                 SetEntryText(entry, buff.overlayText, customMissGlow)
             end
         elseif shouldProcess then
-            local shouldShow = ShouldShowSelfBuff(
-                buff.spellID,
-                buff.class,
-                nil,
-                nil,
-                nil,
-                nil,
-                nil,
-                buff.requireSpecId,
-                true, -- custom buffs track buffs the player receives, not casts
-                nil
-            )
+            -- Custom buffs track buffs the player receives, not casts.
+            local shouldShow = ShouldShowSelfBuff(buff, true)
             local wantPresent = buff.showWhenPresent
             local show = (wantPresent and shouldShow == false) or (not wantPresent and shouldShow)
             if show then
