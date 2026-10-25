@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 local L = BR.L
 
 -- ============================================================================
@@ -928,7 +930,7 @@ end
 ---Create or update the item icons for a consumable buff frame. SyncSecureButtons
 ---positions them.
 ---@param frame table The buff frame
----@param actionItems table[]? Array of { itemID, count, icon }
+---@param actionItems table[]|false|nil Array of { itemID, count, icon }
 ---@param clickable boolean? True when the buttons accept mouse input
 ---@param startIndex? number First index in actionItems to show (default 1)
 local function UpdateConsumableButtons(frame, actionItems, clickable, startIndex)

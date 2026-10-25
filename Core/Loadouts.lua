@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- ============================================================================
 -- LOADOUT DETECTION (talents / talent loadouts / equipment sets)

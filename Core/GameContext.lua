@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- Maps game events to the caches that each event makes stale, and owns the player flags
 -- (combat, rest, level, vehicle), the context windows (ready check, dungeon and delve
@@ -44,7 +46,7 @@ local IsSpellOverlayed = C_SpellActivationOverlay and C_SpellActivationOverlay.I
 
 ---@class GlowRegistryEntry
 ---@field buff table
----@field category string
+---@field category CategoryName
 
 -- Spell IDs whose action-bar overlay glow is up. The overlay events set any spell ID,
 -- so this set does not depend on the registry.

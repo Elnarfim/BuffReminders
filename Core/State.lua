@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- ============================================================================
 -- BUFF STATE MODULE
@@ -12,7 +14,7 @@ local _, BR = ...
 
 ---@class BuffStateEntry
 ---@field key string                         -- "intellect", "devotionAura", etc.
----@field category CategoryName              -- "raid", "presence", "targeted", "self", "pet", "consumable", "custom"
+---@field category CategoryName
 ---@field sortOrder number                   -- Position within category for display ordering
 ---@field visible boolean                    -- Should show?
 ---@field displayType "count"|"text"|"expiring"
@@ -277,7 +279,7 @@ local DRUID_TRAVEL_FORM_IDS = {
 ---@class StanceCache
 ---@field wrongStance boolean|nil
 ---@field expectedStanceID number|false|nil     -- false = non-warrior
----@field currentStanceIcon number|string|false|nil  -- false = unstanced
+---@field currentStanceIcon number|false|nil  -- false = unstanced
 ---@field shadowFormActive boolean|nil
 ---@field wrongDruidForm boolean|nil
 ---@field expectedDruidFormID number|false|nil  -- false = non-druid or non-feral/balance
@@ -2006,8 +2008,11 @@ function BuffState.GetEntry(key)
     return BuffState.entries[key]
 end
 
+---@class VisibleEntryList: { [integer]: BuffStateEntry }
+---@field _sorted? boolean True when the entries are already in sortOrder
+
 ---Pre-built per-category lists of visible entries (populated by Refresh)
----@type table<CategoryName, BuffStateEntry[]>
+---@type table<CategoryName, VisibleEntryList>
 BuffState.visibleByCategory = {}
 
 ---Create or update an entry
@@ -2251,7 +2256,8 @@ local function RefreshSelf(isAuraRestricted, hideExpiring)
                             elseif buff.getExpirationInfo then
                                 remaining, expiringCastID = buff.getExpirationInfo()
                             elseif buff.buffIdOverride or buff.spellID then
-                                _, remaining = UnitHasBuff("player", buff.buffIdOverride or buff.spellID)
+                                _, remaining =
+                                    UnitHasBuff("player", (buff.buffIdOverride or buff.spellID) --[[@as SpellID]])
                             end
                             if TrySetEntryExpiring(entry, remaining, selfThreshold, selfExGlow) then
                                 if expiringCastID then
@@ -2311,9 +2317,7 @@ local function RefreshPresence(db, trackingMode, isAuraRestricted, hideExpiring)
                 HasCasterForBuff(buff.class, buff.levelRequired),
                 buff.castOnOthers
             )
-            local dungeonEntryOk = buff.showOnInstanceEntry
-                and GameContext.IsInDungeonEntry()
-                and (not buff.casterClass or buff.casterClass == playerClass)
+            local dungeonEntryOk = buff.showOnInstanceEntry and GameContext.IsInDungeonEntry()
             local readyCheckOk = not buff.readyCheckOnly or GameContext.IsInReadyCheck()
             -- Soulstone visibility mode overrides readyCheckOnly
             if buff.key == "soulstone" and not readyCheckOk then
@@ -2515,8 +2519,8 @@ local function RefreshConsumables(db, trackingMode, isAuraRestricted, hideExpiri
                 end
             end
         else
-            local requiredClass = buff.class or buff.casterClass
-            local hasCaster = not requiredClass or HasCasterForBuff(requiredClass, buff.levelRequired)
+            local requiredClass = buff.casterClass
+            local hasCaster = not requiredClass or HasCasterForBuff(requiredClass)
             local isFreeConsumable = freeVisible and IsFreeConsumable(buff)
             -- Healthstone ready check mode (independent of follow/override content gates)
             local freeReadyCheckOk = true
@@ -2595,12 +2599,11 @@ local function RefreshCustom(isAuraRestricted, hideExpiring)
     local _, customMissGlow = GetCategoryGlowSettings("custom")
     for i, buff in ipairs(CustomBuffs) do
         local entry = GetOrCreateEntry(buff.key, "custom", i)
-        local settingKey = buff.groupId or buff.key
 
         local trackable = IsAuraTrackable(buff)
         local useGlowFallback = isAuraRestricted and not trackable and buff.glowMode ~= "disabled"
         local shouldProcess = (not isAuraRestricted or trackable or useGlowFallback)
-            and IsBuffEnabled(settingKey)
+            and IsBuffEnabled(buff.key)
             and IsCustomBuffVisibleForContent(buff)
 
         if shouldProcess and buff.requireSpellKnown then
@@ -2650,14 +2653,14 @@ local function RefreshCustom(isAuraRestricted, hideExpiring)
             local shouldShow = ShouldShowSelfBuff(
                 buff.spellID,
                 buff.class,
-                buff.enchantID,
-                buff.requiresSpellID,
-                buff.excludeSpellID,
-                buff.buffIdOverride,
-                buff.customCheck,
+                nil,
+                nil,
+                nil,
+                nil,
+                nil,
                 buff.requireSpecId,
                 true, -- custom buffs track buffs the player receives, not casts
-                buff.requiresBuffWithEnchant
+                nil
             )
             local wantPresent = buff.showWhenPresent
             local show = (wantPresent and shouldShow == false) or (not wantPresent and shouldShow)
@@ -2667,12 +2670,11 @@ local function RefreshCustom(isAuraRestricted, hideExpiring)
                 shouldShow == false
                 and buff.expirationThreshold
                 and buff.expirationThreshold > 0
-                and not buff.enchantID
                 and not hideExpiring
-                and (buff.buffIdOverride or buff.spellID)
+                and buff.spellID
             then
                 -- Buff is present (not missing), check if expiring (per-buff threshold)
-                local _, remaining = UnitHasBuff("player", buff.buffIdOverride or buff.spellID)
+                local _, remaining = UnitHasBuff("player", buff.spellID)
                 TrySetEntryExpiring(entry, remaining, buff.expirationThreshold * 60, true)
             end
         end
@@ -3330,7 +3332,7 @@ function BuffState.GetExpectedWarriorStanceID()
 end
 
 ---Texture for the warrior's currently active stance, or nil if unstanced. Cached.
----@return number|string|nil
+---@return number?
 function BuffState.GetCurrentWarriorStanceIcon()
     if stanceCache.currentStanceIcon ~= nil then
         return stanceCache.currentStanceIcon or nil

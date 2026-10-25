@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 local L = BR.L
 
 -- ============================================================================
@@ -158,7 +160,7 @@ end
 
 -- Content type -> warlockDemons row. Other content uses the world row.
 local DEMON_ROW_BY_CONTENT = { dungeon = "dungeon", scenario = "dungeon", raid = "raid", pvp = "pvp" }
-local DEFAULT_WARLOCK_DEMONS = BR.defaults.defaults.warlockDemons
+local DEFAULT_WARLOCK_DEMONS = BR.defaults.defaults.warlockDemons --[[@as table<string, table<string, boolean>>]]
 
 -- Demons that the content rows can allow, in grid order. `key` is the saved-variable key.
 local WARLOCK_DEMON_CHOICES = {
@@ -280,7 +282,7 @@ end
 
 ---Build and cache the list of pet summon actions for the given class.
 ---Returns cached result on subsequent calls until invalidated.
----@param class ClassName
+---@param class ClassName?
 ---@return PetActionList?
 local function GetPetActions(class)
     if not cacheValid then

@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- ============================================================================
 -- PROFILE SYSTEM (AceDB-3.0 + LibDualSpec-1.0)

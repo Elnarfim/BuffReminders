@@ -31,7 +31,9 @@ BLIZZARD_DATA = (
 WAGO_ENTRY = "https://wago.tools/db2/SoundKitEntry/csv?filter%5BSoundKitID%5D={kit}"
 OUTPUT = Path(__file__).resolve().parent.parent / "Data" / "AlertSounds.lua"
 
-HEADER = """local _, BR = ...
+HEADER = """local _, ns = ...
+---@class BR
+local BR = ns
 
 -- ============================================================================
 -- ALERT SOUNDS (GENERATED)

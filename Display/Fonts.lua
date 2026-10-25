@@ -1,5 +1,6 @@
+local _, ns = ...
 ---@class BR
-local _, BR = ...
+local BR = ns
 
 -- Fonts for the display layer. Options panel text uses the stock GameFont objects,
 -- except for the font previews.

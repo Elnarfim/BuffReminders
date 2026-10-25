@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- ============================================================================
 -- TYPE DEFINITIONS
@@ -57,12 +59,22 @@ local _, BR = ...
 ---@field delveFoodOnly? boolean
 ---@field delveFoodTimer? boolean
 ---@field freeConsumableMode? "follow"|"override"
----@field freeConsumableVisibility? table
+---@field freeConsumableVisibility? ContentVisibility
 ---@field healthstoneVisibility? "readyCheck"|"always"|"casterOnly"
----@field consumableRebuffWarning? boolean
----@field consumableRebuffThreshold? number
----@field consumableRebuffColor? number[]
+---@field healthstoneThreshold? number
+---@field healthstoneLowStock? boolean
+---@field soulstoneVisibility? "readyCheck"|"always"|"casterOnly"
+---@field soulstoneHideCooldown? boolean
+---@field soulstonePinnedTarget? string
+---@field repairThreshold? number Durability percent
+---@field repairHideInCombat? boolean
+---@field mageFoodContent? "all"|"dungeon"|"raid"
+---@field feastAtPlayer? boolean
 ---@field consumableDisplayMode? "icon_only"|"sub_icons"|"expanded"
+---@field consumableBadgeOnSubIcons? boolean
+---@field showConsumableTooltips? boolean
+---@field showBuffTooltips? boolean
+---@field rightClickSnooze? boolean
 ---@field consumableTextScale? number
 ---@field hideConsumableLabels? boolean
 ---@field hideLegacyConsumables? boolean
@@ -71,11 +83,17 @@ local _, BR = ...
 ---@field petLabels? boolean
 ---@field petLabelScale? number
 ---@field petSpecIconOnHover? boolean
+---@field petLabelClasses? table<ClassName, boolean>
+---@field useFelDomination? boolean
+---@field warlockDemons? table<string, table<string, boolean>> Content row -> allowed demon keys
+---@field warlockWrongDemon? boolean
 ---@field textPositions? table<string, {zone: string, offsetX: number, offsetY: number}>
 ---@field textSizes? table<string, number>
 
 ---@class CategorySetting
 ---@field position CategoryPosition
+---@field anchorFrame? string Frame name the category anchors to; nil = screen
+---@field anchorPoint? string
 ---@field iconSize? number
 ---@field iconWidth? number
 ---@field textSize? number
@@ -144,6 +162,7 @@ local _, BR = ...
 ---@field consumable CategorySetting
 ---@field utility CategorySetting
 ---@field custom CategorySetting
+---@field loadout CategorySetting
 
 ---@class CategoryFrame: Frame
 ---@field category CategoryName
@@ -354,6 +373,7 @@ local eventFrame -- forward declaration; created later in file
 
 ---@type TestModeData?
 local testModeData = nil
+---@type ClassName?
 local playerClass = nil -- Cached player class, set once on init
 
 -- Dirty flag system: events set dirty=true, OnUpdate checks flag with throttle
@@ -1851,7 +1871,7 @@ end
 -- Bag items for a consumable frame, memoized for the render cycle. `false` records a
 -- scan that found nothing, so an empty bag never repeats it.
 ---@param frame BuffFrame
----@return table|false items
+---@return table[]|false items
 local function GetCachedItems(frame)
     local items = frame._cachedItems
     if items == nil then
@@ -3483,7 +3503,7 @@ eventHandlers.PLAYER_ENTERING_WORLD = function()
         C_Timer.After(2, function()
             for _, def in ipairs(SelfBuffs) do
                 if def.key == "burningRush" then
-                    InvalidateBuffIconBySpellID(def.spellID)
+                    InvalidateBuffIconBySpellID(def.spellID --[[@as number]])
                     return
                 end
             end

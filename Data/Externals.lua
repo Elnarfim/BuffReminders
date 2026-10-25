@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- The external defensives and buffs shown by Display/AuraTracker.lua, plus the
 -- accessors every consumer of that feature needs. Loads before Display and Options,

@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- The addon's entire default config. Pure data, exported as BR.defaults - the
 -- single source; read it directly, no module-namespaced alias.

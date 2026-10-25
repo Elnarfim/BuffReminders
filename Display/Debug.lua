@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- On-demand diagnostics for bug reports. Each command prints the raw values that
 -- feed one check, so a user can paste the output into an issue. The commands are

@@ -1,4 +1,6 @@
-local addonName, BR = ...
+local addonName, ns = ...
+---@class BR
+local BR = ns
 
 local L = BR.L
 
