@@ -157,6 +157,7 @@ local function Resolve()
     local path = fontName and LSM:Fetch("font", fontName)
     path = path or STANDARD_TEXT_FONT
 
+    ---@type string?
     local outline = defaults and defaults.textOutline
     if outline == "NONE" then
         outline = ""

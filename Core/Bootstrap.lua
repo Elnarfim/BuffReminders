@@ -94,6 +94,7 @@ bootstrapFrame:SetScript("OnEvent", function(_, event, arg1)
     BR.GameContext.RebuildGlowRegistry()
 
     if not db.defaults then
+        ---@diagnostic disable-next-line: missing-fields
         db.defaults = {}
     end
     setmetatable(db.defaults, { __index = defaults.defaults })
