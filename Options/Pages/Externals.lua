@@ -91,7 +91,7 @@ end
 
 ---The sound model for one entry. The row glyph and the card a player's own entry
 ---opens both drive the same drawer row through it.
----@param GetEntry fun(): table?
+---@param GetEntry fun(): ExternalEntry?
 ---@return table
 local function BuildSoundModel(GetEntry)
     local function Path(entry)
@@ -286,7 +286,7 @@ end
 ---Returns the glyph, which exposes Update() to repaint the pair and holds the link
 ---on `.link` for the row to anchor.
 ---@param row table
----@param GetEntry fun(): table?
+---@param GetEntry fun(): ExternalEntry?
 ---@param withLink? boolean
 ---@return table glyph
 local function CreateSoundControls(row, GetEntry, withLink)
@@ -399,7 +399,7 @@ end
 ---Section select-all: one click tracks the whole group, the next clears it.
 ---Exposes Update() so the label follows the row checkboxes.
 ---@param parent Frame
----@param entries table[]
+---@param entries ExternalEntry[]
 local function CreateSectionToggle(parent, entries)
     local btn = CreateFrame("Button", nil, parent)
     local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")

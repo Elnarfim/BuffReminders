@@ -35,6 +35,7 @@ local TRIGGER_ADDED = Enum.UnitAuraSoundTrigger and Enum.UnitAuraSoundTrigger.Ad
 local CHANNEL = "Master"
 
 local Settings = BR.GetExternalSettings
+---@type fun(): ExternalEntry[]
 local Entries = BR.GetExternalEntries
 local EntrySound = BR.GetExternalEntrySound
 

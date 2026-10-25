@@ -43,6 +43,7 @@ local TEXCOORD_INSET = BR.TEXCOORD_INSET
 local GetAspectCropInsets = BR.GetAspectCropInsets
 
 local Settings = BR.GetExternalSettings
+---@type fun(): ExternalEntry[]
 local Entries = BR.GetExternalEntries
 local IsEnabled = BR.AreExternalsEnabled
 -- Appearance reads go through the resolver, which inherits from the global
