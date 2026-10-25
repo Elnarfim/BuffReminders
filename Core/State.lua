@@ -36,6 +36,7 @@ local ceil = math.ceil
 local format = string.format
 local tinsert = table.insert
 local tostring = tostring
+local IsSpellKnown = C_SpellBook.IsSpellKnown
 
 -- Reusable single-element buffer to avoid { spellID } allocations in hot loops.
 -- SAFETY: callers must consume the result immediately - the buffer is overwritten on next call.
@@ -552,14 +553,14 @@ local function GetPlayerRole()
     return cachedPlayerRole
 end
 
----Check if player knows a spell (cached version of IsPlayerSpell)
+---Check if player knows a spell (cached version of C_SpellBook.IsSpellKnown)
 ---@param spellID number
 ---@return boolean
 local function IsPlayerSpellCached(spellID)
     if cachedSpellKnowledge[spellID] ~= nil then
         return cachedSpellKnowledge[spellID]
     end
-    local knows = IsPlayerSpell(spellID)
+    local knows = IsSpellKnown(spellID)
     cachedSpellKnowledge[spellID] = knows
     return knows
 end
@@ -3277,7 +3278,7 @@ function BuffState.GetExpectedWarriorStanceID()
     local specId = GetPlayerSpecId()
     if specId == 73 then
         stanceCache.expectedStanceID = STANCE_DEFENSIVE
-    elseif specId == 72 and IsPlayerSpell(STANCE_BERSERKER) then
+    elseif specId == 72 and IsSpellKnown(STANCE_BERSERKER) then
         stanceCache.expectedStanceID = STANCE_BERSERKER
     else
         stanceCache.expectedStanceID = STANCE_BATTLE

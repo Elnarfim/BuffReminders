@@ -17,8 +17,8 @@ local Loadouts = {}
 
 local TalentLoadoutEx = BR.TalentLoadoutEx
 
-local IsSpellKnownOrOverridesKnown = IsSpellKnownOrOverridesKnown
-local IsPlayerSpell = IsPlayerSpell
+local IsSpellInSpellBook = C_SpellBook.IsSpellInSpellBook
+local IsSpellKnown = C_SpellBook.IsSpellKnown
 local GetSpecialization = GetSpecialization
 local GetSpecializationInfo = GetSpecializationInfo
 local GetSpecializationInfoByID = GetSpecializationInfoByID
@@ -163,10 +163,7 @@ end
 -- ----------------------------------------------------------------------------
 
 local function ResolveTalentKnown(spellID)
-    if IsSpellKnownOrOverridesKnown and IsSpellKnownOrOverridesKnown(spellID) then
-        return true
-    end
-    return IsPlayerSpell and IsPlayerSpell(spellID) or false
+    return IsSpellInSpellBook(spellID, nil, true) or IsSpellKnown(spellID)
 end
 
 ---@param spellID number?

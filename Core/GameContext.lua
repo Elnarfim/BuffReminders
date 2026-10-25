@@ -176,7 +176,7 @@ end
 -- spell and fires again when the talent returns.
 local function PruneGlowingSpells()
     for spellID in pairs(glowingSpells) do
-        if not IsPlayerSpell(spellID) then
+        if not C_SpellBook.IsSpellKnown(spellID) then
             glowingSpells[spellID] = nil
         end
     end

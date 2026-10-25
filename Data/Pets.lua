@@ -3,6 +3,8 @@ local _, ns = ...
 local BR = ns
 local L = BR.L
 
+local IsSpellKnown = C_SpellBook.IsSpellKnown
+
 -- ============================================================================
 -- PET HELPERS MODULE
 -- ============================================================================
@@ -68,16 +70,16 @@ local SPIRIT_BEAST_FAMILY = (C_CreatureInfo.GetCreatureFamilyInfo(46) or {}).nam
 ---@return PetAction[]?
 local function BuildHunterActions()
     -- Marksmanship hunters have no pet without Unbreakable Bond.
-    if BR.StateHelpers.GetPlayerSpecId() == 254 and not IsPlayerSpell(1223323) then
+    if BR.StateHelpers.GetPlayerSpecId() == 254 and not IsSpellKnown(1223323) then
         return nil
     end
 
-    local canUseExotic = IsPlayerSpell(53270) -- Exotic Beasts (BM passive)
+    local canUseExotic = IsSpellKnown(53270) -- Exotic Beasts (BM passive)
     local actions = {}
     local order = 0
 
     for slotIndex, spellID in ipairs(CALL_PET_SPELLS) do
-        if IsPlayerSpell(spellID) then
+        if IsSpellKnown(spellID) then
             local info = C_StableInfo.GetStablePetInfo(slotIndex)
             if info and info.name and info.icon and (not info.isExotic or canUseExotic) then
                 order = order + 1
@@ -96,7 +98,7 @@ local function BuildHunterActions()
         end
     end
 
-    if #actions > 0 and IsPlayerSpell(REVIVE_PET) then
+    if #actions > 0 and IsSpellKnown(REVIVE_PET) then
         order = order + 1
         local icon = C_Spell.GetSpellTexture(REVIVE_PET)
         if icon then
@@ -243,7 +245,7 @@ end
 ---@param spellID number
 ---@return PetAction[]?
 local function BuildSingleAction(spellID)
-    if not IsPlayerSpell(spellID) then
+    if not IsSpellKnown(spellID) then
         return nil
     end
     local info = C_Spell.GetSpellInfo(spellID)

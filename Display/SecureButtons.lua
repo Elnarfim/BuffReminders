@@ -22,6 +22,7 @@ local IsCategorySplit = BR.Helpers.IsCategorySplit
 local ChatRequest = BR.ChatRequest
 
 local GetTime = GetTime
+local IsSpellKnown = C_SpellBook.IsSpellKnown
 local Plain = BR.Secret.Plain
 
 -- ============================================================================
@@ -36,10 +37,10 @@ local function GetCastableSpellID(spellIDs)
         return nil
     end
     if type(spellIDs) ~= "table" then
-        return IsPlayerSpell(spellIDs) and spellIDs or nil
+        return IsSpellKnown(spellIDs) and spellIDs or nil
     end
     for _, id in ipairs(spellIDs) do
-        if IsPlayerSpell(id) then
+        if IsSpellKnown(id) then
             return id
         end
     end
@@ -70,10 +71,10 @@ end
 ---@param buff table The buff definition table
 ---@return number?
 local function GetActionSpellID(buff)
-    if buff.excludeSpellID and IsPlayerSpell(buff.excludeSpellID) then
+    if buff.excludeSpellID and IsSpellKnown(buff.excludeSpellID) then
         return nil
     end
-    if buff.requiresSpellID and not IsPlayerSpell(buff.requiresSpellID) then
+    if buff.requiresSpellID and not IsSpellKnown(buff.requiresSpellID) then
         return nil
     end
     if buff.requireSpecId then
@@ -89,7 +90,7 @@ local function GetActionSpellID(buff)
     if not buff.castSpellID and buff.icons and buff.icons.byRole then
         local role = BR.BuffState.GetPlayerRole()
         local roleSpell = role and buff.icons.byRole[role]
-        if roleSpell and IsPlayerSpell(roleSpell) then
+        if roleSpell and IsSpellKnown(roleSpell) then
             return roleSpell
         end
     end
@@ -111,7 +112,7 @@ local function ResolveCustomClickAction(buff)
         return "item", buff.castItemID
     end
     if buff.castSpellID then
-        if IsPlayerSpell(buff.castSpellID) then
+        if IsSpellKnown(buff.castSpellID) then
             return "spell", buff.castSpellID
         end
         return nil, nil
@@ -120,7 +121,7 @@ local function ResolveCustomClickAction(buff)
     if type(spellID) == "table" then
         spellID = spellID[1]
     end
-    if spellID and IsPlayerSpell(spellID) then
+    if spellID and IsSpellKnown(spellID) then
         return "spell", spellID
     end
     return nil, nil
@@ -1387,7 +1388,7 @@ end
 ---@return BRSecureAction
 local function PetAction(spellID, db)
     local felMacro = (db.defaults or {}).useFelDomination
-        and IsPlayerSpell(FEL_DOMINATION_ID)
+        and IsSpellKnown(FEL_DOMINATION_ID)
         and GetFelDomPetMacro(spellID)
     if felMacro then
         return MacroAction("petmacro", felMacro)
