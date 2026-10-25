@@ -1,4 +1,4 @@
-.PHONY: all lint format check typecheck compile i18n ascii-clean ascii-check
+.PHONY: all lint format check typecheck compile i18n ascii-clean ascii-check api-audit
 
 # Prefer the real Lua 5.1 compiler (enforces the 200-local AND 60-upvalue
 # limits WoW hits); fall back to whatever luac is around.
@@ -37,3 +37,13 @@ i18n:
 # Changes no file, so CI runs it.
 check: typecheck lint compile ascii-check
 	stylua --check .
+
+# Lists WoW API calls that the pinned annotations mark deprecated. Run it once
+# per game patch. Not in check: the full annotations need more casts than they
+# find bugs.
+api-audit:
+	@scripts/fetch-annotations.sh
+	@lua-language-server --check . --configpath=scripts/luarc-api.json --checklevel=Information 2>&1 \
+		| tr '\r' '\n' | sed 's/\x1b\[[0-9;]*m//g' \
+		| awk '/\(deprecated\)$$/ { loc = $$1; getline src; sub(/^ +/, "", src); if (!seen[loc]++) print loc "  " src }' \
+		| sort -t: -k1,1 -k2,2n
