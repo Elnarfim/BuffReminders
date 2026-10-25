@@ -47,7 +47,7 @@ local function EnsureRoguePoisonPrefs()
     return prefs
 end
 
--- Reuse the dropdown chevron texture: rotate +90° for up, -90° for down. Vertex
+-- Reuse the dropdown chevron texture: rotate +90 deg for up, -90 deg for down. Vertex
 -- color tracks state (idle / hover / disabled) to match Dropdown styling.
 local function CreateArrowButton(parent, direction, tooltipTitle, onClick)
     local btn = CreateFrame("Button", nil, parent)

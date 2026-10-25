@@ -3536,7 +3536,7 @@ eventHandlers.ZONE_CHANGED_INDOORS = RefreshRepairAction
 eventHandlers.GROUP_ROSTER_UPDATE = function()
     UpdateAuraEventRegistration()
     SetDirty("group")
-    -- Refresh chat-request macrotext so prefix tracks party↔raid↔instance
+    -- Refresh chat-request macrotext so prefix tracks party<->raid<->instance
     -- transitions. A rebuild in PreClick is too late: the secure dispatcher can
     -- read the old macrotext before the write propagates, and send to the wrong
     -- channel.

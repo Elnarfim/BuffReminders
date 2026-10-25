@@ -127,7 +127,7 @@ end
 ---token so the caller can class-color it:
 ---  * talent  -> "<Spec> <Class>" (no character anchor, so name the class)
 ---  * gear    -> "<Name>"
----  * loadout -> "<Spec> · <Name>"  (spec-first, matching the talent ordering)
+---  * loadout -> "<Spec> - <Name>"  (spec-first, matching the talent ordering)
 ---Realm is stripped for display (see CharacterDisplayName); it lives on the rule
 ---for matching only. Returns nil text when the rule stores no binding.
 ---@param rule LoadoutRule
@@ -149,7 +149,7 @@ function Loadouts.GetBindingLabel(rule)
         local specName = ResolveSpecName(rule.specID)
         local charName = CharacterDisplayName(rule.character)
         if charName and specName then
-            return specName .. " · " .. charName, rule.class
+            return specName .. " \194\183 " .. charName, rule.class
         end
         return charName or specName, rule.class
     end
