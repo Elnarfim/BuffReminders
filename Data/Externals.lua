@@ -54,6 +54,7 @@ BR.EXTERNALS = {
     { key = "darkness", section = "groupDefensives", spellIDs = { 209426 }, soundThrottle = 5 }, -- Demon Hunter
     { key = "powerWordBarrier", section = "groupDefensives", spellIDs = { 81782 }, soundThrottle = 5 }, -- Priest
     { key = "rallyingCry", section = "groupDefensives", spellIDs = { 97463 } }, -- Warrior
+    { key = "spiritLinkTotem", section = "groupDefensives", spellIDs = { 325174 }, soundThrottle = 5 }, -- Shaman
 
     {
         key = "massBarrier", -- Mage
