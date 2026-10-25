@@ -235,7 +235,10 @@ BR.Config.DebugMode = false
 -- All valid settings defined here with their refresh types.
 -- This catches typos and documents the config structure.
 
+---@alias RefreshEvent "DisplayRefresh"|"VisualsRefresh"|"LayoutRefresh"|"FramesReparent"|"VisibilityRefresh"|"ExternalsRefresh"
+
 -- Root-level settings (path = key directly)
+---@type table<string, RefreshEvent|false>
 local RootSettings = {
     position = false, -- Table with x, y
     buffTrackingMode = false, -- No auto-refresh, manually calls UpdateDisplay
@@ -260,6 +263,7 @@ local RootSettings = {
 }
 
 -- Per-category settings (path = categorySettings.{category}.{key})
+---@type table<string, RefreshEvent|false>
 local CategorySettingKeys = {
     -- Appearance (visual properties)
     iconSize = "VisualsRefresh",
@@ -327,6 +331,7 @@ local CategorySettingKeys = {
 }
 
 -- Defaults settings (path = defaults.{key})
+---@type table<string, RefreshEvent|false>
 local DefaultSettingKeys = {
     -- Appearance
     iconSize = "VisualsRefresh",
@@ -447,6 +452,7 @@ end
 
 -- Dynamic tables (path = {root}.{anyKey})
 -- These allow any second-level key (buff names, visibility contexts, etc.)
+---@type table<string, RefreshEvent|false>
 local DynamicRoots = {
     enabledBuffs = "DisplayRefresh",
     categoryVisibility = "DisplayRefresh",
@@ -461,7 +467,7 @@ local DynamicRoots = {
 ---Check if a config path is valid
 ---@param segments string[] Path segments
 ---@return boolean isValid
----@return string|false|nil refreshType
+---@return RefreshEvent|false|nil refreshType
 local function ValidatePath(segments)
     if #segments == 0 then
         return false, nil
@@ -542,7 +548,7 @@ end
 ---Check if a config path is valid and get its refresh type
 ---@param path string Dot-separated path
 ---@return boolean isValid
----@return string|false|nil refreshType
+---@return RefreshEvent|false|nil refreshType
 function BR.Config.IsValidPath(path)
     local segments = {}
     for segment in path:gmatch("[^.]+") do
