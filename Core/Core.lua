@@ -237,7 +237,6 @@ BR.Config.DebugMode = false
 
 -- Root-level settings (path = key directly)
 local RootSettings = {
-    splitCategories = "FramesReparent",
     position = false, -- Table with x, y
     buffTrackingMode = false, -- No auto-refresh, manually calls UpdateDisplay
     outsideInstancesMode = "DisplayRefresh",

@@ -167,8 +167,6 @@ local BR = ns
 ---@class CategoryFrame: Frame
 ---@field category CategoryName
 
----@alias SplitCategories table<CategoryName, boolean>
-
 ---@class DetachedIconEntry
 ---@field position {x: number, y: number}
 
@@ -483,14 +481,8 @@ BR.Display = BR.Display or {}
 ---@return boolean
 local function IsCategorySplit(category)
     local db = BR.profile
-    -- Check new location first (categorySettings.{cat}.split)
-    if db.categorySettings and db.categorySettings[category] then
-        if db.categorySettings[category].split ~= nil then
-            return db.categorySettings[category].split == true
-        end
-    end
-    -- Fall back to legacy location (splitCategories.{cat})
-    return db.splitCategories and db.splitCategories[category] == true
+    local catSettings = db.categorySettings and db.categorySettings[category]
+    return catSettings ~= nil and catSettings.split == true
 end
 
 ---Resolve the key detach state is stored under. The options drawer stores
