@@ -15,6 +15,10 @@ local _, BR = ...
 -- after its first spell, so the label is the client's own. `labelSpellID` names it after
 -- the granting ability instead, when the aura's own name misleads. `labelSpellIDs` joins
 -- several names, for an effect the game names once per faction.
+--
+-- `soundThrottle` holds back a repeat sound on the same spell ID for that many seconds.
+-- It covers an aura that the client applies again: a zone aura re-lands each time the
+-- player re-enters the zone. AddAuraSound refuses a value above 5.
 
 ---Display groupings, in the order the options page renders them.
 BR.EXTERNAL_SECTIONS = {
@@ -40,10 +44,10 @@ BR.EXTERNALS = {
     { key = "painSuppression", section = "personal", spellIDs = { 33206 } }, -- Priest
     { key = "timeDilation", section = "personal", spellIDs = { 357170 } }, -- Evoker
 
-    { key = "ancestralProtection", section = "groupDefensives", spellIDs = { 207498 } }, -- Shaman
-    { key = "antiMagicZone", section = "groupDefensives", spellIDs = { 145629 } }, -- Death Knight
-    { key = "darkness", section = "groupDefensives", spellIDs = { 209426 } }, -- Demon Hunter
-    { key = "powerWordBarrier", section = "groupDefensives", spellIDs = { 81782 } }, -- Priest
+    { key = "ancestralProtection", section = "groupDefensives", spellIDs = { 207498 }, soundThrottle = 5 }, -- Shaman
+    { key = "antiMagicZone", section = "groupDefensives", spellIDs = { 145629 }, soundThrottle = 5 }, -- Death Knight
+    { key = "darkness", section = "groupDefensives", spellIDs = { 209426 }, soundThrottle = 5 }, -- Demon Hunter
+    { key = "powerWordBarrier", section = "groupDefensives", spellIDs = { 81782 }, soundThrottle = 5 }, -- Priest
     { key = "rallyingCry", section = "groupDefensives", spellIDs = { 97463 } }, -- Warrior
 
     {
@@ -73,8 +77,6 @@ BR.EXTERNALS = {
     {
         key = "bloodlust", -- Shaman + the cross-class variants
         section = "boosts",
-        -- The Added trigger repeats while lust runs. AddAuraSound refuses a
-        -- throttleSeconds above 5, so 5 is the most the client allows.
         soundThrottle = 5,
         labelSpellIDs = { 2825, 32182 },
         spellIDs = {

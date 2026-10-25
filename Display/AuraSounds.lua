@@ -78,7 +78,7 @@ end
 ---@param key string
 ---@param spellIDs number[]
 ---@param sound string|number A file path or a file ID
----@param throttle number? Seconds before the same handle may play again
+---@param throttle number? Seconds before the same handle can play again
 local function Register(key, spellIDs, sound, throttle)
     local ids = {}
     -- One table for the whole loop: AddAuraSound reads it synchronously.
