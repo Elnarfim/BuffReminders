@@ -50,7 +50,6 @@ BR.EXTERNALS = {
     { key = "timeDilation", section = "personal", spellIDs = { 357170 } }, -- Evoker
 
     -- A zone aura re-lands each time the player re-enters the zone, hence the throttle.
-    { key = "ancestralProtection", section = "groupDefensives", spellIDs = { 207498 }, soundThrottle = 5 }, -- Shaman
     { key = "antiMagicZone", section = "groupDefensives", spellIDs = { 145629 }, soundThrottle = 5 }, -- Death Knight
     { key = "darkness", section = "groupDefensives", spellIDs = { 209426 }, soundThrottle = 5 }, -- Demon Hunter
     { key = "powerWordBarrier", section = "groupDefensives", spellIDs = { 81782 }, soundThrottle = 5 }, -- Priest
