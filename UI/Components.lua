@@ -175,18 +175,40 @@ end
 ---@param isEnabledFn fun(): boolean Predicate driving the control's enabled state
 ---@param reason string|fun(): string Why the control is disabled and how to enable it
 function Components.AttachDisabledReason(holder, isEnabledFn, reason)
-    holder:EnableMouse(true)
-    holder:HookScript("OnEnter", function()
+    -- Always anchored to the holder, so the tooltip does not move while the
+    -- cursor crosses the parts of the control.
+    local function showReason()
         if isEnabledFn() then
             return
         end
         ShowTooltip(holder, L["Component.DisabledReason.Title"], ResolveDisabledReason(reason), "ANCHOR_TOP")
-    end)
+    end
+
+    holder:EnableMouse(true)
+    holder:HookScript("OnEnter", showReason)
     holder:HookScript("OnLeave", function()
         if not isEnabledFn() then
             HideTooltip()
         end
     end)
+
+    -- A part that takes the mouse (a value box, a slider thumb, a label with its
+    -- own tooltip) hides the holder from the cursor. Its own tooltip runs first,
+    -- then this hook replaces it with the reason while the control is disabled.
+    local function hookParts(frame)
+        for _, child in ipairs({ frame:GetChildren() }) do
+            if child:IsMouseEnabled() then
+                child:HookScript("OnEnter", showReason)
+            end
+            hookParts(child)
+        end
+        for _, region in ipairs({ frame:GetRegions() }) do
+            if region.IsMouseEnabled and region.HookScript and region:IsMouseEnabled() then
+                region:HookScript("OnEnter", showReason)
+            end
+        end
+    end
+    hookParts(holder)
 end
 
 -- ============================================================================
