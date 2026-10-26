@@ -2823,7 +2823,7 @@ end
 
 ---Create a compact numeric stepper with [-] value [+] buttons
 ---@param parent table Parent frame
----@param config table Configuration: label, min, max, step?, labelWidth?, get?, enabled?, inherited?, onChange?, formatValue?
+---@param config table Configuration: label, min, max, step?, labelWidth?, get?, enabled?, inherited?, onChange?, formatValue?, tooltip?
 ---@return table holder Frame with .SetValue(n), .GetValue(), .SetEnabled(bool), .Refresh()
 function Components.NumericStepper(parent, config)
     local step = config.step or 1
@@ -2859,6 +2859,13 @@ function Components.NumericStepper(parent, config)
     label:SetJustifyH("LEFT")
     label:SetText(config.label)
     holder.label = label
+
+    if config.tooltip then
+        local labelHover = CreateFrame("Frame", nil, holder)
+        labelHover:SetAllPoints(label)
+        labelHover:EnableMouse(true)
+        SetupTooltip(labelHover, config.tooltip.title, config.tooltip.desc, "ANCHOR_TOP")
+    end
 
     local currentValue = config.min or 0
     if config.get then

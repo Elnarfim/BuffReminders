@@ -157,9 +157,7 @@ local function Build(content)
     layout:Add(defGrid.frame, defGrid.height, COMPONENT_GAP)
     local labelWidth = defGrid.labelWidth
 
-    -- Size and color can be overridden per category. Font and outline cannot.
     Helpers.LayoutSubsectionHeader(layout, content, L["Options.Text"])
-    Helpers.LayoutSubsectionNote(layout, content, L["Options.Text.Note"])
 
     local defTextStyleHolder = Components.TextStyleRow(content, defAccess, labelWidth)
     layout:Add(defTextStyleHolder, nil, COMPONENT_GAP)
@@ -167,6 +165,7 @@ local function Build(content)
     local defFontHolder = Components.Dropdown(content, {
         label = L["Options.Font"],
         labelWidth = labelWidth,
+        tooltip = { title = L["Options.Font"], desc = L["Options.AppliesEverywhere"] },
         options = BuildFontOptions(),
         width = TEXT_DD_W,
         maxItems = 15,
@@ -186,6 +185,7 @@ local function Build(content)
     local defOutlineHolder = Components.Dropdown(content, {
         label = L["Options.TextOutline"],
         labelWidth = labelWidth,
+        tooltip = { title = L["Options.TextOutline"], desc = L["Options.AppliesEverywhere"] },
         options = {
             { label = L["Options.TextOutline.None"], value = "NONE" },
             { label = L["Options.TextOutline.Outline"], value = "OUTLINE" },
@@ -228,6 +228,7 @@ local function Build(content)
     Helpers.LayoutTextRow(layout, content, {
         label = L["Options.TextPositions.MainText"],
         labelWidth = mainTextLW,
+        tooltip = { title = L["Options.TextPositions.MainText"], desc = L["Options.TextPositions.MainText.Note"] },
         zone = {
             get = function()
                 return select(1, BR.TextPositions.Get("count"))
@@ -255,7 +256,6 @@ local function Build(content)
             end,
         },
     })
-    Helpers.LayoutSubsectionNote(layout, content, L["Options.TextPositions.MainText.Note"])
 
     -- ========================================================================
     -- GLOW

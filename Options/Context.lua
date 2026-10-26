@@ -524,6 +524,14 @@ function Helpers.LayoutTextRow(layout, parent, opts)
         position:SetText(opts.label)
     end
     position:SetPoint("LEFT", row, "LEFT", 0, 0)
+    -- The dropdown carries its own label tooltip. Other rows get one over the label.
+    if opts.tooltip and not opts.list then
+        local labelHover = CreateFrame("Frame", nil, row)
+        labelHover:SetPoint("LEFT", row, "LEFT", 0, 0)
+        labelHover:SetSize(opts.labelWidth, TEXT_ROW_HEIGHT)
+        labelHover:EnableMouse(true)
+        BR.SetupTooltip(labelHover, opts.tooltip.title, opts.tooltip.desc, "ANCHOR_TOP")
+    end
 
     local controls = {}
     local last = position
