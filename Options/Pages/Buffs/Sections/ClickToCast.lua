@@ -120,24 +120,22 @@ local function Build(ctx, layout)
     end
     layout:SetX(baseX)
 
-    if category == "raid" or category == "presence" then
+    if BR.Display.BUFF_TOOLTIP_CATEGORIES[category] then
         -- The hover tooltip works on the icon frame itself, not on the click
         -- overlay. Thus isClickable does not gate it.
         local showBuffTooltipsHolder = Components.Checkbox(parent, {
             label = L["Options.ShowBuffTooltips"],
             get = function()
-                return BR.Config.Get("defaults.showBuffTooltips") ~= false
+                return GetCategorySetting(category, "showBuffTooltips", false) == true
             end,
             tooltip = {
                 title = L["Options.ShowBuffTooltips"],
                 desc = L["Options.ShowBuffTooltips.Desc"],
             },
             onChange = function(checked)
-                BR.Config.Set("defaults.showBuffTooltips", checked)
+                Helpers.SetCategorySetting(category, "showBuffTooltips", checked)
             end,
         })
-        -- The raid and presence pages write the same key, so the tag marks it global.
-        BR.Options.Helpers.AttachGlobalTag(showBuffTooltipsHolder)
         layout:Add(showBuffTooltipsHolder, nil, COMPONENT_GAP)
     end
 end

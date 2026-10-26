@@ -212,6 +212,10 @@ local function ImportSettings(prefixedStr)
     if exportVersion < 59 then
         BR.Migrations.MoveCategoryDirection(p.categorySettings)
     end
+    -- Pre-v60 strings carry the shared buff tooltip toggle (migration [60]).
+    if exportVersion < 60 then
+        BR.Migrations.SplitBuffTooltips(p)
+    end
 
     -- Pre-v55 strings carry a runtime icon cache on each custom buff (migration [55]).
     if type(p.customBuffs) == "table" then

@@ -73,7 +73,6 @@ local BR = ns
 ---@field consumableDisplayMode? "icon_only"|"sub_icons"|"expanded"
 ---@field consumableBadgeOnSubIcons? boolean
 ---@field showConsumableTooltips? boolean
----@field showBuffTooltips? boolean
 ---@field rightClickSnooze? boolean
 ---@field consumableTextScale? number
 ---@field hideConsumableLabels? boolean
@@ -147,6 +146,7 @@ local BR = ns
 ---@field clickableHighlight? boolean
 ---@field subIconSide? string
 ---@field showOnlyOnReadyCheck? boolean
+---@field showBuffTooltips? boolean Spell tooltip on hover (raid, presence, targeted, self)
 ---@field priority? number
 
 --- All category settings must be defined here. When adding a new category:
@@ -1013,14 +1013,28 @@ end
 -- Map buff key -> consumable category (derived from buff definitions in Data/Buffs.lua)
 local BUFF_KEY_TO_CATEGORY = BR.BUFF_KEY_TO_CATEGORY
 
--- Show the spell tooltip for a buff frame (raid/presence hover), with a
--- class-colored "Provided by" line. Gated by defaults.showBuffTooltips so
--- hover never pops a tooltip unless the user opted in. The caller passes the
--- hovered frame as `anchor`, so the tooltip lines up with the cursor when a
--- click overlay covers the icon.
+-- Categories whose icons are spells, so a hover can show the spell tooltip.
+local BUFF_TOOLTIP_CATEGORIES = { raid = true, presence = true, targeted = true, self = true }
+
+---True when the category shows the spell tooltip on hover. Off unless the user
+---opted in, so a hover never pops a tooltip by surprise.
+---@param category? string
+---@return boolean
+local function IsBuffTooltipOn(category)
+    if not category or not BUFF_TOOLTIP_CATEGORIES[category] then
+        return false
+    end
+    local cs = BR.profile and BR.profile.categorySettings and BR.profile.categorySettings[category]
+    return cs ~= nil and cs.showBuffTooltips == true
+end
+BR.Display.IsBuffTooltipOn = IsBuffTooltipOn
+BR.Display.BUFF_TOOLTIP_CATEGORIES = BUFF_TOOLTIP_CATEGORIES
+
+-- Show the spell tooltip for a buff frame, with a class-colored "Provided by"
+-- line. The caller passes the hovered frame as `anchor`, so the tooltip lines up
+-- with the cursor when a click overlay covers the icon.
 local function ShowBuffSpellTooltip(frame, anchor)
-    local db = BR.profile
-    if not db or not db.defaults or db.defaults.showBuffTooltips ~= true then
+    if not IsBuffTooltipOn(frame.buffCategory) then
         return
     end
     local def = frame.buffDef
@@ -1048,12 +1062,12 @@ BR.Display.ShowBuffSpellTooltip = ShowBuffSpellTooltip
 
 -- Apply mouse interactivity to a buff icon frame. Icons are always click-through
 -- (dragging is handled by anchor handles; click-to-cast/chat-requests live on the
--- secure overlays that float above the icon). Raid/presence frames get hover
--- events ONLY when the buff tooltip is opted in - otherwise they stay fully
+-- secure overlays that float above the icon). A frame gets hover events ONLY
+-- when its category opted in to the buff tooltip - otherwise it stays fully
 -- click-through so the world beneath (camera drag, unit clicks) is reachable.
 -- Re-called from UpdateVisuals so toggling showBuffTooltips takes effect live.
 local function ApplyBuffFrameMouse(frame, category)
-    if (category == "raid" or category == "presence") and BR.profile.defaults.showBuffTooltips == true then
+    if IsBuffTooltipOn(category) then
         frame:SetMouseClickEnabled(false)
         frame:SetMouseMotionEnabled(true)
         frame:SetScript("OnEnter", function(self)

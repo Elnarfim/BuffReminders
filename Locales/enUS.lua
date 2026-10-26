@@ -627,7 +627,7 @@ english["Options.ShowItemTooltips"] = "Show item tooltips"
 english["Options.ShowItemTooltips.Desc"] = "When hovering over a consumable icon, show its item tooltip."
 english["Options.ShowBuffTooltips"] = "Show buff tooltips"
 english["Options.ShowBuffTooltips.Desc"] =
-    "When hovering over a raid or presence buff icon, show the spell tooltip and which class provides the buff."
+    "When the mouse is on a buff icon of this category, show the spell tooltip and which class provides the buff."
 english["Options.PetPassiveCombat"] = "Pet passive only in combat"
 english["Options.PetPassiveCombat.Desc"] =
     "Only show the passive pet reminder while in combat. When disabled, the reminder is always shown."
@@ -1143,12 +1143,6 @@ english["Appearance.Text"] = "Text size"
 english["Component.AdjustValue"] = "Adjust value"
 english["Component.AdjustValue.Desc"] = "Click to type or use mouse wheel"
 english["Component.AdjustValue.ClickHint"] = "Click the number to input a specific value"
-
--- Scope tag for globally-stored controls on category pages
-english["Options.GlobalTag"] = "GLOBAL"
-english["Options.GlobalTag.Title"] = "Applies everywhere"
-english["Options.GlobalTag.Desc"] =
-    "This setting is stored once for the whole addon.\nChanging it here changes it for every category, not just this one."
 
 -- Disabled-control explanations
 english["Component.DisabledReason.Title"] = "Why is this disabled?"

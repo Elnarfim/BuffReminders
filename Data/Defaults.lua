@@ -209,7 +209,6 @@ BR.defaults = {
         hideConsumableLabels = false,
         showConsumableTooltips = false,
         rightClickSnooze = true,
-        showBuffTooltips = false,
         hideLegacyConsumables = true,
         preferReusableRunes = false,
         feastAtPlayer = true,

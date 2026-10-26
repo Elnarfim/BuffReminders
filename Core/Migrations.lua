@@ -24,7 +24,7 @@ local max = math.max
 
 BR.Migrations = {}
 
-BR.Migrations.DB_VERSION = 59
+BR.Migrations.DB_VERSION = 60
 
 ---Move a category's growth direction from growDirection, read only under the
 ---appearance override, to layoutDirection, which inherits on its own. The
@@ -45,6 +45,28 @@ function BR.Migrations.MoveCategoryDirection(categorySettings)
             catSettings.growDirection = nil
         end
     end
+end
+
+---Move the shared buff tooltip toggle (defaults.showBuffTooltips, read by raid
+---and presence) to a per-category key on both, so each keeps what it showed.
+---@param profile table One profile
+function BR.Migrations.SplitBuffTooltips(profile)
+    local profileDefaults = type(profile.defaults) == "table" and profile.defaults
+    if not profileDefaults then
+        return
+    end
+    if profileDefaults.showBuffTooltips == true then
+        if type(profile.categorySettings) ~= "table" then
+            profile.categorySettings = {}
+        end
+        for _, category in ipairs({ "raid", "presence" }) do
+            if type(profile.categorySettings[category]) ~= "table" then
+                profile.categorySettings[category] = {}
+            end
+            profile.categorySettings[category].showBuffTooltips = true
+        end
+    end
+    profileDefaults.showBuffTooltips = nil
 end
 
 -- Run pending migrations against the profile `db`, using code `defaults` for
@@ -1217,6 +1239,22 @@ function BR.Migrations.Run(db, defaults, ctx)
             for _, profile in pairs(profiles) do
                 if type(profile) == "table" and profile ~= active and (profile.dbVersion or 0) >= 58 then
                     BR.Migrations.MoveCategoryDirection(profile.categorySettings)
+                end
+            end
+        end,
+        -- [60] The buff tooltip toggle becomes per category
+        -- (BR.Migrations.SplitBuffTooltips). It covers inactive profiles by the
+        -- rule of [59].
+        [60] = function()
+            BR.Migrations.SplitBuffTooltips(db)
+            local profiles = BR.aceDB and BR.aceDB.sv and BR.aceDB.sv.profiles
+            if not profiles then
+                return
+            end
+            local active = BR.aceDB.profile
+            for _, profile in pairs(profiles) do
+                if type(profile) == "table" and profile ~= active and (profile.dbVersion or 0) >= 58 then
+                    BR.Migrations.SplitBuffTooltips(profile)
                 end
             end
         end,
