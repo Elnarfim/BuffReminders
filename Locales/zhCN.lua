@@ -329,7 +329,6 @@ L["Externals.GroupBuffs"] = "团队增益"
 L["Externals.Movement"] = "移动加速"
 L["Externals.Aggro"] = "仇恨转移"
 L["Externals.Augmentation"] = "增效"
-L["Externals.DurationSize"] = "倒计时文字大小"
 L["Externals.Appearance"] = "外观"
 
 -- Page titles

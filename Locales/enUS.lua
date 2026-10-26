@@ -324,6 +324,8 @@ english["Display.LoginFirstInstall"] =
     "Thanks for installing! Type |cFFFFD100/br unlock|r to move the buff display, or use the button at the bottom of the |cFFFFD100/br|r options panel."
 english["Display.LoginSnooze"] =
     "The consumable dismiss button is now a right-click: right-click a consumable to snooze its reminders, or type |cFFFFD100/br snooze|r."
+english["Display.LoginCasterName"] =
+    "External Buffs can now show who cast each buff. Turn it on in |cFFFFD100/br|r > Categories > External Buffs."
 
 -- ============================================================================
 -- OPTIONS: NAVIGATION LABELS
@@ -364,7 +366,7 @@ english["Externals.Boosts"] = "Damage & Mana"
 english["Externals.Movement"] = "Movement"
 english["Externals.Aggro"] = "Threat Redirects"
 english["Externals.Augmentation"] = "Augmentation"
-english["Externals.DurationSize"] = "Countdown size"
+english["Externals.Countdown"] = "Countdown"
 english["Externals.Appearance"] = "Appearance"
 english["Externals.AppearanceNote"] =
     "Changes made in combat apply as soon as you leave it. Unlock the frames to drag the row."
@@ -374,6 +376,10 @@ english["Externals.ShowSwipe.Desc"] =
 english["Externals.ShowTooltips"] = "Show tooltips"
 english["Externals.ShowTooltips.Desc"] =
     "Show the game's buff tooltip when the mouse is on an icon. The icons never take clicks, only mouse movement."
+english["Externals.CasterName"] = "Caster name"
+english["Externals.CasterName.Desc"] =
+    "Show who cast the buff next to the icon, in class color."
+english["Externals.CasterNameOff"] = "Pick a side for Caster name first."
 english["Externals.Sound.Claimed"] = "%s already plays a sound for this spell ID."
 -- Externals: the player's own entries
 english["Externals.Custom"] = "Your Buffs"

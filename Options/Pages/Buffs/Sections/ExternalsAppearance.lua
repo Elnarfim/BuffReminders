@@ -12,44 +12,27 @@ local BR = ns
 -- forbidden button, and growth is container-level flow-layout state with four
 -- directions only (the flow layout has no centered growth).
 --
--- Appearance keys follow the category convention: an Override checkbox gates them.
+-- Icon keys follow the category convention: an Override checkbox gates them.
 -- While the override is off, the keys inherit from the global defaults
 -- (BR.GetExternalSetting resolves the gate) and render dimmed with the live
--- inherited values. Countdown size, direction, the swipe and the tooltip toggle
--- have no `defaults` counterpart, so they ignore the override.
+-- inherited values. Direction and the Text and Behavior groups have no
+-- `defaults` counterpart, so they ignore the override.
 --
 -- This section is terminal: it owns the tab frame's height.
 
 local L = BR.L
 local Components = BR.Components
 
-local LayoutSectionHeader = BR.Options.Helpers.LayoutSectionHeader
-local LayoutSectionNote = BR.Options.Helpers.LayoutSectionNote
+local Helpers = BR.Options.Helpers
+local LayoutSectionHeader = Helpers.LayoutSectionHeader
+local LayoutSectionNote = Helpers.LayoutSectionNote
 
 local COMPONENT_GAP = BR.Options.Constants.COMPONENT_GAP
-local DROPDOWN_EXTRA = BR.Options.Constants.DROPDOWN_EXTRA
 
 local SLIDERS = {
-    { key = "iconZoom", labelKey = "Appearance.Zoom", min = 0, max = 40, suffix = "%", default = 0, inherited = true },
-    {
-        key = "borderSize",
-        labelKey = "Appearance.Border",
-        min = 0,
-        max = 8,
-        suffix = "px",
-        default = 2,
-        inherited = true,
-    },
-    {
-        key = "spacing",
-        labelKey = "Appearance.Spacing",
-        min = 0,
-        max = 32,
-        suffix = "px",
-        default = 4,
-        inherited = true,
-    },
-    { key = "durationSize", labelKey = "Externals.DurationSize", min = 8, max = 32, suffix = "px", default = 16 },
+    { key = "iconZoom", labelKey = "Appearance.Zoom", min = 0, max = 40, suffix = "%", default = 0 },
+    { key = "borderSize", labelKey = "Appearance.Border", min = 0, max = 8, suffix = "px", default = 2 },
+    { key = "spacing", labelKey = "Appearance.Spacing", min = 0, max = 32, suffix = "px", default = 4 },
 }
 
 -- Keys copied into the externals table when the override turns on.
@@ -192,17 +175,151 @@ local function BuildSizeRow(parent, labelWidth)
     return row
 end
 
+-- Text rows follow the Items tab: one row per text element.
+local ROW_SIDE_W = 80
+local ROW_OFFSET_TRACK_W = 48
+local ROW_SIZE_LABEL_W = 30
+-- Room after the caster name label for the what's-new dot.
+local DOT_ROOM = 14
+
+local function IsCasterNameShown()
+    return Setting("showCasterName") == true
+end
+
+local function CasterNameEnabled()
+    return IsEnabled() and IsCasterNameShown()
+end
+
+local function CasterNameDisabledReason()
+    if not IsEnabled() then
+        return L["Externals.NoneTracked"]
+    end
+    return L["Externals.CasterNameOff"]
+end
+
+---@return Frame row
+local function BuildCountdownRow(parent, labelWidth)
+    local row = CreateFrame("Frame", nil, parent)
+    row:SetSize(parent:GetWidth(), 20)
+
+    local size = Components.NumericStepper(row, {
+        label = L["Externals.Countdown"],
+        labelWidth = labelWidth,
+        min = 8,
+        max = 32,
+        step = 1,
+        enabled = IsEnabled,
+        disabledReason = L["Externals.NoneTracked"],
+        get = function()
+            return Setting("durationSize") or 16
+        end,
+        onChange = function(value)
+            BR.Config.Set("externals.durationSize", value)
+        end,
+    })
+    size:SetPoint("LEFT", row, "LEFT", 0, 0)
+
+    return row
+end
+
+---"Off" in the side dropdown stands for showCasterName = false, so the row needs
+---no separate checkbox.
+---@return Frame row
+local function BuildCasterNameRow(parent, labelWidth)
+    local row = CreateFrame("Frame", nil, parent)
+    row:SetSize(parent:GetWidth(), 26)
+
+    local side = Components.Dropdown(row, {
+        label = L["Externals.CasterName"],
+        labelWidth = labelWidth,
+        width = ROW_SIDE_W,
+        options = {
+            { label = L["Options.Off"], value = "OFF" },
+            { label = L["Options.SubIconSide.Bottom"], value = "BOTTOM" },
+            { label = L["Options.SubIconSide.Top"], value = "TOP" },
+            { label = L["Options.SubIconSide.Left"], value = "LEFT" },
+            { label = L["Options.SubIconSide.Right"], value = "RIGHT" },
+        },
+        tooltip = { title = L["Externals.CasterName"], desc = L["Externals.CasterName.Desc"] },
+        enabled = IsEnabled,
+        disabledReason = L["Externals.NoneTracked"],
+        get = function()
+            if not IsCasterNameShown() then
+                return "OFF"
+            end
+            return Setting("casterNamePosition") or "BOTTOM"
+        end,
+        onChange = function(value)
+            if value == "OFF" then
+                BR.Config.Set("externals.showCasterName", false)
+            else
+                BR.Config.SetMulti({
+                    ["externals.showCasterName"] = true,
+                    ["externals.casterNamePosition"] = value,
+                })
+            end
+            Components.RefreshAll()
+        end,
+    })
+    side:SetPoint("LEFT", row, "LEFT", 0, 0)
+    BR.Options.WhatsNew.AttachDot(side.label, "externals.casterName")
+
+    local size = Components.NumericStepper(row, {
+        label = L["Options.TextPositions.Size"],
+        labelWidth = ROW_SIZE_LABEL_W,
+        min = 6,
+        max = 40,
+        step = 1,
+        enabled = CasterNameEnabled,
+        disabledReason = CasterNameDisabledReason,
+        get = function()
+            return Setting("casterNameSize") or 12
+        end,
+        onChange = function(value)
+            BR.Config.Set("externals.casterNameSize", value)
+        end,
+    })
+    size:SetPoint("LEFT", side, "RIGHT", 10, 0)
+
+    local function OffsetSlider(key, labelKey)
+        return Components.Slider(row, {
+            label = L[labelKey],
+            labelWidth = 12,
+            sliderWidth = ROW_OFFSET_TRACK_W,
+            min = -50,
+            max = 50,
+            enabled = CasterNameEnabled,
+            disabledReason = CasterNameDisabledReason,
+            get = function()
+                return Setting(key) or 0
+            end,
+            onChange = function(value)
+                BR.Config.Set("externals." .. key, value)
+            end,
+        })
+    end
+
+    local offsetX = OffsetSlider("casterNameOffsetX", "Options.TextPositions.OffsetX.Short")
+    offsetX:SetPoint("LEFT", size, "RIGHT", 10, 0)
+    local offsetY = OffsetSlider("casterNameOffsetY", "Options.TextPositions.OffsetY.Short")
+    offsetY:SetPoint("LEFT", offsetX, "RIGHT", 8, 0)
+
+    return row
+end
+
 local function Build(ctx, layout)
     local parent = ctx.content
 
     LayoutSectionHeader(layout, parent, L["Externals.Appearance"])
     LayoutSectionNote(layout, parent, L["Externals.AppearanceNote"])
 
+    -- Icons: the Override checkbox sits at the top, so its scope is the group.
+    Helpers.LayoutSubsectionHeader(layout, parent, L["Options.Icons"])
     AddOverrideRow(parent, layout)
 
-    -- One shared label column so the tracks line up: "Countdown size" is far wider
-    -- than "Zoom". Without the shared width, each slider fits its label to its text.
-    local labels = { L["Appearance.Width"] }
+    -- One shared label column so the tracks line up. Without it, each slider fits
+    -- its label to its text.
+    local labels = { L["Appearance.Width"], L["Direction.Label"] }
     for _, spec in ipairs(SLIDERS) do
         labels[#labels + 1] = L[spec.labelKey]
     end
@@ -219,8 +336,8 @@ local function Build(ctx, layout)
             max = spec.max,
             step = 1,
             suffix = spec.suffix,
-            enabled = spec.inherited and InheritedEnabled or IsEnabled,
-            disabledReason = spec.inherited and InheritedDisabledReason or L["Externals.NoneTracked"],
+            enabled = InheritedEnabled,
+            disabledReason = InheritedDisabledReason,
             get = function()
                 return Setting(key) or default
             end,
@@ -249,7 +366,19 @@ local function Build(ctx, layout)
             BR.Config.Set("externals.growDirection", dir)
         end,
     })
-    layout:Add(dirHolder, nil, COMPONENT_GAP + DROPDOWN_EXTRA)
+    -- Last row of the group: the subsection header supplies the space below.
+    layout:Add(dirHolder, nil, COMPONENT_GAP)
+
+    Helpers.LayoutSubsectionHeader(layout, parent, L["Options.Text"])
+
+    local textLabelWidth = Components.MeasureSharedLabelWidth({
+        L["Externals.Countdown"],
+        L["Externals.CasterName"],
+    }) + DOT_ROOM
+    layout:Add(BuildCountdownRow(parent, textLabelWidth), 20, COMPONENT_GAP)
+    layout:Add(BuildCasterNameRow(parent, textLabelWidth), 26, COMPONENT_GAP)
+
+    Helpers.LayoutSubsectionHeader(layout, parent, L["Options.Behavior"])
 
     local swipeHolder = Components.Checkbox(parent, {
         label = L["Externals.ShowSwipe"],
@@ -286,3 +415,5 @@ local function Build(ctx, layout)
 end
 
 BR.Options.BuffSections.ExternalsAppearance = Build
+
+BR.Options.WhatsNew.Register({ cohort = "6.10.0", pageId = "categories", key = "externals.casterName" })

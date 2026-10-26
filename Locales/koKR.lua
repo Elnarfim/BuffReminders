@@ -350,7 +350,6 @@ L["Externals.Boosts"] = "공격 및 마나"
 L["Externals.Movement"] = "이동기"
 L["Externals.Aggro"] = "위협 수준 이전"
 L["Externals.Augmentation"] = "증강"
-L["Externals.DurationSize"] = "쿨타임 크기"
 L["Externals.Appearance"] = "외형"
 L["Externals.AppearanceNote"] =
     "전투 중 변경한 사항은 전투 종료 후 즉시 적용됩니다. 프레임 잠금을 해제하면 버프 줄을 이동할 수 있습니다."

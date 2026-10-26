@@ -93,6 +93,29 @@ function WhatsNew.IsGroupNew(group)
     return false
 end
 
+local DOT_TEXTURE = "Interface\\AddOns\\BuffReminders\\Media\\dot.tga"
+
+---A dot after the text of `label`, shown while `key` is new. The panel OnShow
+---re-evaluates it, so the dot goes away at the open after MarkSeen.
+---@param label any FontString
+---@param key string
+---@return Texture
+function WhatsNew.AttachDot(label, key)
+    local dot = label:GetParent():CreateTexture(nil, "OVERLAY")
+    dot:SetTexture(DOT_TEXTURE)
+    dot:SetVertexColor(0.88, 0.42, 0.40)
+    dot:SetSize(10, 10)
+    -- From the text end, not the region edge: a fixed-width label column is
+    -- wider than its text.
+    dot:SetPoint("LEFT", label, "LEFT", label:GetStringWidth() + 4, 0)
+    local function refresh()
+        dot:SetShown(unseenItems[key] == true)
+    end
+    refresh()
+    table.insert(BR.RefreshableComponents, { Refresh = refresh })
+    return dot
+end
+
 function WhatsNew.HasPending()
     return pending
 end

@@ -351,7 +351,6 @@ L["Externals.Boosts"] = "傷害 & 法力"
 L["Externals.Movement"] = "移動"
 L["Externals.Aggro"] = "威脅重定向"
 L["Externals.Augmentation"] = "強化"
-L["Externals.DurationSize"] = "倒數尺寸"
 L["Externals.Appearance"] = "外觀"
 L["Externals.AppearanceNote"] =
     "Changes made in combat apply as soon as you leave it. Unlock the frames to drag the row."
