@@ -84,7 +84,7 @@ local function Build(content, scrollFrame)
             return frame
         end
 
-        -- The resize hooks let CustomAppearance size the tab frame and grow the page.
+        -- The resize hooks let the template size the tab frame and grow the page.
         BR.Options.Pages.BuffTemplate.Build(frame, scrollFrame, cat, {
             appearancePadding = APPEARANCE_PADDING,
             onAppearanceResize = UpdatePageHeight,

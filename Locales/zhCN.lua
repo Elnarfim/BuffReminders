@@ -689,8 +689,6 @@ L["Options.Override.Appearance.Desc"] =
     "为该类别覆盖全局外观默认值。\n关闭时，下方的各项控件将显示继承自“默认值”页面的数值。"
 L["Options.Override.Glow.Desc"] =
     "为该类别覆盖全局发光设置。\n关闭时，下方的各项控件将显示继承自“默认值”页面的数值。"
-L["Options.Override.Externals.Desc"] =
-    "为这些图标覆盖全局外观默认值。\n关闭时，尺寸、缩放、边框和间距控件将显示继承自“默认值”页面的数值。倒计时大小和方向始终是独立的。"
 L["Options.Customize"] = "自定义"
 L["Options.ResetPosition"] = "重置位置"
 L["Options.MasqueNote"] = "缩放和边框设置由Masque管理。"

@@ -101,7 +101,7 @@ local BR = ns
 ---@field textAlpha? number
 ---@field textColor? number[]
 ---@field spacing? number
----@field growDirection? string
+---@field layoutDirection? string Growth direction of a split frame; nil follows defaults.growDirection
 ---@field iconZoom? number
 ---@field borderSize? number
 ---@field showExpirationGlow? boolean
@@ -565,7 +565,6 @@ local function BuildCategorySettings(category)
         result.spacing = (catSettings and catSettings.spacing) or 0.2
         result.iconZoom = (catSettings and catSettings.iconZoom) or 0
         result.borderSize = (catSettings and catSettings.borderSize) or 2
-        result.growDirection = (catSettings and catSettings.growDirection) or "CENTER"
     else
         result.iconSize = globalDefaults.iconSize or 64
         result.iconWidth = globalDefaults.iconWidth
@@ -576,8 +575,10 @@ local function BuildCategorySettings(category)
         result.spacing = globalDefaults.spacing or 0.2
         result.iconZoom = globalDefaults.iconZoom or 0
         result.borderSize = globalDefaults.borderSize or 2
-        result.growDirection = globalDefaults.growDirection or "CENTER"
     end
+    -- The direction inherits on its own: nil follows the Defaults page, whatever the
+    -- appearance override says.
+    result.growDirection = (catSettings and catSettings.layoutDirection) or globalDefaults.growDirection or "CENTER"
 
     -- BUFF! text: direct per-category for raid only
     if category == "raid" then
@@ -932,7 +933,10 @@ local function CreateCategoryFrame(category)
     local db = BR.profile
     local catSettings = db.categorySettings and db.categorySettings[category] or defaults.categorySettings[category]
     local pos = catSettings.position or defaults.categorySettings[category].position
-    local direction = catSettings.growDirection or defaults.defaults.growDirection or "CENTER"
+    local direction = catSettings.layoutDirection
+        or (db.defaults and db.defaults.growDirection)
+        or defaults.defaults.growDirection
+        or "CENTER"
     local anchor = DIRECTION_ANCHORS[direction] or "CENTER"
 
     local frame = CreateFrame("Frame", "BuffReminders_Category_" .. category, UIParent)
@@ -1343,7 +1347,7 @@ local function PositionMainContainer(mainFrameBuffs)
         end
         lastMainSignature = sig
 
-        local direction = BR.Config.GetCategorySetting("main", "growDirection") or "CENTER"
+        local direction = GetCategorySettings("main").growDirection or "CENTER"
         local isVertical = direction == "UP" or direction == "DOWN"
 
         local widths = {}
@@ -2719,10 +2723,7 @@ local function InitializeFrames()
     local pos = (db.categorySettings and db.categorySettings.main and db.categorySettings.main.position)
         or db.position
         or { point = "CENTER", x = 0, y = 0 }
-    local mainCatSettings = db.categorySettings and db.categorySettings.main
-    local initDirection = (mainCatSettings and mainCatSettings.growDirection)
-        or (db.defaults and db.defaults.growDirection)
-        or "CENTER"
+    local initDirection = (db.defaults and db.defaults.growDirection) or "CENTER"
     local anchor = DIRECTION_ANCHORS[initDirection] or "CENTER"
     local extFrame, extPoint = ResolveAnchorParent("main")
     if extFrame then

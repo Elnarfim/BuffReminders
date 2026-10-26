@@ -772,8 +772,6 @@ L["Options.Override.Appearance.Desc"] =
     "覆寫此類別的全域外觀預設值。 \n關閉時，下方的控制項顯示從「預設值」頁面繼承的值。"
 L["Options.Override.Glow.Desc"] =
     "覆寫此類別的全域發光設定。 \n關閉時，下方的控制項顯示從「預設值」頁面繼承的值。"
-L["Options.Override.Externals.Desc"] =
-    "覆蓋這些圖示的全域外觀預設值。\n關閉時，大小、縮放、邊框和間距控制顯示從「預設值」頁面繼承的值。倒數計時的大小和方向總是分開的。"
 L["Options.Customize"] = "自定義"
 L["Options.ResetPosition"] = "重置位置"
 L["Options.MasqueNote"] = "縮放和邊框設置由Masque管理。"

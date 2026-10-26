@@ -367,7 +367,6 @@ english["Externals.Movement"] = "Movement"
 english["Externals.Aggro"] = "Threat Redirects"
 english["Externals.Augmentation"] = "Augmentation"
 english["Externals.Countdown"] = "Countdown"
-english["Externals.Appearance"] = "Appearance"
 english["Externals.AppearanceNote"] =
     "Changes made in combat apply as soon as you leave it. Unlock the frames to drag the row."
 english["Externals.ShowSwipe"] = "Show duration swipe"
@@ -431,7 +430,6 @@ english["Options.Preview"] = "Preview"
 -- ============================================================================
 -- OPTIONS: GLOBAL DEFAULTS
 -- ============================================================================
-english["Options.GlobalDefaults"] = "Global Defaults"
 english["Options.GlobalDefaults.Note"] = "(All categories inherit these unless overridden with a custom appearance)"
 english["Options.Default"] = "Default"
 english["Options.Text"] = "Text"
@@ -465,7 +463,6 @@ english["Options.MissingGlow.Desc"] = "Glow icons whose buff is completely missi
 english["Options.GlowSettings.Expiring"] = "Glow Settings - Expiring"
 english["Options.GlowSettings.Missing"] = "Glow Settings - Missing"
 english["Options.Glow.Enabled"] = "Enabled"
-english["Options.Threshold"] = "Threshold"
 english["Options.GlowMissingPets"] = "Glow missing pets"
 english["Options.Expiration"] = "Expiration"
 english["Options.Glow"] = "Glow"
@@ -473,10 +470,9 @@ english["Options.UseCustomColor"] = "Use Custom Color"
 english["Options.UseCustomColor.Desc"] =
     "When enabled, the proc glow is desaturated and recolored.\nThis looks less vibrant than the default proc glow."
 english["Options.ExpirationReminder"] = "Expiration Reminder"
-english["Options.Timing"] = "Timing"
-english["Options.UseDefaultThreshold"] = "Use default threshold"
-english["Options.UseDefaultThreshold.Desc"] =
-    "When checked, this category follows the global expiration threshold from the Defaults page.\nUncheck to set a category-specific threshold."
+english["Options.ExpirationWarning"] = "Warn when under"
+english["Options.Override.Expiration.Desc"] =
+    "Set a warning time for this category. While off, the time from the Defaults page applies."
 english["Options.PreKeyThreshold"] = "Pre-Key Threshold"
 english["Options.PreKeyThreshold.Desc"] =
     "Use a longer expiration threshold when inside a Mythic dungeon (M0) before a keystone is inserted.\nHelps ensure your buffs are fresh before the key goes in."
@@ -536,6 +532,7 @@ english["Tooltip.PinNotInGroup"] = "(not in group)"
 english["Options.FreeConsumables"] = "Free Consumables"
 english["Options.FreeConsumables.Note"] = "(healthstones, permanent augment runes)"
 english["Options.FreeConsumables.Override"] = "Override content filters"
+english["Options.FreeConsumables.Follows"] = "Follows the Show in filters above."
 english["Options.FreeConsumables.Override.Desc"] =
     "When checked, free consumables use their own content type visibility settings below.\n\nWhen unchecked, they follow the same content filters as other consumables."
 
@@ -543,20 +540,18 @@ english["Options.FreeConsumables.Override.Desc"] =
 -- OPTIONS: ICONS
 -- ============================================================================
 english["Options.Icons"] = "Icons"
-english["Options.ShowText"] = "Show text on icons"
-english["Options.ShowText.Desc"] =
-    "Display count and missing-buff text overlays on buff icons for this category. The expiring countdown timer always stays visible"
+english["Options.ShowTextToggle"] = "Show"
+english["Options.MainText.Desc"] =
+    "Show the main text on the icons: a count like 17/20, or a label like NO PET. The Defaults page sets its position. The expiring countdown always stays visible."
 english["Options.ShowMissingCountOnly"] = "Show missing count only"
 english["Options.ShowMissingCountOnly.Desc"] =
     'Show only the number of missing buffs (e.g., "1") instead of the full count (e.g., "19/20")'
-english["Options.ShowBuffReminderText"] = 'Show "BUFF!" reminder text'
-english["Options.Size"] = "Size"
 
 -- ============================================================================
 -- OPTIONS: TEXT POSITIONS
 -- ============================================================================
-english["Options.TextPositions"] = "Text"
 english["Options.TextPositions.Zone"] = "Position"
+english["Options.TextPositions.Offset"] = "Offset"
 english["Options.TextPositions.OffsetX.Short"] = "X"
 english["Options.TextPositions.OffsetY.Short"] = "Y"
 english["Options.TextPositions.Size"] = "Size"
@@ -580,6 +575,13 @@ english["Options.TextPositions.Align.Right"] = "Right"
 -- ============================================================================
 -- OPTIONS: CLICK TO CAST
 -- ============================================================================
+english["Options.Interaction"] = "Interaction"
+english["Options.TextOverlays"] = "Text & overlays"
+english["Options.BuffReminderText"] = '"BUFF!" text'
+english["Options.ItemFilters"] = "Items"
+english["Options.Direction.Default"] = "Default"
+english["Options.Direction.Desc"] =
+    "The direction in which the icons of this frame grow. Default follows the direction on the Defaults page."
 english["Options.ClickToCast"] = "Click to cast"
 english["Options.ClickToCast.DescFull"] =
     "Make buff icons clickable to cast the corresponding spell (out of combat only). Only works for spells your character can cast."
@@ -626,7 +628,6 @@ english["Options.ShowItemTooltips.Desc"] = "When hovering over a consumable icon
 english["Options.ShowBuffTooltips"] = "Show buff tooltips"
 english["Options.ShowBuffTooltips.Desc"] =
     "When hovering over a raid or presence buff icon, show the spell tooltip and which class provides the buff."
-english["Options.Behavior"] = "Behavior"
 english["Options.PetPassiveCombat"] = "Pet passive only in combat"
 english["Options.PetPassiveCombat.Desc"] =
     "Only show the passive pet reminder while in combat. When disabled, the reminder is always shown."
@@ -646,8 +647,9 @@ english["Options.PetDisplay.SummonDesc"] = "Each pet summon spell as its own ico
 english["Options.PetDisplay.Mode"] = "Pet display mode"
 english["Options.PetDisplay.Mode.Desc"] = "How missing pet reminders are displayed."
 english["Options.PetLabels"] = "Pet labels"
+english["Options.PetLabels.Classes"] = "Labels for"
+english["Options.PetLabels.Classes.Desc"] = "Pet labels show only on the pets of the ticked classes."
 english["Options.PetLabels.Desc"] = "Show pet name and specialization below each icon."
-english["Options.PetLabels.SizePct"] = "Size %"
 
 -- ============================================================================
 -- OPTIONS: CONSUMABLE DISPLAY
@@ -660,11 +662,6 @@ english["Options.ConsumableBadgeOnSubIcons"] = "Show quality badge on sub-icons"
 english["Options.ConsumableBadgeOnSubIcons.Title"] = "Quality badge on sub-icons"
 english["Options.ConsumableBadgeOnSubIcons.Desc"] =
     'Show the food quality letter (e.g. "H" for Hearty, "F" for Fleeting) on each sub-icon, not just the main icon.'
-english["Options.ConsumableBadgeOnSubIcons.Disabled"] = "Only available in the Sub-icons display mode."
-english["Options.HideConsumableLabels"] = "Hide stat labels"
-english["Options.HideConsumableLabels.Title"] = "Hide consumable stat labels"
-english["Options.HideConsumableLabels.Desc"] =
-    'Hide the small stat labels (e.g. "Hi 1st", "Lo 2nd") shown on the top-left of consumable icons.'
 english["Options.ItemDisplay"] = "Item display"
 english["Options.ItemDisplay.IconOnly"] = "Icon only"
 english["Options.ItemDisplay.IconOnlyDesc"] = "Shows the item with the highest count"
@@ -808,7 +805,8 @@ english["Options.Override.Appearance.Desc"] =
 english["Options.Override.Glow.Desc"] =
     "Override the global glow settings for this category.\nWhile off, the controls below show the inherited values from the Defaults page."
 english["Options.Override.Externals.Desc"] =
-    "Override the global appearance defaults for these icons.\nWhile off, the size, zoom, border and spacing controls show the inherited values from the Defaults page. Countdown size and direction are always separate."
+    "Override the global appearance defaults for these icons.\nWhile off, the icon controls below show the inherited values from the Defaults page. Direction, text and tooltips are always separate."
+english["Options.Override.OpenDefaults"] = "Open"
 english["Options.Customize"] = "Customize"
 english["Options.ResetPosition"] = "Reset Position"
 english["Options.MasqueNote"] = "Zoom and Border settings are managed by Masque"
@@ -1154,10 +1152,6 @@ english["Options.GlobalTag.Desc"] =
 
 -- Disabled-control explanations
 english["Component.DisabledReason.Title"] = "Why is this disabled?"
-english["DisabledReason.GrowDirection"] =
-    'Grow direction needs this category in its own frame.\nEnable "Split into separate frame" in the Layout section first.'
-english["DisabledReason.ResetPosition"] =
-    'Only split categories have their own position.\nEnable "Split into separate frame" first.'
 english["DisabledReason.OverrideSection"] = 'Turn on "Override" at the top of this section first.'
 english["DisabledReason.CombatOverride"] =
     '"In combat" hiding is enabled above, so nothing shows in combat and this override would have no effect.\nUncheck it to use a combat tracking override.'
@@ -1167,8 +1161,9 @@ english["DisabledReason.ExpiringInCombat"] =
     '"In combat" hiding is enabled, so everything is already hidden during combat.'
 english["DisabledReason.HealthstoneThreshold"] = 'Enable "Warn when low" first.'
 english["DisabledReason.ClickToCast"] = 'Turn on "Click to cast" first.'
-english["DisabledReason.UseDefaultThreshold"] = 'Uncheck "Use default threshold" to set a category-specific value.'
-english["DisabledReason.StatLabelsHidden"] = 'Uncheck "Hide stat labels" first.'
+english["DisabledReason.ShowWithoutItems"] = 'Turn on "Show when not in bags" first.'
+english["DisabledReason.PetLabelsOff"] = 'Pick a position for "Pet labels" first.'
+english["DisabledReason.OverrideRow"] = 'Tick "Override" on this row first.'
 
 -- Direction labels
 english["Direction.Left"] = "Left"

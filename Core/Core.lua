@@ -277,7 +277,7 @@ local CategorySettingKeys = {
     showExpirationGlow = "DisplayRefresh",
     expirationThreshold = "DisplayRefresh",
     spacing = "LayoutRefresh",
-    growDirection = "LayoutRefresh",
+    layoutDirection = "LayoutRefresh",
     subIconSide = "LayoutRefresh",
     anchorFrame = "LayoutRefresh",
     anchorPoint = "LayoutRefresh",
@@ -710,7 +710,6 @@ local AppearanceKeys = {
     spacing = true,
     iconZoom = true,
     borderSize = true,
-    growDirection = true,
 }
 -- NOTE: expirationThreshold is deliberately NOT an appearance key. It is a timing/behavior
 -- setting and uses the standard per-key fallback (category value if set, else defaults),
