@@ -19,7 +19,6 @@ local MakeCategoryGetter = Helpers.MakeCategoryGetter
 local MakeCategorySetter = Helpers.MakeCategorySetter
 
 local COMPONENT_GAP = BR.Options.Constants.COMPONENT_GAP
-local SECTION_GAP = BR.Options.Constants.SECTION_GAP
 
 local function Build(ctx, layout)
     local category = ctx.category
@@ -215,7 +214,6 @@ local function Build(ctx, layout)
 
     -- The hide-stat-labels checkbox gates the Stat label position row. Keep the
     -- checkbox directly above that row, so the dependency stays visible.
-    layout:Space(SECTION_GAP)
     Helpers.LayoutSubsectionHeader(layout, parent, L["Options.TextPositions"])
 
     local consumableTextScaleHolder = Components.Slider(parent, {

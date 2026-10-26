@@ -17,7 +17,6 @@ local Helpers = BR.Options.Helpers
 local UpdateDisplay = BR.Display.Update
 
 local COMPONENT_GAP = BR.Options.Constants.COMPONENT_GAP
-local SECTION_GAP = BR.Options.Constants.SECTION_GAP
 
 local FREE_VISIBILITY_DEFAULT = {
     openWorld = false,
@@ -47,7 +46,6 @@ local function Build(ctx, layout)
         return db.defaults.freeConsumableVisibility
     end
 
-    layout:Space(SECTION_GAP)
     Helpers.LayoutSubsectionHeader(layout, parent, L["Options.FreeConsumables"])
     Helpers.LayoutSubsectionNote(layout, parent, L["Options.FreeConsumables.Note"])
 

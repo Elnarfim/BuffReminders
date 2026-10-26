@@ -32,7 +32,7 @@ BR.Options.Constants = {
     SCROLLBAR_WIDTH = 24,
     COMPONENT_GAP = 6, -- standard gap between components
     SECTION_GAP = 8, -- gap before/after section boundaries
-    DROPDOWN_EXTRA = 8, -- extra clearance after dropdowns (menu overlay space)
+    DROPDOWN_EXTRA = 8, -- extra clearance after a dropdown, except the last row of a group
     PAGE_TOP_PADDING = -16, -- y offset where each page's top VerticalLayout cursor starts
 
     -- Dialog shell metrics. A dialog declares its own width; these cover the
@@ -194,8 +194,10 @@ end
 
 -- Compact gold subsection header: smaller than LayoutSectionHeader, no accent
 -- line, for a nested sub-block under an existing section header. Pinned at the
--- layout's current x, so the caller's indent stays.
+-- layout's current x, so the caller's indent stays. It owns the space above it, so
+-- every subsection boundary is the same height. Callers add no space before it.
 function Helpers.LayoutSubsectionHeader(layout, parent, text)
+    layout:Space(SECTION_GAP)
     local header = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     header:SetText("|cffffcc00" .. text .. "|r")
     local h = ceil(header:GetStringHeight())
