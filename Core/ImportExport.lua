@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- ============================================================================
 -- IMPORT/EXPORT FUNCTIONS
@@ -19,7 +21,7 @@ local DEFLATE_CONFIG = { level = 9 }
 
 -- Shareable profile settings with no entry in BR.defaults. A profile string carries
 -- these keys too, and an import replaces them. Runtime memory (rememberedConsumables)
--- and debugMode stay local.
+-- stays local.
 local EXTRA_PROFILE_KEYS = {
     "customBuffs",
     "detachedIcons",
@@ -141,6 +143,8 @@ local function ExportSettings(sourceProfile)
             export[key] = DeepCopy(prof[key])
         end
     end
+    -- Lets an import tell which conversions an older string still needs.
+    export.exportVersion = BR.Migrations.DB_VERSION
 
     local result, err = SerializeTable(export)
     if not result then
@@ -168,6 +172,10 @@ local function ImportSettings(prefixedStr)
         BR.profile[key] = nil
     end
 
+    -- Strings from before the stamp carry no version.
+    local exportVersion = tonumber(data.exportVersion) or 0
+    data.exportVersion = nil
+
     for k, v in pairs(data) do
         BR.profile[k] = DeepCopy(v)
     end
@@ -178,7 +186,7 @@ local function ImportSettings(prefixedStr)
     -- Guard on the OLD key only: the new mode keys already hold a value in the
     -- profile (AceDB defaults), so a `p.outsideInstancesMode == nil` check never
     -- fires and drops the legacy boolean without conversion.
-    local p = BR.profile
+    local p = BR.profile --[[@as table]] -- carries keys that BRProfile no longer declares
     if p.selfOnlyOutsideInstances ~= nil then
         p.outsideInstancesMode = p.selfOnlyOutsideInstances and "self_only" or "default"
     end
@@ -198,6 +206,17 @@ local function ImportSettings(prefixedStr)
     end
     p.optionsPanelScale = nil
 
+    -- Pre-v59 strings carry a category's direction as growDirection (migration [59]).
+    -- In a newer string a nil layoutDirection means "follow Defaults", so only an
+    -- older string gets the conversion.
+    if exportVersion < 59 then
+        BR.Migrations.MoveCategoryDirection(p.categorySettings)
+    end
+    -- Pre-v60 strings carry the shared buff tooltip toggle (migration [60]).
+    if exportVersion < 60 then
+        BR.Migrations.SplitBuffTooltips(p)
+    end
+
     -- Pre-v55 strings carry a runtime icon cache on each custom buff (migration [55]).
     if type(p.customBuffs) == "table" then
         for _, buff in pairs(p.customBuffs) do
@@ -210,6 +229,7 @@ local function ImportSettings(prefixedStr)
     -- Ensure defaults sub-table exists and has the metatable (DeepCopy produces
     -- a plain table, and old export strings can omit the defaults key).
     if not BR.profile.defaults then
+        ---@diagnostic disable-next-line: missing-fields
         BR.profile.defaults = {}
     end
     setmetatable(BR.profile.defaults, { __index = defaults.defaults })

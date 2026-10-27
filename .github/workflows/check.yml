@@ -1,0 +1,37 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      LUALS_VERSION: "3.19.2"
+      LUACHECK_VERSION: "1.2.0-1"
+      STYLUA_VERSION: "2.6.0"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1 liblua5.1-0-dev luarocks ripgrep
+          sudo luarocks --lua-version=5.1 install luacheck "$LUACHECK_VERSION"
+
+          mkdir -p "$RUNNER_TEMP/luals"
+          curl -sSL "https://github.com/LuaLS/lua-language-server/releases/download/${LUALS_VERSION}/lua-language-server-${LUALS_VERSION}-linux-x64.tar.gz" \
+            | tar xz -C "$RUNNER_TEMP/luals"
+          echo "$RUNNER_TEMP/luals/bin" >> "$GITHUB_PATH"
+
+          curl -sSL -o "$RUNNER_TEMP/stylua.zip" \
+            "https://github.com/JohnnyMorganz/StyLua/releases/download/v${STYLUA_VERSION}/stylua-linux-x86_64.zip"
+          unzip -q "$RUNNER_TEMP/stylua.zip" -d "$RUNNER_TEMP/stylua"
+          echo "$RUNNER_TEMP/stylua" >> "$GITHUB_PATH"
+
+      - name: make check
+        run: make check

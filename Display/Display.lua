@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- ============================================================================
 -- TYPE DEFINITIONS
@@ -57,12 +59,21 @@ local _, BR = ...
 ---@field delveFoodOnly? boolean
 ---@field delveFoodTimer? boolean
 ---@field freeConsumableMode? "follow"|"override"
----@field freeConsumableVisibility? table
+---@field freeConsumableVisibility? ContentVisibility
 ---@field healthstoneVisibility? "readyCheck"|"always"|"casterOnly"
----@field consumableRebuffWarning? boolean
----@field consumableRebuffThreshold? number
----@field consumableRebuffColor? number[]
+---@field healthstoneThreshold? number
+---@field healthstoneLowStock? boolean
+---@field soulstoneVisibility? "readyCheck"|"always"|"casterOnly"
+---@field soulstoneHideCooldown? boolean
+---@field soulstonePinnedTarget? string
+---@field repairThreshold? number Durability percent
+---@field repairHideInCombat? boolean
+---@field mageFoodContent? "all"|"dungeon"|"raid"
+---@field feastAtPlayer? boolean
 ---@field consumableDisplayMode? "icon_only"|"sub_icons"|"expanded"
+---@field consumableBadgeOnSubIcons? boolean
+---@field showConsumableTooltips? boolean
+---@field rightClickSnooze? boolean
 ---@field consumableTextScale? number
 ---@field hideConsumableLabels? boolean
 ---@field hideLegacyConsumables? boolean
@@ -71,11 +82,17 @@ local _, BR = ...
 ---@field petLabels? boolean
 ---@field petLabelScale? number
 ---@field petSpecIconOnHover? boolean
+---@field petLabelClasses? table<ClassName, boolean>
+---@field useFelDomination? boolean
+---@field warlockDemons? table<string, table<string, boolean>> Content row -> allowed demon keys
+---@field warlockWrongDemon? boolean
 ---@field textPositions? table<string, {zone: string, offsetX: number, offsetY: number}>
 ---@field textSizes? table<string, number>
 
 ---@class CategorySetting
 ---@field position CategoryPosition
+---@field anchorFrame? string Frame name the category anchors to; nil = screen
+---@field anchorPoint? string
 ---@field iconSize? number
 ---@field iconWidth? number
 ---@field textSize? number
@@ -83,7 +100,7 @@ local _, BR = ...
 ---@field textAlpha? number
 ---@field textColor? number[]
 ---@field spacing? number
----@field growDirection? string
+---@field layoutDirection? string Growth direction of a split frame; nil follows defaults.growDirection
 ---@field iconZoom? number
 ---@field borderSize? number
 ---@field showExpirationGlow? boolean
@@ -129,6 +146,7 @@ local _, BR = ...
 ---@field clickableHighlight? boolean
 ---@field subIconSide? string
 ---@field showOnlyOnReadyCheck? boolean
+---@field showBuffTooltips? boolean Spell tooltip on hover (raid, presence, targeted, self)
 ---@field priority? number
 
 --- All category settings must be defined here. When adding a new category:
@@ -144,11 +162,10 @@ local _, BR = ...
 ---@field consumable CategorySetting
 ---@field utility CategorySetting
 ---@field custom CategorySetting
+---@field loadout CategorySetting
 
 ---@class CategoryFrame: Frame
 ---@field category CategoryName
-
----@alias SplitCategories table<CategoryName, boolean>
 
 ---@class DetachedIconEntry
 ---@field position {x: number, y: number}
@@ -181,6 +198,7 @@ local _, BR = ...
 ---@field isExtraFrame? boolean
 ---@field mainFrame? BuffFrame
 ---@field _br_pet_spell? string             -- Localized spell name for pet click-to-cast
+---@field _br_item? table                   -- Consumable item an expanded extra frame shows
 ---@field _br_pet_spec_icon? number        -- Pet spec ability icon texture for hover swap
 ---@field _br_pet_label_key? string        -- Cache key for pet label updates
 ---@field _br_count_scale? number          -- Font scale the count text was last written with
@@ -188,6 +206,7 @@ local _, BR = ...
 ---@field _br_pet_family_text? FontString  -- Pet spec label below name
 ---@field _br_pet_extra_text? FontString   -- Spirit Beast label below spec
 ---@field _cachedItems? table|false         -- Per-cycle cache for GetConsumableActionItems result
+---@field _sameStatItems? table             -- Reused list for the expiring fan-out (GetSameStatItems)
 
 -- Lua stdlib locals (avoid repeated global lookups in hot paths)
 local floor, max, min = math.floor, math.max, math.min
@@ -352,6 +371,7 @@ local eventFrame -- forward declaration; created later in file
 
 ---@type TestModeData?
 local testModeData = nil
+---@type ClassName?
 local playerClass = nil -- Cached player class, set once on init
 
 -- Dirty flag system: events set dirty=true, OnUpdate checks flag with throttle
@@ -461,14 +481,8 @@ BR.Display = BR.Display or {}
 ---@return boolean
 local function IsCategorySplit(category)
     local db = BR.profile
-    -- Check new location first (categorySettings.{cat}.split)
-    if db.categorySettings and db.categorySettings[category] then
-        if db.categorySettings[category].split ~= nil then
-            return db.categorySettings[category].split == true
-        end
-    end
-    -- Fall back to legacy location (splitCategories.{cat})
-    return db.splitCategories and db.splitCategories[category] == true
+    local catSettings = db.categorySettings and db.categorySettings[category]
+    return catSettings ~= nil and catSettings.split == true
 end
 
 ---Resolve the key detach state is stored under. The options drawer stores
@@ -551,7 +565,6 @@ local function BuildCategorySettings(category)
         result.spacing = (catSettings and catSettings.spacing) or 0.2
         result.iconZoom = (catSettings and catSettings.iconZoom) or 0
         result.borderSize = (catSettings and catSettings.borderSize) or 2
-        result.growDirection = (catSettings and catSettings.growDirection) or "CENTER"
     else
         result.iconSize = globalDefaults.iconSize or 64
         result.iconWidth = globalDefaults.iconWidth
@@ -562,8 +575,10 @@ local function BuildCategorySettings(category)
         result.spacing = globalDefaults.spacing or 0.2
         result.iconZoom = globalDefaults.iconZoom or 0
         result.borderSize = globalDefaults.borderSize or 2
-        result.growDirection = globalDefaults.growDirection or "CENTER"
     end
+    -- The direction inherits on its own: nil follows the Defaults page, whatever the
+    -- appearance override says.
+    result.growDirection = (catSettings and catSettings.layoutDirection) or globalDefaults.growDirection or "CENTER"
 
     -- BUFF! text: direct per-category for raid only
     if category == "raid" then
@@ -918,7 +933,10 @@ local function CreateCategoryFrame(category)
     local db = BR.profile
     local catSettings = db.categorySettings and db.categorySettings[category] or defaults.categorySettings[category]
     local pos = catSettings.position or defaults.categorySettings[category].position
-    local direction = catSettings.growDirection or defaults.defaults.growDirection or "CENTER"
+    local direction = catSettings.layoutDirection
+        or (db.defaults and db.defaults.growDirection)
+        or defaults.defaults.growDirection
+        or "CENTER"
     local anchor = DIRECTION_ANCHORS[direction] or "CENTER"
 
     local frame = CreateFrame("Frame", "BuffReminders_Category_" .. category, UIParent)
@@ -995,14 +1013,28 @@ end
 -- Map buff key -> consumable category (derived from buff definitions in Data/Buffs.lua)
 local BUFF_KEY_TO_CATEGORY = BR.BUFF_KEY_TO_CATEGORY
 
--- Show the spell tooltip for a buff frame (raid/presence hover), with a
--- class-colored "Provided by" line. Gated by defaults.showBuffTooltips so
--- hover never pops a tooltip unless the user opted in. The caller passes the
--- hovered frame as `anchor`, so the tooltip lines up with the cursor when a
--- click overlay covers the icon.
+-- Categories whose icons are spells, so a hover can show the spell tooltip.
+local BUFF_TOOLTIP_CATEGORIES = { raid = true, presence = true, targeted = true, self = true }
+
+---True when the category shows the spell tooltip on hover. Off unless the user
+---opted in, so a hover never pops a tooltip by surprise.
+---@param category? string
+---@return boolean
+local function IsBuffTooltipOn(category)
+    if not category or not BUFF_TOOLTIP_CATEGORIES[category] then
+        return false
+    end
+    local cs = BR.profile and BR.profile.categorySettings and BR.profile.categorySettings[category]
+    return cs ~= nil and cs.showBuffTooltips == true
+end
+BR.Display.IsBuffTooltipOn = IsBuffTooltipOn
+BR.Display.BUFF_TOOLTIP_CATEGORIES = BUFF_TOOLTIP_CATEGORIES
+
+-- Show the spell tooltip for a buff frame, with a class-colored "Provided by"
+-- line. The caller passes the hovered frame as `anchor`, so the tooltip lines up
+-- with the cursor when a click overlay covers the icon.
 local function ShowBuffSpellTooltip(frame, anchor)
-    local db = BR.profile
-    if not db or not db.defaults or db.defaults.showBuffTooltips ~= true then
+    if not IsBuffTooltipOn(frame.buffCategory) then
         return
     end
     local def = frame.buffDef
@@ -1030,12 +1062,12 @@ BR.Display.ShowBuffSpellTooltip = ShowBuffSpellTooltip
 
 -- Apply mouse interactivity to a buff icon frame. Icons are always click-through
 -- (dragging is handled by anchor handles; click-to-cast/chat-requests live on the
--- secure overlays that float above the icon). Raid/presence frames get hover
--- events ONLY when the buff tooltip is opted in - otherwise they stay fully
+-- secure overlays that float above the icon). A frame gets hover events ONLY
+-- when its category opted in to the buff tooltip - otherwise it stays fully
 -- click-through so the world beneath (camera drag, unit clicks) is reachable.
 -- Re-called from UpdateVisuals so toggling showBuffTooltips takes effect live.
 local function ApplyBuffFrameMouse(frame, category)
-    if (category == "raid" or category == "presence") and BR.profile.defaults.showBuffTooltips == true then
+    if IsBuffTooltipOn(category) then
         frame:SetMouseClickEnabled(false)
         frame:SetMouseMotionEnabled(true)
         frame:SetScript("OnEnter", function(self)
@@ -1329,7 +1361,7 @@ local function PositionMainContainer(mainFrameBuffs)
         end
         lastMainSignature = sig
 
-        local direction = BR.Config.GetCategorySetting("main", "growDirection") or "CENTER"
+        local direction = GetCategorySettings("main").growDirection or "CENTER"
         local isVertical = direction == "UP" or direction == "DOWN"
 
         local widths = {}
@@ -1849,7 +1881,7 @@ end
 -- Bag items for a consumable frame, memoized for the render cycle. `false` records a
 -- scan that found nothing, so an empty bag never repeats it.
 ---@param frame BuffFrame
----@return table|false items
+---@return table[]|false items
 local function GetCachedItems(frame)
     local items = frame._cachedItems
     if items == nil then
@@ -1857,6 +1889,31 @@ local function GetCachedItems(frame)
         frame._cachedItems = items
     end
     return items
+end
+
+-- items[1] followed by the other bag items that share its stat label, in bag sort
+-- order. An unlabeled item has no "same" variant. The list is reused per frame.
+---@param frame BuffFrame
+---@param items table[]
+---@return table[]
+local function GetSameStatItems(frame, items)
+    local list = frame._sameStatItems
+    if not list then
+        list = {}
+        frame._sameStatItems = list
+    end
+    wipe(list)
+    local first = items[1]
+    list[1] = first
+    local label = first and first.statLabel
+    if label then
+        for i = 2, #items do
+            if items[i].statLabel == label then
+                list[#list + 1] = items[i]
+            end
+        end
+    end
+    return list
 end
 
 -- Drop the memo so the next read rescans the bags.
@@ -2048,9 +2105,10 @@ local function ApplyConsumableDisplayMode(frame, entry, frameList, parentFrame)
         end
     end
 
-    -- The variant icons fan out only when the buff is fully gone. An expiring buff, or
-    -- food that the player eats now, keeps one icon so the row width stays the same.
-    if entry.displayType ~= "text" or entry.isEating then
+    -- Every variant fans out when the buff is fully gone. An expiring buff fans out
+    -- only the other qualities of the stat it refreshes; food being eaten keeps one icon.
+    local expiring = entry.displayType == "expiring"
+    if (entry.displayType ~= "text" and not expiring) or entry.isEating then
         BR.SecureButtons.UpdateConsumableButtons(frame, nil)
         return
     end
@@ -2060,6 +2118,9 @@ local function ApplyConsumableDisplayMode(frame, entry, frameList, parentFrame)
 
     local displayMode = (BR.profile.defaults or {}).consumableDisplayMode or "sub_icons"
     local items = GetCachedItems(frame)
+    if expiring and items then
+        items = GetSameStatItems(frame, items)
+    end
 
     if displayMode == "sub_icons" then
         if testMode and items and #items > 1 then
@@ -2132,12 +2193,16 @@ local function ApplyConsumableDisplayMode(frame, entry, frameList, parentFrame)
         BR.SecureButtons.UpdateConsumableButtons(frame, nil)
         if displayMode == "expanded" and items and #items > 1 then
             local cachedGlow = entry.category
-                    and GetCachedGlowSettings(entry.category, entry.glowKindOverride or "missing")
+                    and GetCachedGlowSettings(
+                        entry.category,
+                        entry.glowKindOverride or (expiring and "expiring" or "missing")
+                    )
                 or nil
             local expandedSize = frame:GetWidth()
             local stackFontSize = BR.SecureButtons.ComputeConsumableFontSize(expandedSize, "stackCount")
             for i = 2, #items do
                 local extra = GetOrCreateExtraFrame(frame, i - 1)
+                extra._br_item = items[i] -- The click overlay uses the item this frame shows.
                 extra:SetParent(parentFrame)
                 extra:SetSize(expandedSize, frame:GetHeight())
                 extra.icon:SetTexture(items[i].icon)
@@ -2672,10 +2737,7 @@ local function InitializeFrames()
     local pos = (db.categorySettings and db.categorySettings.main and db.categorySettings.main.position)
         or db.position
         or { point = "CENTER", x = 0, y = 0 }
-    local mainCatSettings = db.categorySettings and db.categorySettings.main
-    local initDirection = (mainCatSettings and mainCatSettings.growDirection)
-        or (db.defaults and db.defaults.growDirection)
-        or "CENTER"
+    local initDirection = (db.defaults and db.defaults.growDirection) or "CENTER"
     local anchor = DIRECTION_ANCHORS[initDirection] or "CENTER"
     local extFrame, extPoint = ResolveAnchorParent("main")
     if extFrame then
@@ -3308,18 +3370,8 @@ local function SlashHandler(msg)
             end
         end
         BR.Components.RefreshAll()
-    elseif cmd == "debug" then
-        BR.profile.debugMode = not BR.profile.debugMode
-        if BR.profile.debugMode then
-            print("|cff00ccffBuffReminders:|r " .. L["Display.DebugEnabled"])
-        else
-            print("|cff00ccffBuffReminders:|r " .. L["Display.DebugDisabled"])
-        end
     elseif cmd == "runedebug" then
         BR.Display.PrintRuneDebug()
-    elseif cmd == "spelldebug" then
-        local arg = msg:match("^%S+%s+(%S+)")
-        BR.Display.PrintSpellDebug(arg and arg:lower())
     elseif cmd == "secretdebug" then
         local arg = msg:match("^%S+%s+(%S+)")
         BR.Display.PrintSecretDebug(arg)
@@ -3448,7 +3500,7 @@ eventHandlers.PLAYER_ENTERING_WORLD = function()
         C_Timer.After(2, function()
             for _, def in ipairs(SelfBuffs) do
                 if def.key == "burningRush" then
-                    InvalidateBuffIconBySpellID(def.spellID)
+                    InvalidateBuffIconBySpellID(def.spellID --[[@as number]])
                     return
                 end
             end
@@ -3501,7 +3553,7 @@ eventHandlers.ZONE_CHANGED_INDOORS = RefreshRepairAction
 eventHandlers.GROUP_ROSTER_UPDATE = function()
     UpdateAuraEventRegistration()
     SetDirty("group")
-    -- Refresh chat-request macrotext so prefix tracks party↔raid↔instance
+    -- Refresh chat-request macrotext so prefix tracks party<->raid<->instance
     -- transitions. A rebuild in PreClick is too late: the secure dispatcher can
     -- read the old macrotext before the write propagates, and send to the wrong
     -- channel.
@@ -3639,7 +3691,6 @@ eventHandlers.PLAYER_SPECIALIZATION_CHANGED = function(arg1)
 end
 
 eventHandlers.TRAIT_CONFIG_UPDATED = function()
-    BR.Display.LogLoadoutChange()
     BR.SecureButtons.RefreshOverlaySpells()
     SetDirty()
     -- An external loadout addon rebuilds its list after a short delay, so the loadout

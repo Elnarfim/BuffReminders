@@ -350,7 +350,6 @@ L["Externals.Boosts"] = "공격 및 마나"
 L["Externals.Movement"] = "이동기"
 L["Externals.Aggro"] = "위협 수준 이전"
 L["Externals.Augmentation"] = "증강"
-L["Externals.DurationSize"] = "쿨타임 크기"
 L["Externals.Appearance"] = "외형"
 L["Externals.AppearanceNote"] =
     "전투 중 변경한 사항은 전투 종료 후 즉시 적용됩니다. 프레임 잠금을 해제하면 버프 줄을 이동할 수 있습니다."
@@ -600,8 +599,6 @@ L["Options.PetSpecIcon.Desc"] =
 L["Options.ShowItemTooltips"] = "아이템 툴팁 표시"
 L["Options.ShowItemTooltips.Desc"] = "소모품 아이콘에 마우스를 올리면 아이템 툴팁이 표시됩니다."
 L["Options.ShowBuffTooltips"] = "버프 툴팁 표시"
-L["Options.ShowBuffTooltips.Desc"] =
-    "공격대 또는 특수 버프 아이콘에 마우스 커서를 올리면 주문 툴팁과 걸어준 직업이 표시됩니다."
 L["Options.Behavior"] = "동작"
 L["Options.PetPassiveCombat"] = "전투 중에만 수동적 소환수 알림"
 L["Options.PetPassiveCombat.Desc"] =
@@ -774,8 +771,6 @@ L["Options.Override.Appearance.Desc"] =
     "이 카테고리에 대한 전역 외형 기본값을 다시 설정합니다.\n비활성화 시 아래의 설정들은 기본값 페이지에서 상속된 값을 표시합니다."
 L["Options.Override.Glow.Desc"] =
     "이 카테고리에 대한 전역 반짝임 설정을 다시 설정합니다.\n비활성화 시, 아래 설정들은 기본값 페이지에서 상속된 값을 표시합니다."
-L["Options.Override.Externals.Desc"] =
-    "이 아이콘들에 대한 전역 외형 기본값을 다시 설정합니다.\n비활성화 시, 크기, 확대, 테두리, 간격 조정은 기본값 페이지의 상속값으로 표시됩니다. 초읽기 텍스트 크기와 방향은 항상 별개입니다."
 L["Options.Customize"] = "사용자 지정"
 L["Options.ResetPosition"] = "위치 초기화"
 L["Options.MasqueNote"] = "확대 및 테두리 설정은 Masque에서 관리합니다."

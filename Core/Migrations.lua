@@ -1,4 +1,6 @@
-local _, BR = ...
+local _, ns = ...
+---@class BR
+local BR = ns
 
 -- ============================================================================
 -- Versioned SavedVariables migrations.
@@ -22,7 +24,50 @@ local max = math.max
 
 BR.Migrations = {}
 
-BR.Migrations.DB_VERSION = 55
+BR.Migrations.DB_VERSION = 60
+
+---Move a category's growth direction from growDirection, read only under the
+---appearance override, to layoutDirection, which inherits on its own. The
+---effective direction stays the same: an override with no stored direction
+---resolved to CENTER, and a direction stored without the override was ignored.
+---The main frame has no override and always followed Defaults, so a stale main
+---growDirection goes too.
+---@param categorySettings table|nil One profile's categorySettings
+function BR.Migrations.MoveCategoryDirection(categorySettings)
+    if type(categorySettings) ~= "table" then
+        return
+    end
+    for category, catSettings in pairs(categorySettings) do
+        if type(catSettings) == "table" then
+            if category ~= "main" and catSettings.useCustomAppearance and catSettings.layoutDirection == nil then
+                catSettings.layoutDirection = catSettings.growDirection or "CENTER"
+            end
+            catSettings.growDirection = nil
+        end
+    end
+end
+
+---Move the shared buff tooltip toggle (defaults.showBuffTooltips, read by raid
+---and presence) to a per-category key on both, so each keeps what it showed.
+---@param profile table One profile
+function BR.Migrations.SplitBuffTooltips(profile)
+    local profileDefaults = type(profile.defaults) == "table" and profile.defaults
+    if not profileDefaults then
+        return
+    end
+    if profileDefaults.showBuffTooltips == true then
+        if type(profile.categorySettings) ~= "table" then
+            profile.categorySettings = {}
+        end
+        for _, category in ipairs({ "raid", "presence" }) do
+            if type(profile.categorySettings[category]) ~= "table" then
+                profile.categorySettings[category] = {}
+            end
+            profile.categorySettings[category].showBuffTooltips = true
+        end
+    end
+    profileDefaults.showBuffTooltips = nil
+end
 
 -- Run pending migrations against the profile `db`, using code `defaults` for
 -- fallbacks. `ctx` carries the Display.lua file-scope values the migrations
@@ -1105,6 +1150,111 @@ function BR.Migrations.Run(db, defaults, ctx)
                             buff._iconsCache = nil
                         end
                     end
+                end
+            end
+        end,
+
+        -- [56] defaults.warlockDemon (one summon spell ID per row) becomes
+        -- defaults.warlockDemons (a set of allowed demons per row). Every key is
+        -- written, because a missing key follows the default, which allows Felhunter.
+        [56] = function()
+            local profiles = BR.aceDB and BR.aceDB.sv and BR.aceDB.sv.profiles
+            if not profiles then
+                return
+            end
+            local demonKeys = { [688] = "imp", [697] = "voidwalker", [691] = "felhunter", [366222] = "sayaad" }
+            for _, profile in pairs(profiles) do
+                local profileDefaults = type(profile) == "table" and profile.defaults
+                if type(profileDefaults) == "table" then
+                    local old = rawget(profileDefaults, "warlockDemon")
+                    if type(old) == "table" then
+                        local new = rawget(profileDefaults, "warlockDemons")
+                        if type(new) ~= "table" then
+                            new = {}
+                            profileDefaults.warlockDemons = new
+                        end
+                        for row, spellID in pairs(old) do
+                            if type(row) == "string" and demonKeys[spellID] then
+                                local accepted = {}
+                                for id, key in pairs(demonKeys) do
+                                    accepted[key] = id == spellID
+                                end
+                                new[row] = accepted
+                            end
+                        end
+                    end
+                    profileDefaults.warlockDemon = nil
+                end
+            end
+        end,
+
+        -- [57] Ancestral Protection Totem leaves the curated externals list: the game
+        -- removed the ability, so aura 207498 can never apply. Nothing walks a tracked
+        -- key without a matching entry, so this pass only clears the dead saved keys.
+        -- It covers every profile, because an inactive profile keeps them otherwise.
+        [57] = function()
+            local profiles = BR.aceDB and BR.aceDB.sv and BR.aceDB.sv.profiles
+            if not profiles then
+                return
+            end
+            for _, profile in pairs(profiles) do
+                local externals = type(profile) == "table" and profile.externals
+                if type(externals) == "table" then
+                    if type(externals.entries) == "table" then
+                        externals.entries.ancestralProtection = nil
+                    end
+                    if type(externals.sounds) == "table" then
+                        externals.sounds.ancestralProtection = nil
+                    end
+                end
+            end
+        end,
+
+        -- [58] /br debug leaves: no code reads debugMode, so this pass clears the
+        -- dead flag in every profile.
+        [58] = function()
+            local profiles = BR.aceDB and BR.aceDB.sv and BR.aceDB.sv.profiles
+            if not profiles then
+                return
+            end
+            for _, profile in pairs(profiles) do
+                if type(profile) == "table" then
+                    profile.debugMode = nil
+                end
+            end
+        end,
+
+        -- [59] A category's direction moves from growDirection to layoutDirection
+        -- (BR.Migrations.MoveCategoryDirection). This pass covers every inactive
+        -- profile too, because an inactive profile otherwise keeps the old key. An
+        -- inactive profile below v58 is skipped: older migrations still read its
+        -- growDirection, and its own run reaches this step in order.
+        [59] = function()
+            BR.Migrations.MoveCategoryDirection(db.categorySettings)
+            local profiles = BR.aceDB and BR.aceDB.sv and BR.aceDB.sv.profiles
+            if not profiles then
+                return
+            end
+            local active = BR.aceDB.profile
+            for _, profile in pairs(profiles) do
+                if type(profile) == "table" and profile ~= active and (profile.dbVersion or 0) >= 58 then
+                    BR.Migrations.MoveCategoryDirection(profile.categorySettings)
+                end
+            end
+        end,
+        -- [60] The buff tooltip toggle becomes per category
+        -- (BR.Migrations.SplitBuffTooltips). It covers inactive profiles by the
+        -- rule of [59].
+        [60] = function()
+            BR.Migrations.SplitBuffTooltips(db)
+            local profiles = BR.aceDB and BR.aceDB.sv and BR.aceDB.sv.profiles
+            if not profiles then
+                return
+            end
+            local active = BR.aceDB.profile
+            for _, profile in pairs(profiles) do
+                if type(profile) == "table" and profile ~= active and (profile.dbVersion or 0) >= 58 then
+                    BR.Migrations.SplitBuffTooltips(profile)
                 end
             end
         end,
